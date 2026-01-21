@@ -10,6 +10,10 @@ export default defineConfig({
     globals: true,
     css: false,
     include: ["test/**/*.test.{ts,tsx}"],
+    typecheck: {
+      enabled: true,
+      tsconfig: "./tsconfig.test.json",
+    },
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],

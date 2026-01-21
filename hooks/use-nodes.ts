@@ -9,6 +9,7 @@
 
 import { useCallback } from "react"
 import { useNodesState, type NodeChange } from "@xyflow/react"
+import { generateId } from "@/lib/utils"
 import type {
   EntityNode,
   EntityData,
@@ -90,13 +91,6 @@ const NODE_CONFIGS: {
 // =============================================================================
 // 유틸리티 함수
 // =============================================================================
-
-/**
- * Generate an RFC 4122 v4 UUID string.
- */
-function generateId(): string {
-  return crypto.randomUUID()
-}
 
 /**
  * Produce a unique name by appending a numeric suffix when needed.

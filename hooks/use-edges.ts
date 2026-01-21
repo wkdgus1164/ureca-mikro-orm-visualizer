@@ -13,6 +13,7 @@ import {
   type Connection,
   type EdgeChange,
 } from "@xyflow/react"
+import { generateId } from "@/lib/utils"
 import type { RelationshipEdge, RelationshipData } from "@/types/relationship"
 import { RelationType, FetchType } from "@/types/relationship"
 
@@ -21,13 +22,6 @@ import { RelationType, FetchType } from "@/types/relationship"
  */
 export type FlowEdge = RelationshipEdge & {
   selected?: boolean
-}
-
-/**
- * Generate an RFC 4122 v4 UUID string.
- */
-function generateId(): string {
-  return crypto.randomUUID()
 }
 
 /**
