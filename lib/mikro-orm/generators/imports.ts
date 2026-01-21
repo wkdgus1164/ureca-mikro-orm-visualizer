@@ -121,10 +121,14 @@ export function collectImports(
         needsCascade = true
       }
 
-      // 타겟 Entity 찾기
+      // 타겟 Entity 찾기 (sanitized name으로 비교하여 self-import 방지)
       const targetNode = allNodes.find((n) => n.id === edge.target)
-      if (targetNode && targetNode.data.name !== entity.data.name) {
-        relatedEntities.add(sanitizeClassName(targetNode.data.name))
+      if (targetNode) {
+        const targetName = sanitizeClassName(targetNode.data.name)
+        const currentName = sanitizeClassName(entity.data.name)
+        if (targetName !== currentName) {
+          relatedEntities.add(targetName)
+        }
       }
     })
 
