@@ -3,11 +3,10 @@
 /**
  * Export 모달 컴포넌트
  *
- * 생성된 MikroORM TypeScript 코드, JSON Schema, 또는 이미지를 내보낼 수 있는 모달
+ * 생성된 MikroORM TypeScript 코드 또는 이미지를 내보낼 수 있는 모달
  *
  * 탭 컴포넌트들로 분리:
  * - TypeScriptExportTab: TypeScript 코드 미리보기/복사/다운로드
- * - JsonExportTab: JSON Schema 미리보기/복사/다운로드
  * - ImageExportTab: 이미지 형식/해상도 선택 및 다운로드
  */
 
@@ -20,18 +19,16 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { FileCode, FileJson, ImageIcon } from "lucide-react"
+import { FileCode, ImageIcon } from "lucide-react"
 import { useEditorContext } from "@/components/providers/editor-provider"
 import { generateAllDiagramCode } from "@/lib/mikro-orm/generator"
-import { exportDiagramAsJson } from "@/lib/export/json"
 import { TypeScriptExportTab } from "@/components/export/typescript-export-tab"
-import { JsonExportTab } from "@/components/export/json-export-tab"
 import { ImageExportTab } from "@/components/export/image-export-tab"
 
 /**
  * Export 형식 타입
  */
-type ExportFormat = "typescript" | "json" | "image"
+type ExportFormat = "typescript" | "image"
 
 /**
  * Export 모달 Props
@@ -65,14 +62,6 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     return generateAllDiagramCode(nodes, edges)
   }, [isOpen, nodes, edges])
 
-  /**
-   * JSON Schema 코드 생성
-   */
-  const generatedJsonCode = useMemo(() => {
-    if (!isOpen || nodes.length === 0) return ""
-    return exportDiagramAsJson(nodes, edges)
-  }, [isOpen, nodes, edges])
-
   // Entity가 없는 경우
   if (nodes.length === 0) {
     return (
@@ -99,9 +88,9 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     <Dialog open={isOpen} onOpenChange={() => onClose()}>
       <DialogContent className="!max-w-[800px] !w-[48vw] max-h-[85vh] p-0 gap-0 overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-2">
-          <DialogTitle>Export Code</DialogTitle>
+          <DialogTitle>Export</DialogTitle>
           <DialogDescription>
-            Export your diagram as TypeScript classes, JSON schema, or image
+            Export your diagram as TypeScript classes or image
           </DialogDescription>
         </DialogHeader>
 
@@ -117,10 +106,6 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
                 <FileCode className="h-4 w-4" />
                 TypeScript
               </TabsTrigger>
-              <TabsTrigger value="json" className="gap-2">
-                <FileJson className="h-4 w-4" />
-                JSON
-              </TabsTrigger>
               <TabsTrigger value="image" className="gap-2">
                 <ImageIcon className="h-4 w-4" />
                 Image
@@ -131,11 +116,6 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
           {/* TypeScript 탭 */}
           <TabsContent value="typescript" className="m-0 flex-1 overflow-hidden px-6 pt-2">
             <TypeScriptExportTab generatedCode={generatedTsCode} />
-          </TabsContent>
-
-          {/* JSON 탭 */}
-          <TabsContent value="json" className="m-0 overflow-hidden px-6 pt-2">
-            <JsonExportTab jsonCode={generatedJsonCode} />
           </TabsContent>
 
           {/* Image 탭 */}
