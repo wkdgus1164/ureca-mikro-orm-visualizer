@@ -17,7 +17,7 @@ import {
 import type { RelationshipData } from "@/types/relationship"
 import { RelationType, RELATION_TYPE_LABELS } from "@/types/relationship"
 import { cn } from "@/lib/utils"
-import { MARKER_IDS, EdgeMarkerDefs } from "@/components/editor/edges/shared/edge-markers"
+import { MARKER_IDS } from "@/components/editor/edges/shared/edge-markers"
 
 /**
  * Relationship 엣지 타입 (ReactFlow Edge 확장)
@@ -103,11 +103,6 @@ function RelationshipEdgeComponent({
 
   return (
     <>
-      {/* SVG 마커 정의 */}
-      <defs>
-        <EdgeMarkerDefs />
-      </defs>
-
       {/* 엣지 패스 */}
       <BaseEdge
         id={id}

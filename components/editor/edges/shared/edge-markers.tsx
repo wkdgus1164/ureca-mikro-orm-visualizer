@@ -123,3 +123,34 @@ export function EdgeMarkerDefs() {
     </>
   )
 }
+
+/**
+ * 전역 엣지 마커 컴포넌트
+ *
+ * ReactFlow 캔버스와 같은 컨테이너 내에서 한 번만 렌더링되어야 함
+ * 중복 SVG marker ID 문제를 방지하기 위해 엣지 컴포넌트 외부에서 사용
+ *
+ * @example
+ * ```tsx
+ * <div className="editor-container">
+ *   <GlobalEdgeMarkers />
+ *   <ReactFlow ... />
+ * </div>
+ * ```
+ */
+export function GlobalEdgeMarkers() {
+  return (
+    <svg
+      style={{
+        position: "absolute",
+        width: 0,
+        height: 0,
+        overflow: "hidden",
+      }}
+    >
+      <defs>
+        <EdgeMarkerDefs />
+      </defs>
+    </svg>
+  )
+}
