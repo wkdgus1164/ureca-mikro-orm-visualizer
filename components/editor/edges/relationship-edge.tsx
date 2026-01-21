@@ -38,9 +38,13 @@ const MARKER_IDS = {
 } as const
 
 /**
- * 관계 타입별 엣지 스타일
+ * Compute the inline SVG style for an edge based on the relationship type and whether it is selected.
  *
- * 색상을 더 선명하게 하여 라이트/다크 모드에서 모두 잘 보이도록 함
+ * The returned style adjusts stroke width for selection and chooses a stroke color that remains clear in both light and dark themes.
+ *
+ * @param relationType - The relationship type influencing marker/visual semantics (used for future extensibility)
+ * @param selected - Whether the edge is selected; selected edges use a heavier stroke and primary color
+ * @returns An object containing `strokeWidth` and `stroke` properties for the edge's inline style
  */
 function getEdgeStyle(relationType: RelationType, selected: boolean) {
   const baseStyle = {
@@ -52,7 +56,9 @@ function getEdgeStyle(relationType: RelationType, selected: boolean) {
 }
 
 /**
- * 관계 타입별 마커 설정
+ * Selects the SVG marker URL to use at the end of an edge for the given relationship type.
+ *
+ * @returns The SVG URL reference for the end marker corresponding to `relationType` (for example `url(#arrow)` or `url(#crowFoot)`).
  */
 function getMarkerEnd(relationType: RelationType): string {
   switch (relationType) {
@@ -68,7 +74,10 @@ function getMarkerEnd(relationType: RelationType): string {
 }
 
 /**
- * 관계 타입별 마커 시작점
+ * Selects the SVG marker URL to use at the start of an edge based on the relationship type.
+ *
+ * @param relationType - The relationship type that determines the start marker
+ * @returns The SVG marker URL (for use in `markerStart`), or `undefined` if no start marker applies
  */
 function getMarkerStart(relationType: RelationType): string | undefined {
   switch (relationType) {
@@ -82,19 +91,13 @@ function getMarkerStart(relationType: RelationType): string | undefined {
 }
 
 /**
- * Relationship 엣지 컴포넌트
+ * Render a custom React Flow edge that visualizes a MikroORM relationship.
  *
- * 관계 타입에 따라 다른 스타일의 엣지 렌더링:
- * - OneToOne: 양방향 화살표
- * - OneToMany: Source→까마귀발
- * - ManyToOne: 화살표→Target
- * - ManyToMany: 양방향 까마귀발
+ * Chooses start/end SVG markers (arrow, crow-foot, or vertical "one") based on the relation type,
+ * draws a Bezier edge between source and target, and renders a centered label showing the source
+ * property name and relation type label.
  *
- * @example
- * ```tsx
- * const edgeTypes = { relationship: RelationshipEdge }
- * <ReactFlow edgeTypes={edgeTypes} />
- * ```
+ * @returns A React element that renders the relationship edge with markers and a label.
  */
 function RelationshipEdgeComponent({
   id,

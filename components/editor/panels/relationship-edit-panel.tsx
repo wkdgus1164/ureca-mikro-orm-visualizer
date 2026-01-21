@@ -29,16 +29,12 @@ import {
 } from "@/types/relationship"
 
 /**
- * Relationship 편집 컨텐츠 컴포넌트
+ * Render editable UI for the selected relationship inside the PropertySidebar.
  *
- * PropertySidebar 내부에 렌더링되며, 변경 시 즉시 반영
+ * Allows editing relationship properties (type, source/target properties, fetch strategy,
+ * and options) and applies changes in real time to the selected edge.
  *
- * @example
- * ```tsx
- * <PropertySidebar>
- *   <RelationshipEditContent />
- * </PropertySidebar>
- * ```
+ * @returns A JSX element containing the relationship editing controls, or `null` when no relationship is selected.
  */
 export function RelationshipEditContent() {
   const { nodes, getSelectedEdge, updateRelationship } = useEditorContext()

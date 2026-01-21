@@ -18,9 +18,14 @@ import { RelationshipEditContent } from "@/components/editor/panels/relationship
 import { useEditorContext } from "@/components/providers/editor-provider"
 
 /**
- * 에디터 3-패널 레이아웃
+ * Render the editor's three-panel layout with a dynamic right-side properties panel.
  *
- * 좌측 사이드바, 중앙 캔버스, 우측 프로퍼티 패널로 구성
+ * Displays a left NodeListPanel, a central EditorCanvas, and a right PropertySidebar whose title,
+ * description, and content change based on the current selection from the editor context:
+ * shows EnumEditContent when an enum is selected, EntityEditContent when an entity is selected,
+ * RelationshipEditContent when an edge is selected, and defaults to a "Properties" panel with no content otherwise.
+ *
+ * @returns The editor layout's JSX element
  */
 export function EditorLayout() {
   const {

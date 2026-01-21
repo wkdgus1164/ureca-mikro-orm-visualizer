@@ -34,14 +34,21 @@ const DEFAULT_OPTIONS: GeneratorOptions = {
 }
 
 /**
- * 들여쓰기 헬퍼
+ * Create a string of spaces representing indentation for a given level and size.
+ *
+ * @param level - The indentation level (number of indent steps)
+ * @param size - Number of spaces per indent level (default: 2)
+ * @returns A string containing `level * size` space characters
  */
 function indent(level: number, size: number = 2): string {
   return " ".repeat(level * size)
 }
 
 /**
- * 클래스명 정규화 (공백 → 언더바)
+ * Replace all whitespace in a class name with underscores to produce a sanitized identifier.
+ *
+ * @param name - The class name to sanitize
+ * @returns The sanitized class name with all whitespace replaced by underscores
  */
 function sanitizeClassName(name: string): string {
   return name.replace(/\s+/g, "_")
@@ -52,10 +59,10 @@ function sanitizeClassName(name: string): string {
 // =============================================================================
 
 /**
- * Property 목록에서 고유한 Enum 정의를 수집
+ * Collects unique enum definitions from a list of entity properties by enum name.
  *
- * @param properties - Property 목록
- * @returns 고유한 Enum 정의 배열 (이름 기준 중복 제거)
+ * @param properties - Array of entity properties to scan for enum definitions
+ * @returns An array of unique `EnumDefinition` objects; if multiple properties reference the same enum name, the last encountered definition is used
  */
 function collectEnumDefinitions(properties: EntityProperty[]): EnumDefinition[] {
   const enumMap = new Map<string, EnumDefinition>()
@@ -71,19 +78,16 @@ function collectEnumDefinitions(properties: EntityProperty[]): EnumDefinition[] 
 }
 
 /**
- * Enum 정의를 TypeScript enum 코드로 변환
+ * Generate a TypeScript enum declaration from an EnumDefinition.
  *
- * @param enumDef - Enum 정의
- * @returns 생성된 TypeScript enum 코드
+ * The provided `enumDef` name becomes the enum identifier and each entry in
+ * `enumDef.values` becomes a member where the `key` is the member name and the
+ * `value` is the assigned literal. Values that parse as numbers (and are not
+ * empty strings) are emitted unquoted; all other values are emitted as quoted
+ * strings.
  *
- * @example
- * ```ts
- * const code = generateEnumCode({ name: "UserRole", values: [{ key: "Admin", value: "admin" }] })
- * // 결과:
- * // export enum UserRole {
- * //   Admin = "admin",
- * // }
- * ```
+ * @param enumDef - Enum definition with `name` and `values`, where each value has `key` and `value`
+ * @returns The generated TypeScript `export enum` declaration as a string
  */
 function generateEnumCode(enumDef: EnumDefinition): string {
   const lines: string[] = []
@@ -103,10 +107,10 @@ function generateEnumCode(enumDef: EnumDefinition): string {
 }
 
 /**
- * 여러 Enum 정의를 TypeScript 코드로 변환
+ * Generate TypeScript code for multiple enum definitions.
  *
- * @param enumDefs - Enum 정의 배열
- * @returns 생성된 TypeScript enum 코드 (줄바꿈으로 구분)
+ * @param enumDefs - The enum definitions to convert into TypeScript enums
+ * @returns The concatenated TypeScript enum declarations separated by a single blank line; returns an empty string if `enumDefs` is empty
  */
 function generateAllEnumsCode(enumDefs: EnumDefinition[]): string {
   if (enumDefs.length === 0) return ""
@@ -115,7 +119,13 @@ function generateAllEnumsCode(enumDefs: EnumDefinition[]): string {
 }
 
 /**
- * Property 데코레이터 옵션 생성
+ * Builds a MikroORM property decorator options object string from property metadata.
+ *
+ * Uses the property's `isUnique`, `isNullable`, and `defaultValue` fields to include
+ * `unique`, `nullable`, and `default` entries when applicable.
+ *
+ * @param property - The entity property metadata (reads `isUnique`, `isNullable`, and `defaultValue`)
+ * @returns A string containing the options object (e.g. `{ unique: true, nullable: true, default: "x" }`) or an empty string when there are no options
  */
 function generatePropertyOptions(property: EntityProperty): string {
   const options: string[] = []
@@ -148,7 +158,15 @@ function generatePropertyOptions(property: EntityProperty): string {
 }
 
 /**
- * Property 데코레이터 및 선언 생성
+ * Generate the decorator lines and TypeScript property declaration for an entity property.
+ *
+ * Produces the decorator (PrimaryKey, Enum, or Property) and a single-line TypeScript property
+ * declaration including nullability marker and type. Enum-typed properties reference the enum
+ * name; primary keys receive the `@PrimaryKey()` decorator.
+ *
+ * @param property - The entity property definition to render
+ * @param indentSize - Number of spaces to use for one indentation level
+ * @returns A string with the decorator line(s) and the property declaration, separated by newlines
  */
 function generateProperty(
   property: EntityProperty,
@@ -185,7 +203,10 @@ function generateProperty(
 }
 
 /**
- * 관계 타입에 따른 데코레이터 이름
+ * Map a RelationType to the corresponding MikroORM relation decorator name.
+ *
+ * @param relationType - The relation type to map
+ * @returns The decorator name: `"OneToOne"`, `"OneToMany"`, `"ManyToOne"`, or `"ManyToMany"`
  */
 function getRelationDecorator(relationType: RelationType): string {
   switch (relationType) {
@@ -201,7 +222,10 @@ function getRelationDecorator(relationType: RelationType): string {
 }
 
 /**
- * 관계가 Collection 타입인지 확인
+ * Determine whether a relation type represents a collection-valued relationship.
+ *
+ * @param relationType - The relation type to evaluate
+ * @returns `true` if the relation is `OneToMany` or `ManyToMany`, `false` otherwise
  */
 function isCollectionRelation(relationType: RelationType): boolean {
   return (
@@ -211,8 +235,14 @@ function isCollectionRelation(relationType: RelationType): boolean {
 }
 
 /**
- * Relationship 데코레이터 옵션 생성
- * 옵션이 있으면 멀티라인 포맷으로 반환
+ * Builds MikroORM relationship decorator options as a formatted string.
+ *
+ * Returns an empty string when no relationship options are enabled; otherwise returns a string
+ * that begins with ", {" and contains a multiline, indented object literal with the enabled options.
+ *
+ * @param data - Relationship configuration containing flags like `cascade`, `isNullable`, `orphanRemoval`, and `fetchType`
+ * @param indentSize - Number of spaces used per indentation level when formatting the options
+ * @returns An empty string if no options are set, otherwise a multiline object literal string (prefixed with `, {`) suitable for use in a decorator
  */
 function generateRelationshipOptions(data: RelationshipData, indentSize: number): string {
   const options: string[] = []
@@ -248,8 +278,16 @@ function generateRelationshipOptions(data: RelationshipData, indentSize: number)
 }
 
 /**
- * Relationship 데코레이터 및 선언 생성
- */
+ * Generate the MikroORM relationship decorator and corresponding property declaration for a given relationship edge.
+ *
+ * Generates code only when the provided sourceEntity is the edge's source and the edge has relationship data; returns `null` otherwise.
+ *
+ * @param edge - The relationship edge describing the relation and its metadata.
+ * @param sourceEntity - The entity for which the relationship code is generated; generation occurs only if this entity is the edge source.
+ * @param targetEntity - The related target entity referenced by the relationship.
+ * @param allNodes - All entity nodes in the diagram (provided for context when resolving names/imports).
+ * @param indentSize - Number of spaces to use for indentation.
+ * @returns The decorator and property declaration as a string, or `null` if no code should be generated.
 function generateRelationship(
   edge: RelationshipEdge,
   sourceEntity: EntityNode,
@@ -291,7 +329,20 @@ function generateRelationship(
 }
 
 /**
- * Entity별 필요한 데코레이터 import 수집
+ * Collects MikroORM decorators and related import requirements for a given entity.
+ *
+ * Inspects the entity's properties, indexes, and relationships to determine which decorators
+ * are required, which other entity classes must be imported, and whether Collection or Cascade
+ * utilities are needed.
+ *
+ * @param entity - The entity node to analyze
+ * @param edges - All relationship edges in the diagram
+ * @param allNodes - All entity nodes in the diagram (used to resolve related entity names)
+ * @returns An object containing:
+ *  - `decorators`: a set of decorator names required for the entity (e.g., "Entity", "Property", "PrimaryKey", "Enum", "Index", "Unique", relation decorators)
+ *  - `relatedEntities`: a set of sanitized class names of other entities referenced by this entity's relationships (for import statements)
+ *  - `needsCollection`: `true` if any relationship uses a collection type (OneToMany or ManyToMany), `false` otherwise
+ *  - `needsCascade`: `true` if any relationship declares cascade, `false` otherwise
  */
 function collectImports(
   entity: EntityNode,
@@ -375,7 +426,10 @@ function collectImports(
 }
 
 /**
- * Entity 레벨 Index 데코레이터 생성
+ * Generate `@Index` and `@Unique` decorator lines for the indexes defined on an entity.
+ *
+ * @param entity - The entity node whose `data.indexes` will be converted; indexes with no properties are ignored.
+ * @returns An array of decorator strings such as `@Index({ properties: [...] })` or `@Unique({ properties: [...], name: "..." })`
  */
 function generateIndexDecorators(entity: EntityNode): string[] {
   const indexes = entity.data.indexes ?? []
@@ -399,7 +453,13 @@ function generateIndexDecorators(entity: EntityNode): string[] {
 }
 
 /**
- * Import 문 생성
+ * Builds import statements for MikroORM core decorators and related entity classes.
+ *
+ * @param decorators - Names of decorators to import from `@mikro-orm/core`
+ * @param relatedEntities - Names of related entity classes to import from local files (`./<EntityName>`)
+ * @param needsCollection - Include `Collection` in the core import when `true`
+ * @param needsCascade - Include `Cascade` in the core import when `true`
+ * @returns A string containing the combined import statements
  */
 function generateImports(
   decorators: Set<string>,
@@ -431,33 +491,16 @@ function generateImports(
 }
 
 /**
- * Entity 노드를 TypeScript 코드로 변환
+ * Generate TypeScript source code for a MikroORM entity node.
  *
- * @param entity - 변환할 Entity 노드
- * @param edges - 모든 Relationship 엣지
- * @param allNodes - 모든 Entity 노드 (관계 참조용)
- * @param options - 생성 옵션
- * @returns 생성된 TypeScript 코드
+ * Produces imports, enum declarations (if any), index/unique decorators, the @Entity decorator,
+ * property declarations with decorators, relationship properties, and the enclosing class.
  *
- * @example
- * ```ts
- * const code = generateEntityCode(userNode, edges, allNodes)
- * // 결과:
- * // import { Entity, PrimaryKey, Property, OneToMany, Collection } from "@mikro-orm/core"
- * // import { Post } from "./Post"
- * //
- * // @Entity()
- * // export class User {
- * //   @PrimaryKey()
- * //   id!: number
- * //
- * //   @Property({ unique: true })
- * //   email!: string
- * //
- * //   @OneToMany(() => Post, post => post.author)
- * //   posts = new Collection<Post>(this)
- * // }
- * ```
+ * @param entity - The Entity node to convert
+ * @param edges - All relationship edges in the diagram (used to emit relationships where `entity` is the source)
+ * @param allNodes - All entity nodes for resolving relationship targets
+ * @param options - Generation options (e.g., indentation size, collection import path)
+ * @returns The generated TypeScript source code for the entity as a string
  */
 export function generateEntityCode(
   entity: EntityNode,
@@ -544,12 +587,9 @@ export function generateEntityCode(
 }
 
 /**
- * 모든 Entity를 TypeScript 코드로 변환
+ * Generate TypeScript source code for each entity node and return them keyed by sanitized entity name.
  *
- * @param nodes - Entity 노드 목록
- * @param edges - Relationship 엣지 목록
- * @param options - 생성 옵션
- * @returns Entity 이름과 코드의 맵
+ * @returns A Map where each key is the sanitized entity class name and each value is the generated TypeScript code for that entity
  */
 export function generateAllEntitiesCode(
   nodes: EntityNode[],
@@ -571,27 +611,13 @@ export function generateAllEntitiesCode(
 // =============================================================================
 
 /**
- * Embeddable 노드를 TypeScript 코드로 변환
+ * Generate TypeScript code for a MikroORM embeddable node.
  *
- * @param embeddable - 변환할 Embeddable 노드
- * @param options - 생성 옵션
- * @returns 생성된 TypeScript 코드
+ * Includes any enum declarations required by the embeddable's properties.
  *
- * @example
- * ```ts
- * const code = generateEmbeddableCode(addressNode)
- * // 결과:
- * // import { Embeddable, Property } from "@mikro-orm/core"
- * //
- * // @Embeddable()
- * // export class Address {
- * //   @Property()
- * //   street!: string
- * //
- * //   @Property()
- * //   city!: string
- * // }
- * ```
+ * @param embeddable - The Embeddable node to convert into TypeScript code
+ * @param options - Generator options (e.g., indentation size, collection import path)
+ * @returns The generated TypeScript source code for the embeddable class
  */
 export function generateEmbeddableCode(
   embeddable: EmbeddableNode,
@@ -657,11 +683,11 @@ export function generateEmbeddableCode(
 }
 
 /**
- * 모든 Embeddable을 TypeScript 코드로 변환
+ * Generate TypeScript code for each embeddable node.
  *
- * @param nodes - Embeddable 노드 목록
- * @param options - 생성 옵션
- * @returns Embeddable 이름과 코드의 맵
+ * @param nodes - Array of embeddable nodes to convert into code
+ * @param options - Generator options that customize output formatting and imports
+ * @returns A map where each key is an embeddable name and each value is the generated TypeScript code for that embeddable
  */
 export function generateAllEmbeddablesCode(
   nodes: EmbeddableNode[],
@@ -678,20 +704,10 @@ export function generateAllEmbeddablesCode(
 }
 
 /**
- * EnumNode를 TypeScript enum 코드로 변환
+ * Generates a TypeScript enum declaration from an EnumNode.
  *
- * @param enumNode - 변환할 Enum 노드
- * @returns 생성된 TypeScript enum 코드
- *
- * @example
- * ```ts
- * const code = generateEnumNodeCode(userRoleNode)
- * // 결과:
- * // export enum UserRole {
- * //   Admin = "admin",
- * //   User = "user",
- * // }
- * ```
+ * @param enumNode - Enum node containing the enum name and its values
+ * @returns The generated TypeScript enum source code
  */
 export function generateEnumNodeCode(enumNode: EnumNode): string {
   // EnumNode의 data를 EnumDefinition으로 사용
@@ -703,10 +719,10 @@ export function generateEnumNodeCode(enumNode: EnumNode): string {
 }
 
 /**
- * 모든 EnumNode를 TypeScript 코드로 변환
+ * Generate TypeScript code for each enum node and return a map keyed by sanitized enum names.
  *
- * @param nodes - Enum 노드 목록
- * @returns Enum 이름과 코드의 맵
+ * @param nodes - The array of enum nodes to convert
+ * @returns A map where each key is the sanitized enum name and each value is the generated TypeScript enum code
  */
 export function generateAllEnumNodesCode(
   nodes: EnumNode[]
@@ -722,12 +738,12 @@ export function generateAllEnumNodesCode(
 }
 
 /**
- * 모든 다이어그램 노드 (Entity + Embeddable + Enum)를 TypeScript 코드로 변환
+ * Generate TypeScript source code for all diagram nodes (entities, embeddables, and enums).
  *
- * @param nodes - 모든 노드 (Entity + Embeddable + Enum)
- * @param edges - Relationship 엣지 목록
- * @param options - 생성 옵션
- * @returns 노드 이름과 코드의 맵
+ * @param nodes - Array of diagram nodes to process (Entity, Embeddable, and Enum nodes)
+ * @param edges - Relationship edges used when generating entity code
+ * @param options - Generator options (e.g., indent size, collection import path)
+ * @returns A Map that maps each sanitized node name to its generated TypeScript source code
  */
 export function generateAllDiagramCode(
   nodes: DiagramNode[],

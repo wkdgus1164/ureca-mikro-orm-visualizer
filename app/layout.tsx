@@ -23,6 +23,12 @@ export const metadata: Metadata = {
   },
 }
 
+/**
+ * Root layout component that provides global fonts, theme handling, and a toast container for the app.
+ *
+ * @param children - The page content to render inside the layout
+ * @returns The top-level HTML structure (`<html>` and `<body>`) containing a ThemeProvider that applies global theming and fonts, renders `children`, and mounts a bottom-right rich-colored Toaster
+ */
 export default function RootLayout({
   children,
 }: Readonly<{

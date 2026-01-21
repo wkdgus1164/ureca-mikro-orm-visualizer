@@ -29,13 +29,14 @@ const handleClassName =
   "!w-2.5 !h-2.5 !bg-primary !border-2 !border-background hover:!bg-primary/80 transition-colors"
 
 /**
- * Entity 노드 컴포넌트
+ * Render a React Flow node that visualizes an entity as a card with connection handles.
  *
- * @example
- * ```tsx
- * const nodeTypes = { entity: EntityNode }
- * <ReactFlow nodeTypes={nodeTypes} />
- * ```
+ * The card displays the entity name and a list of properties; icons indicate primary key,
+ * unique, or nullable properties. Visual styling updates when the node is selected.
+ *
+ * @param data - Entity data containing `name` and `properties` used to populate the card
+ * @param selected - Whether the node is currently selected (affects card styling)
+ * @returns The JSX element representing the entity node for rendering inside React Flow
  */
 function EntityNodeComponent({ data, selected }: EntityNodeProps) {
   const { name, properties } = data

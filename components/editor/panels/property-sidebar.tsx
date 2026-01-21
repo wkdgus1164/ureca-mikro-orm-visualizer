@@ -29,22 +29,19 @@ interface PropertySidebarProps {
 }
 
 /**
- * 우측 Property 사이드바 컴포넌트
+ * Right-aligned property sidebar panel that slides open within the layout.
  *
- * 애니메이션과 함께 열림/닫힘이 전환되며,
- * 오버레이 없이 레이아웃에 포함됨
+ * Renders a fixed-width (400px) panel when open containing a header with a title,
+ * an optional description, a close button that calls `onClose`, and a scrollable
+ * content area. When `isOpen` is false the panel is not rendered and occupies no width.
  *
- * @example
- * ```tsx
- * <PropertySidebar
- *   isOpen={uiState.isRightPanelOpen}
- *   onClose={closeRightPanel}
- *   title="Edit Entity"
- *   description="Modify entity properties"
- * >
- *   <EntityEditContent />
- * </PropertySidebar>
- * ```
+ * @param isOpen - Whether the sidebar is open
+ * @param onClose - Callback invoked when the close action is triggered
+ * @param title - Header title text
+ * @param description - Optional header description text
+ * @param children - Content to render inside the sidebar body
+ * @param className - Optional additional CSS classes applied to the aside element
+ * @returns The sidebar element to include in the layout
  */
 export function PropertySidebar({
   isOpen,

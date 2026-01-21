@@ -30,18 +30,16 @@ const handleClassName =
   "!w-2.5 !h-2.5 !bg-amber-500 !border-2 !border-background hover:!bg-amber-400 transition-colors"
 
 /**
- * Enum 노드 컴포넌트
+ * Render a React Flow node that visualizes a TypeScript-style enum using an amber theme.
  *
- * Entity와 시각적으로 구분되는 특징:
- * - amber 색상 테마 (Entity는 기본 primary, Embeddable은 violet)
- * - List 아이콘
- * - Key = Value 형태로 Enum 값 표시
+ * The node displays a header with the enum name and an "Enum" badge, a body that lists
+ * values as `Key = "Value"` (or a "No values" placeholder), and four connection handles
+ * (top/left as targets, right/bottom as sources). Selection state changes the node's
+ * border and ring styling.
  *
- * @example
- * ```tsx
- * const nodeTypes = { enum: EnumNode }
- * <ReactFlow nodeTypes={nodeTypes} />
- * ```
+ * @param data - Node data containing `name` and `values` to render
+ * @param selected - Whether the node is selected, which alters visual emphasis
+ * @returns The JSX element representing the Enum node
  */
 function EnumNodeComponent({ data, selected }: EnumNodeProps) {
   const { name, values } = data

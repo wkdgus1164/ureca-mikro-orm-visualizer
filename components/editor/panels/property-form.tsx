@@ -46,9 +46,10 @@ interface PropertyFormProps {
 }
 
 /**
- * Property 편집 폼 컴포넌트 (리스트 스타일)
+ * Renders an editable list-style form for a single EntityProperty.
  *
- * 프로퍼티의 이름, 타입, 옵션 등을 편집할 수 있는 폼
+ * Provides inline name editing, type selection (including inline enum creation and references to external enums),
+ * editing of inline enum definitions (add/update/delete values), toggles for primary/unique/nullable, and a default value input.
  *
  * @example
  * ```tsx

@@ -44,25 +44,22 @@ const DEFAULT_OPTIONS: Required<ExportImageOptions> = {
 }
 
 /**
- * ReactFlow 뷰포트 요소를 찾아 반환
+ * Get the ReactFlow viewport DOM element.
  *
- * @returns 뷰포트 요소 또는 null
+ * @returns The `.react-flow__viewport` element if present, `null` otherwise.
  */
 function getViewportElement(): HTMLElement | null {
   return document.querySelector(".react-flow__viewport")
 }
 
 /**
- * ReactFlow 캔버스를 이미지로 내보내기
+ * Export the ReactFlow canvas containing the given nodes to an image data URL.
  *
- * @param nodes - 현재 노드 목록
- * @param options - export 옵션
- * @returns 이미지 Data URL
- *
- * @example
- * ```ts
- * const dataUrl = await exportAsImage(nodes, { format: "png", scale: 2 })
- * ```
+ * @param nodes - The nodes to include in the exported image
+ * @param options - Export options (format, scale, backgroundColor, padding, quality)
+ * @returns The image data URL (`data:image/...`) for the exported PNG or SVG
+ * @throws Error if the ReactFlow viewport element cannot be found
+ * @throws Error if `nodes` is empty
  */
 export async function exportAsImage(
   nodes: Node[],
@@ -119,10 +116,10 @@ export async function exportAsImage(
 }
 
 /**
- * 이미지 Data URL을 파일로 다운로드
+ * Trigger a browser download for the given data URL using the specified filename.
  *
- * @param dataUrl - 이미지 Data URL
- * @param filename - 파일명 (확장자 포함)
+ * @param dataUrl - The data URL of the image to download
+ * @param filename - The target filename including extension
  */
 export function downloadImage(dataUrl: string, filename: string): void {
   const link = document.createElement("a")
@@ -135,17 +132,11 @@ export function downloadImage(dataUrl: string, filename: string): void {
 }
 
 /**
- * ReactFlow 캔버스를 이미지로 내보내고 바로 다운로드
+ * Export the ReactFlow canvas as an image and immediately download it.
  *
- * @param nodes - 현재 노드 목록
- * @param filename - 파일명 (확장자 제외, 자동 추가됨)
- * @param options - export 옵션
- *
- * @example
- * ```ts
- * await exportAndDownloadImage(nodes, "my-diagram", { format: "png", scale: 2 })
- * // "my-diagram.png" 파일이 다운로드됨
- * ```
+ * @param nodes - The nodes to include in the exported image
+ * @param filename - Base filename without extension; the appropriate extension is appended automatically
+ * @param options - Export options (format, scale, backgroundColor, padding, quality)
  */
 export async function exportAndDownloadImage(
   nodes: Node[],
