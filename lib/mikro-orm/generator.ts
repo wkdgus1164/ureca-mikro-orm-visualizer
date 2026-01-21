@@ -73,9 +73,9 @@ export function generateAllDiagramCode(
   const embeddableNodes: EmbeddableNode[] = nodes.filter(isEmbeddableNode)
   const enumNodes: EnumNode[] = nodes.filter(isEnumNode)
 
-  // Entity 코드 생성
+  // Entity 코드 생성 (EnumNode 전달하여 Enum 참조 처리)
   entityNodes.forEach((entity) => {
-    const code = generateEntityCode(entity, edges, entityNodes, options)
+    const code = generateEntityCode(entity, edges, entityNodes, options, enumNodes)
     result.set(sanitizeClassName(entity.data.name), code)
   })
 

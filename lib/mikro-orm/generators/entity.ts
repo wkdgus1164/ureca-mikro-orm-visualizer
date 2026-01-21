@@ -4,7 +4,7 @@
  * EntityNode를 완전한 MikroORM Entity 클래스 코드로 변환
  */
 
-import type { EntityNode } from "@/types/entity"
+import type { EntityNode, EnumNode } from "@/types/entity"
 import type { RelationshipEdge } from "@/types/relationship"
 import {
   type GeneratorOptions,
@@ -15,6 +15,13 @@ import { collectEnumDefinitions, generateAllEnumsCode } from "./enum"
 import { generateProperty } from "./property"
 import { generateRelationship } from "./relationship"
 import { collectImports, generateImports } from "./imports"
+
+/**
+ * Enum 이름 Set 생성 (Enum 참조 확인용)
+ */
+function getEnumNames(enumNodes: EnumNode[]): Set<string> {
+  return new Set(enumNodes.map((node) => node.data.name))
+}
 
 /**
  * Generate `@Index` and `@Unique` decorator lines for the indexes defined on an entity.
@@ -47,22 +54,27 @@ function generateIndexDecorators(entity: EntityNode): string[] {
  * @param edges - All relationship edges in the diagram
  * @param allNodes - All entity nodes for resolving relationship targets
  * @param options - Generation options (e.g., indentation size)
+ * @param enumNodes - All enum nodes in the diagram (for Enum reference resolution)
  * @returns The generated TypeScript source code for the entity as a string
  */
 export function generateEntityCode(
   entity: EntityNode,
   edges: RelationshipEdge[],
   allNodes: EntityNode[],
-  options: GeneratorOptions = {}
+  options: GeneratorOptions = {},
+  enumNodes: EnumNode[] = []
 ): string {
   const opts = { ...DEFAULT_OPTIONS, ...options }
   const indentSize = opts.indentSize!
 
-  // Import 정보 수집
-  const { decorators, relatedEntities, needsCollection, needsCascade } =
-    collectImports(entity, edges, allNodes)
+  // Enum 이름 Set (참조 확인용)
+  const enumNames = getEnumNames(enumNodes)
 
-  // Enum 정의 수집
+  // Import 정보 수집 (Enum 참조 포함)
+  const { decorators, relatedEntities, needsCollection, needsCascade, referencedEnums } =
+    collectImports(entity, edges, allNodes, enumNames)
+
+  // Enum 정의 수집 (인라인 Enum만)
   const enumDefs = collectEnumDefinitions(entity.data.properties)
 
   const lines: string[] = []
@@ -72,7 +84,8 @@ export function generateEntityCode(
     decorators,
     relatedEntities,
     needsCollection,
-    needsCascade
+    needsCascade,
+    referencedEnums
   )
   lines.push(imports)
   lines.push("")
@@ -100,7 +113,7 @@ export function generateEntityCode(
 
   // Properties
   const propertyCode = entity.data.properties
-    .map((prop) => generateProperty(prop, indentSize))
+    .map((prop) => generateProperty(prop, indentSize, enumNames))
     .join("\n\n")
 
   if (propertyCode) {
@@ -137,17 +150,19 @@ export function generateEntityCode(
  * @param nodes - Array of entity nodes to convert
  * @param edges - All relationship edges in the diagram
  * @param options - Generation options
+ * @param enumNodes - All enum nodes in the diagram (for Enum reference resolution)
  * @returns A Map where each key is the sanitized entity class name and each value is the generated code
  */
 export function generateAllEntitiesCode(
   nodes: EntityNode[],
   edges: RelationshipEdge[],
-  options: GeneratorOptions = {}
+  options: GeneratorOptions = {},
+  enumNodes: EnumNode[] = []
 ): Map<string, string> {
   return new Map(
     nodes.map((node) => [
       sanitizeClassName(node.data.name),
-      generateEntityCode(node, edges, nodes, options),
+      generateEntityCode(node, edges, nodes, options, enumNodes),
     ])
   )
 }

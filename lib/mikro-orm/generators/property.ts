@@ -57,20 +57,36 @@ export function generatePropertyOptions(property: EntityProperty): string {
  *
  * @param property - The entity property definition to render
  * @param indentSize - Number of spaces to use for one indentation level
+ * @param enumNames - Set of all Enum names in the diagram (for Enum reference detection)
  * @returns A string with the decorator line(s) and the property declaration, separated by newlines
  */
 export function generateProperty(
   property: EntityProperty,
-  indentSize: number
+  indentSize: number,
+  enumNames: Set<string> = new Set()
 ): string {
   const lines: string[] = []
   const ind = indent(1, indentSize)
 
+  // Enum 참조 타입인지 확인 (property.type이 Enum 이름인 경우)
+  const isEnumRef = enumNames.has(property.type)
+
   if (property.isPrimaryKey) {
     lines.push(`${ind}@PrimaryKey()`)
   } else if (property.type === "enum" && property.enumDef) {
-    // Enum 타입 처리
+    // 인라인 Enum 타입 처리
     const enumName = property.enumDef.name
+    const options = generatePropertyOptions(property)
+    if (options) {
+      lines.push(
+        `${ind}@Enum({ items: () => ${enumName}, ${options.slice(2, -2)} })`
+      )
+    } else {
+      lines.push(`${ind}@Enum(() => ${enumName})`)
+    }
+  } else if (isEnumRef) {
+    // Enum 참조 타입 처리 (property.type이 Enum 이름)
+    const enumName = property.type
     const options = generatePropertyOptions(property)
     if (options) {
       lines.push(

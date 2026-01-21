@@ -21,6 +21,8 @@ export interface CollectedImports {
   needsCollection: boolean
   /** Cascade import 필요 여부 */
   needsCascade: boolean
+  /** 참조하는 Enum 이름 목록 */
+  referencedEnums: Set<string>
 }
 
 /**
@@ -33,19 +35,23 @@ export interface CollectedImports {
  * @param entity - The entity node to analyze
  * @param edges - All relationship edges in the diagram
  * @param allNodes - All entity nodes in the diagram (used to resolve related entity names)
+ * @param enumNames - Set of all Enum names in the diagram (for Enum reference detection)
  * @returns An object containing:
  *  - `decorators`: a set of decorator names required for the entity
  *  - `relatedEntities`: a set of sanitized class names of other entities referenced
  *  - `needsCollection`: `true` if any relationship uses a collection type
  *  - `needsCascade`: `true` if any relationship declares cascade
+ *  - `referencedEnums`: a set of Enum names that need to be imported
  */
 export function collectImports(
   entity: EntityNode,
   edges: RelationshipEdge[],
-  allNodes: EntityNode[]
+  allNodes: EntityNode[],
+  enumNames: Set<string> = new Set()
 ): CollectedImports {
   const decorators = new Set<string>(["Entity"])
   const relatedEntities = new Set<string>()
+  const referencedEnums = new Set<string>()
   let needsCollection = false
   let needsCascade = false
 
@@ -55,19 +61,27 @@ export function collectImports(
     decorators.add("PrimaryKey")
   }
 
-  // Enum이 아닌 일반 프로퍼티가 있는지 확인
+  // Enum 참조 타입 확인 (property.type이 Enum 이름인 경우)
+  entity.data.properties
+    .filter((p) => !p.isPrimaryKey && enumNames.has(p.type))
+    .forEach((p) => {
+      referencedEnums.add(p.type)
+      decorators.add("Enum")
+    })
+
+  // Enum이 아닌 일반 프로퍼티가 있는지 확인 (인라인 Enum과 참조 Enum 제외)
   const hasRegularProps = entity.data.properties.some(
-    (p) => !p.isPrimaryKey && p.type !== "enum"
+    (p) => !p.isPrimaryKey && p.type !== "enum" && !enumNames.has(p.type)
   )
   if (hasRegularProps) {
     decorators.add("Property")
   }
 
-  // Enum 타입 프로퍼티 확인
-  const hasEnumProps = entity.data.properties.some(
+  // 인라인 Enum 타입 프로퍼티 확인
+  const hasInlineEnumProps = entity.data.properties.some(
     (p) => p.type === "enum" && p.enumDef
   )
-  if (hasEnumProps) {
+  if (hasInlineEnumProps) {
     decorators.add("Enum")
   }
 
@@ -114,7 +128,7 @@ export function collectImports(
       }
     })
 
-  return { decorators, relatedEntities, needsCollection, needsCascade }
+  return { decorators, relatedEntities, needsCollection, needsCascade, referencedEnums }
 }
 
 /**
@@ -124,13 +138,15 @@ export function collectImports(
  * @param relatedEntities - Names of related entity classes to import from local files
  * @param needsCollection - Include `Collection` in the core import when `true`
  * @param needsCascade - Include `Cascade` in the core import when `true`
+ * @param referencedEnums - Names of Enum types to import from local files
  * @returns A string containing the combined import statements
  */
 export function generateImports(
   decorators: Set<string>,
   relatedEntities: Set<string>,
   needsCollection: boolean,
-  needsCascade: boolean
+  needsCascade: boolean,
+  referencedEnums: Set<string> = new Set()
 ): string {
   const lines: string[] = []
 
@@ -147,10 +163,17 @@ export function generateImports(
     `import { ${coreImports.sort().join(", ")} } from "@mikro-orm/core"`
   )
 
+  // Referenced Enum imports (정렬하여 결정적인 순서 보장)
+  const enumImports = [...referencedEnums].sort().map(
+    (enumName) => `import { ${enumName} } from "./${enumName}"`
+  )
+  lines.push(...enumImports)
+
   // Related entity imports (정렬하여 결정적인 순서 보장)
   const entityImports = [...relatedEntities].sort().map(
     (entityName) => `import { ${entityName} } from "./${entityName}"`
   )
+  lines.push(...entityImports)
 
-  return [...lines, ...entityImports].join("\n")
+  return lines.join("\n")
 }
