@@ -1,8 +1,13 @@
 /**
- * Entity 관련 타입 정의
+ * Entity 및 Embeddable 관련 타입 정의
  *
- * MikroORM Entity를 비주얼 에디터에서 표현하기 위한 타입들
+ * MikroORM Entity와 Embeddable을 비주얼 에디터에서 표현하기 위한 타입들
  */
+
+/**
+ * 노드 종류 (Entity 또는 Embeddable)
+ */
+export type NodeKind = "entity" | "embeddable"
 
 /**
  * Entity의 개별 프로퍼티 정의
@@ -126,4 +131,88 @@ export function createDefaultProperty(id: string): EntityProperty {
     isUnique: false,
     isNullable: true,
   }
+}
+
+// =============================================================================
+// Embeddable 관련 타입 (Phase 2)
+// =============================================================================
+
+/**
+ * Embeddable 노드의 데이터 구조
+ *
+ * ReactFlow 노드의 data 프로퍼티에 저장되는 정보
+ * Entity와 유사하지만 tableName이 없고 @Embeddable 데코레이터 사용
+ */
+export interface EmbeddableData {
+  /** Embeddable 이름 (예: "Address", "Money") - 클래스명으로 사용 */
+  name: string
+  /** Embeddable의 프로퍼티 목록 (PrimaryKey 없음) */
+  properties: EntityProperty[]
+  /** ReactFlow 타입 호환을 위한 index signature */
+  [key: string]: unknown
+}
+
+/**
+ * ReactFlow Embeddable 노드 타입
+ *
+ * ReactFlow의 Node 타입을 기반으로 한 Embeddable 노드 정의
+ */
+export interface EmbeddableNode {
+  /** 노드 고유 ID (uuid) */
+  id: string
+  /** 노드 타입 - 항상 "embeddable" */
+  type: "embeddable"
+  /** 캔버스 내 위치 */
+  position: {
+    x: number
+    y: number
+  }
+  /** Embeddable 데이터 */
+  data: EmbeddableData
+}
+
+/**
+ * 새 Embeddable 생성을 위한 기본값 팩토리
+ */
+export function createDefaultEmbeddable(
+  id: string,
+  position: { x: number; y: number }
+): EmbeddableNode {
+  return {
+    id,
+    type: "embeddable",
+    position,
+    data: {
+      name: "NewEmbeddable",
+      properties: [
+        {
+          id: `${id}-prop-1`,
+          name: "value",
+          type: "string",
+          isPrimaryKey: false,
+          isUnique: false,
+          isNullable: false,
+        },
+      ],
+    },
+  }
+}
+
+/**
+ * 모든 다이어그램 노드 타입 (Entity 또는 Embeddable)
+ */
+export type DiagramNode = EntityNode | EmbeddableNode
+
+/**
+ * 노드가 Entity인지 확인하는 타입 가드
+ */
+export function isEntityNode(node: DiagramNode): node is EntityNode {
+  return node.type === "entity"
+}
+
+/**
+ * 노드가 Embeddable인지 확인하는 타입 가드
+ */
+export function isEmbeddableNode(node: DiagramNode): node is EmbeddableNode {
+  return node.type === "embeddable"
 }

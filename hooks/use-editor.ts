@@ -15,7 +15,12 @@ import {
   type EdgeChange,
   addEdge,
 } from "@xyflow/react"
-import type { EntityNode, EntityData } from "@/types/entity"
+import type {
+  EntityNode,
+  EntityData,
+  EmbeddableNode,
+  EmbeddableData,
+} from "@/types/entity"
 import type { RelationshipEdge, RelationshipData } from "@/types/relationship"
 import { RelationType } from "@/types/relationship"
 import {
@@ -23,12 +28,13 @@ import {
   type EditorUIState,
   INITIAL_UI_STATE,
 } from "@/types/editor"
-import { createDefaultEntity } from "@/types/entity"
+import { createDefaultEntity, createDefaultEmbeddable } from "@/types/entity"
 
 /**
  * ReactFlow 노드 타입 (내부 사용)
+ * Entity 또는 Embeddable 노드 모두 포함
  */
-type FlowNode = EntityNode & {
+type FlowNode = (EntityNode | EmbeddableNode) & {
   selected?: boolean
   dragging?: boolean
 }
@@ -62,6 +68,12 @@ export interface UseEditorReturn {
   updateEntity: (id: string, data: Partial<EntityData>) => void
   /** Entity 노드 삭제 */
   deleteEntity: (id: string) => void
+  /** Embeddable 노드 추가 */
+  addEmbeddable: (position?: { x: number; y: number }) => void
+  /** Embeddable 노드 업데이트 */
+  updateEmbeddable: (id: string, data: Partial<EmbeddableData>) => void
+  /** Embeddable 노드 삭제 */
+  deleteEmbeddable: (id: string) => void
   /** Relationship 엣지 업데이트 */
   updateRelationship: (id: string, data: Partial<RelationshipData>) => void
   /** Relationship 엣지 삭제 */
@@ -180,6 +192,51 @@ export function useEditor(): UseEditorReturn {
   )
 
   /**
+   * Embeddable 노드 추가
+   */
+  const addEmbeddable = useCallback(
+    (position?: { x: number; y: number }) => {
+      const id = generateId()
+      const defaultPosition = position ?? {
+        x: 100 + Math.random() * 200,
+        y: 100 + Math.random() * 200,
+      }
+
+      const newEmbeddable = createDefaultEmbeddable(id, defaultPosition)
+      setNodes((nds) => [...nds, newEmbeddable as FlowNode])
+    },
+    [setNodes]
+  )
+
+  /**
+   * Embeddable 노드 업데이트
+   */
+  const updateEmbeddable = useCallback(
+    (id: string, data: Partial<EmbeddableData>) => {
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === id ? { ...node, data: { ...node.data, ...data } } : node
+        )
+      )
+    },
+    [setNodes]
+  )
+
+  /**
+   * Embeddable 노드 삭제
+   */
+  const deleteEmbeddable = useCallback(
+    (id: string) => {
+      setNodes((nds) => nds.filter((node) => node.id !== id))
+      // 연관된 엣지도 삭제
+      setEdges((eds) =>
+        eds.filter((edge) => edge.source !== id && edge.target !== id)
+      )
+    },
+    [setNodes, setEdges]
+  )
+
+  /**
    * Relationship 엣지 업데이트
    */
   const updateRelationship = useCallback(
@@ -271,6 +328,9 @@ export function useEditor(): UseEditorReturn {
     addEntity,
     updateEntity,
     deleteEntity,
+    addEmbeddable,
+    updateEmbeddable,
+    deleteEmbeddable,
     updateRelationship,
     deleteRelationship,
     setSelection,

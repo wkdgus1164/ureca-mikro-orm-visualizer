@@ -10,7 +10,7 @@
 
 ## 진행 상황
 
-- [ ] Embeddable 지원
+- [x] Embeddable 지원
 - [ ] Index 및 Unique 제약조건
 - [ ] Enum 타입 지원
 - [ ] JSON Schema export
@@ -221,9 +221,9 @@ const handleExportImage = async (format: "png" | "svg") => {
 4. 코드 생성 로직에 `@Embeddable` 데코레이터 추가
 
 **완료 조건:**
-- [ ] Embeddable 노드 추가 및 렌더링
-- [ ] Entity와 시각적 구분
-- [ ] `@Embedded` 데코레이터 코드 생성
+- [x] Embeddable 노드 추가 및 렌더링
+- [x] Entity와 시각적 구분
+- [x] `@Embeddable` 데코레이터 코드 생성
 
 **커밋 메시지 템플릿:**
 ```

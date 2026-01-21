@@ -3,9 +3,16 @@
  *
  * Entity 노드와 Relationship 엣지를 MikroORM 데코레이터가 포함된
  * TypeScript 클래스로 변환
+ * Phase 2: Embeddable 지원 추가
  */
 
-import type { EntityNode, EntityProperty } from "@/types/entity"
+import type {
+  EntityNode,
+  EntityProperty,
+  EmbeddableNode,
+  DiagramNode,
+} from "@/types/entity"
+import { isEntityNode, isEmbeddableNode } from "@/types/entity"
 import type { RelationshipEdge, RelationshipData } from "@/types/relationship"
 import { RelationType } from "@/types/relationship"
 
@@ -386,6 +393,132 @@ export function generateAllEntitiesCode(
   for (const node of nodes) {
     const code = generateEntityCode(node, edges, nodes, options)
     result.set(node.data.name, code)
+  }
+
+  return result
+}
+
+// =============================================================================
+// Embeddable 코드 생성 (Phase 2)
+// =============================================================================
+
+/**
+ * Embeddable 노드를 TypeScript 코드로 변환
+ *
+ * @param embeddable - 변환할 Embeddable 노드
+ * @param options - 생성 옵션
+ * @returns 생성된 TypeScript 코드
+ *
+ * @example
+ * ```ts
+ * const code = generateEmbeddableCode(addressNode)
+ * // 결과:
+ * // import { Embeddable, Property } from "@mikro-orm/core"
+ * //
+ * // @Embeddable()
+ * // export class Address {
+ * //   @Property()
+ * //   street!: string
+ * //
+ * //   @Property()
+ * //   city!: string
+ * // }
+ * ```
+ */
+export function generateEmbeddableCode(
+  embeddable: EmbeddableNode,
+  options: GeneratorOptions = {}
+): string {
+  const opts = { ...DEFAULT_OPTIONS, ...options }
+  const indentSize = opts.indentSize!
+
+  const lines: string[] = []
+
+  // Import 문 (Embeddable은 관계가 없으므로 간단)
+  const decorators = new Set<string>(["Embeddable"])
+  const hasProps = embeddable.data.properties.length > 0
+  if (hasProps) {
+    decorators.add("Property")
+  }
+
+  lines.push(
+    `import { ${[...decorators].sort().join(", ")} } from "@mikro-orm/core"`
+  )
+  lines.push("")
+
+  // Embeddable 데코레이터
+  lines.push("@Embeddable()")
+
+  // 클래스 선언
+  lines.push(`export class ${embeddable.data.name} {`)
+
+  // Properties (PrimaryKey 제외 - Embeddable에는 PK가 없음)
+  const propertyCode = embeddable.data.properties
+    .filter((prop) => !prop.isPrimaryKey) // Embeddable에는 PK 불필요
+    .map((prop) => generateProperty(prop, indentSize))
+    .join("\n\n")
+
+  if (propertyCode) {
+    lines.push(propertyCode)
+  }
+
+  // 클래스 닫기
+  lines.push("}")
+
+  return lines.join("\n")
+}
+
+/**
+ * 모든 Embeddable을 TypeScript 코드로 변환
+ *
+ * @param nodes - Embeddable 노드 목록
+ * @param options - 생성 옵션
+ * @returns Embeddable 이름과 코드의 맵
+ */
+export function generateAllEmbeddablesCode(
+  nodes: EmbeddableNode[],
+  options: GeneratorOptions = {}
+): Map<string, string> {
+  const result = new Map<string, string>()
+
+  for (const node of nodes) {
+    const code = generateEmbeddableCode(node, options)
+    result.set(node.data.name, code)
+  }
+
+  return result
+}
+
+/**
+ * 모든 다이어그램 노드 (Entity + Embeddable)를 TypeScript 코드로 변환
+ *
+ * @param nodes - 모든 노드 (Entity + Embeddable)
+ * @param edges - Relationship 엣지 목록
+ * @param options - 생성 옵션
+ * @returns 노드 이름과 코드의 맵
+ */
+export function generateAllDiagramCode(
+  nodes: DiagramNode[],
+  edges: RelationshipEdge[],
+  options: GeneratorOptions = {}
+): Map<string, string> {
+  const result = new Map<string, string>()
+
+  // Entity 노드만 필터링
+  const entityNodes = nodes.filter(isEntityNode)
+  // Embeddable 노드만 필터링
+  const embeddableNodes = nodes.filter(isEmbeddableNode)
+
+  // Entity 코드 생성
+  for (const entity of entityNodes) {
+    const code = generateEntityCode(entity, edges, entityNodes, options)
+    result.set(entity.data.name, code)
+  }
+
+  // Embeddable 코드 생성
+  for (const embeddable of embeddableNodes) {
+    const code = generateEmbeddableCode(embeddable, options)
+    result.set(embeddable.data.name, code)
   }
 
   return result

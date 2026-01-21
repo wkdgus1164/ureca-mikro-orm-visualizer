@@ -10,6 +10,7 @@ import { useReactFlow } from "@xyflow/react"
 import { Button } from "@/components/ui/button"
 import {
   Plus,
+  Package,
   Link,
   Undo2,
   Redo2,
@@ -45,10 +46,12 @@ function ToolbarDivider() {
 export function EditorToolbar({ className }: EditorToolbarProps) {
   const {
     addEntity,
+    addEmbeddable,
     uiState,
     toggleConnecting,
     toggleExportModal,
     deleteEntity,
+    deleteEmbeddable,
     deleteRelationship,
   } = useEditorContext()
   const { zoomIn, zoomOut, fitView } = useReactFlow()
@@ -61,6 +64,13 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
   }
 
   /**
+   * Embeddable 추가 핸들러
+   */
+  const handleAddEmbeddable = () => {
+    addEmbeddable()
+  }
+
+  /**
    * Relationship 연결 모드 토글
    */
   const handleToggleConnecting = () => {
@@ -69,11 +79,14 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
 
   /**
    * 선택된 요소 삭제
+   * Entity와 Embeddable 모두 처리
    */
   const handleDelete = () => {
     const { selection } = uiState
     if (selection.type === "node" && selection.id) {
+      // 노드 삭제 (Entity 또는 Embeddable)
       deleteEntity(selection.id)
+      deleteEmbeddable(selection.id)
     } else if (selection.type === "edge" && selection.id) {
       deleteRelationship(selection.id)
     }
@@ -107,6 +120,17 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
         >
           <Plus className="h-4 w-4" />
           <span className="hidden sm:inline">Add Entity</span>
+        </Button>
+
+        {/* Embeddable 추가 */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleAddEmbeddable}
+          className="gap-2 text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
+        >
+          <Package className="h-4 w-4" />
+          <span className="hidden sm:inline">Add Embeddable</span>
         </Button>
 
         {/* Relationship 연결 모드 */}

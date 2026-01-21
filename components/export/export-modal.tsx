@@ -23,7 +23,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism"
 import { toast } from "sonner"
 import { useEditorContext } from "@/components/providers/editor-provider"
-import { generateAllEntitiesCode } from "@/lib/mikro-orm/generator"
+import { generateAllDiagramCode } from "@/lib/mikro-orm/generator"
 
 /**
  * Export 모달 Props
@@ -52,15 +52,15 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const [copiedEntity, setCopiedEntity] = useState<string | null>(null)
 
   /**
-   * 모든 Entity 코드 생성
+   * 모든 다이어그램 노드 (Entity + Embeddable) 코드 생성
    */
   const generatedCodes = useMemo(() => {
     if (!isOpen || nodes.length === 0) return new Map<string, string>()
-    return generateAllEntitiesCode(nodes, edges)
+    return generateAllDiagramCode(nodes, edges)
   }, [isOpen, nodes, edges])
 
   /**
-   * Entity 이름 목록
+   * 클래스 이름 목록 (Entity + Embeddable)
    */
   const entityNames = useMemo(
     () => Array.from(generatedCodes.keys()),
@@ -152,7 +152,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <FileCode className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
-              No entities to export. Create some entities first!
+              No classes to export. Create some entities or embeddables first!
             </p>
           </div>
         </DialogContent>
@@ -166,7 +166,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle>Export TypeScript Code</DialogTitle>
           <DialogDescription>
-            Generated MikroORM entity classes ({entityNames.length} entities)
+            Generated MikroORM classes ({entityNames.length} files)
           </DialogDescription>
         </DialogHeader>
 
