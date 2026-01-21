@@ -147,6 +147,8 @@ export interface EntityData {
   properties: EntityProperty[]
   /** Entity 레벨 Index 목록 (Phase 2) */
   indexes?: EntityIndex[]
+  /** Aggregate Root 여부 (DDD 패턴) */
+  isAggregateRoot?: boolean
   /** ReactFlow 타입 호환을 위한 index signature */
   [key: string]: unknown
 }

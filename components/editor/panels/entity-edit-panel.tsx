@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
+import { Switch } from "@/components/ui/switch"
 import { Plus, Database } from "lucide-react"
 import { useEditorContext } from "@/components/providers/editor-provider"
 import { PropertyForm } from "@/components/editor/panels/property-form"
@@ -47,6 +48,13 @@ function EntityEditInner({ selectedNode }: EntityEditInnerProps) {
    */
   const handleNameChange = (name: string) => {
     updateEntity(selectedNode.id, { name })
+  }
+
+  /**
+   * Aggregate Root 변경 핸들러 (실시간 반영)
+   */
+  const handleAggregateRootChange = (isAggregateRoot: boolean) => {
+    updateEntity(selectedNode.id, { isAggregateRoot })
   }
 
   /**
@@ -105,6 +113,25 @@ function EntityEditInner({ selectedNode }: EntityEditInnerProps) {
 
   return (
     <div className="space-y-4">
+      {/* Aggregate Root 스위치 */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-0.5">
+          <Label htmlFor="aggregate-root" className="cursor-pointer">
+            Aggregate Root
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            DDD 패턴의 집합 루트 (Repository 기본 단위)
+          </p>
+        </div>
+        <Switch
+          id="aggregate-root"
+          checked={data.isAggregateRoot ?? false}
+          onCheckedChange={handleAggregateRootChange}
+        />
+      </div>
+
+      <Separator />
+
       {/* Entity 이름 */}
       <div className="space-y-1.5">
         <Label htmlFor="entity-name">Entity Name</Label>

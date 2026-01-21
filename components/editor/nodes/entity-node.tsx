@@ -35,7 +35,7 @@ type EntityNodeProps = NodeProps<EntityNodeType>
  * - 바디: 프로퍼티 목록 (PK, Unique, Nullable 아이콘 표시)
  */
 function EntityNodeComponent({ data, selected }: EntityNodeProps) {
-  const { name, properties } = data
+  const { name, properties, isAggregateRoot } = data
 
   return (
     <NodeHandles theme="blue">
@@ -45,7 +45,7 @@ function EntityNodeComponent({ data, selected }: EntityNodeProps) {
         header={
           <NodeCardHeader
             title={name}
-            badge="«Entity»"
+            badge={isAggregateRoot ? "«Root»" : "«Entity»"}
             theme="entity"
           />
         }
