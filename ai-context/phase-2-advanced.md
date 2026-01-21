@@ -14,7 +14,7 @@
 - [x] Index 및 Unique 제약조건
 - [x] Enum 타입 지원
 - [x] JSON Schema export
-- [ ] ERD 이미지 export (PNG, SVG)
+- [x] ERD 이미지 export (PNG, SVG)
 - [ ] 다이어그램 저장/불러오기 (JSON)
 
 ---
@@ -340,9 +340,9 @@ feat(export): JSON Schema export 구현
 3. Export 모달에 이미지 export 옵션 추가
 
 **완료 조건:**
-- [ ] PNG, SVG export 기능
-- [ ] 해상도 선택 (1x, 2x, 4x)
-- [ ] Export 모달 UI 업데이트
+- [x] PNG, SVG export 기능
+- [x] 해상도 선택 (1x, 2x, 4x)
+- [x] Export 모달 UI 업데이트
 
 **커밋 메시지 템플릿:**
 ```

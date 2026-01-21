@@ -27,18 +27,25 @@ import {
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Copy, Download, Check, FileCode, FileJson } from "lucide-react"
+import { Copy, Download, Check, FileCode, FileJson, ImageIcon } from "lucide-react"
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism"
 import { toast } from "sonner"
 import { useEditorContext } from "@/components/providers/editor-provider"
 import { generateAllDiagramCode } from "@/lib/mikro-orm/generator"
 import { exportDiagramAsJson } from "@/lib/export/json"
+import {
+  exportAndDownloadImage,
+  SCALE_OPTIONS,
+  FORMAT_OPTIONS,
+  type ImageFormat,
+  type ImageScale,
+} from "@/lib/export/image"
 
 /**
  * Export 형식 타입
  */
-type ExportFormat = "typescript" | "json"
+type ExportFormat = "typescript" | "json" | "image"
 
 /**
  * Export 모달 Props
@@ -61,12 +68,17 @@ interface ExportModalProps {
 export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const { nodes, edges } = useEditorContext()
 
-  // Export 형식 (TypeScript 또는 JSON Schema)
+  // Export 형식 (TypeScript, JSON Schema, 또는 Image)
   const [exportFormat, setExportFormat] = useState<ExportFormat>("typescript")
   // 선택된 Entity 탭 (복사/다운로드 시 사용, TypeScript 모드에서만)
   const [selectedEntity, setSelectedEntity] = useState<string | null>(null)
   // 복사 완료 상태 (아이콘 피드백용)
   const [copied, setCopied] = useState(false)
+
+  // 이미지 export 옵션 (Phase 2)
+  const [imageFormat, setImageFormat] = useState<ImageFormat>("png")
+  const [imageScale, setImageScale] = useState<ImageScale>(2)
+  const [isExporting, setIsExporting] = useState(false)
 
   /**
    * 모든 다이어그램 노드 (Entity + Embeddable) TypeScript 코드 생성
@@ -187,6 +199,29 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   }, [entityNames, handleDownloadTs])
 
   /**
+   * 이미지 다운로드 핸들러
+   */
+  const handleDownloadImage = useCallback(async () => {
+    setIsExporting(true)
+    try {
+      await exportAndDownloadImage(nodes, "diagram", {
+        format: imageFormat,
+        scale: imageScale,
+        backgroundColor: "#ffffff",
+        padding: 50,
+      })
+      toast.success(
+        `diagram.${imageFormat} downloaded!`
+      )
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to export image"
+      toast.error(message)
+    } finally {
+      setIsExporting(false)
+    }
+  }, [nodes, imageFormat, imageScale])
+
+  /**
    * 탭 변경 핸들러
    */
   const handleTabChange = useCallback((value: string) => {
@@ -223,9 +258,9 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
             <div>
               <DialogTitle>Export Code</DialogTitle>
               <DialogDescription>
-                {exportFormat === "typescript"
-                  ? `Generated MikroORM classes (${entityNames.length} files)`
-                  : "Diagram exported as JSON Schema"}
+                {exportFormat === "typescript" && `Generated MikroORM classes (${entityNames.length} files)`}
+                {exportFormat === "json" && "Diagram exported as JSON Schema"}
+                {exportFormat === "image" && "Export diagram as PNG or SVG image"}
               </DialogDescription>
             </div>
             {/* Format 선택 드롭다운 */}
@@ -247,6 +282,12 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
                   <div className="flex items-center gap-2">
                     <FileJson className="h-4 w-4" />
                     JSON Schema
+                  </div>
+                </SelectItem>
+                <SelectItem value="image">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4" />
+                    Image (PNG/SVG)
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -325,6 +366,62 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
           </ScrollArea>
         )}
 
+        {/* 이미지 형식 (Phase 2) */}
+        {exportFormat === "image" && (
+          <div className="px-6 py-8 flex flex-col items-center justify-center h-[400px] bg-muted/30">
+            <ImageIcon className="h-16 w-16 text-muted-foreground mb-6" />
+            <p className="text-lg font-medium mb-6">Export Diagram as Image</p>
+
+            <div className="flex flex-col gap-4 w-full max-w-sm">
+              {/* 이미지 형식 선택 */}
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Format</label>
+                <Select
+                  value={imageFormat}
+                  onValueChange={(value) => setImageFormat(value as ImageFormat)}
+                >
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FORMAT_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* 해상도 선택 */}
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Resolution</label>
+                <Select
+                  value={String(imageScale)}
+                  onValueChange={(value) => setImageScale(Number(value) as ImageScale)}
+                >
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SCALE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={String(option.value)}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <p className="text-sm text-muted-foreground mt-6 text-center">
+              {imageFormat === "svg"
+                ? "SVG is vector-based and can scale to any size without quality loss."
+                : `PNG will be exported at ${imageScale}x resolution for sharp display.`}
+            </p>
+          </div>
+        )}
+
         {/* 하단 액션 버튼 - TypeScript 형식 */}
         {exportFormat === "typescript" && (
           <div className="flex items-center justify-between px-6 py-4 border-t bg-muted/50">
@@ -371,6 +468,28 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
             <Button onClick={handleDownloadJson}>
               <Download className="h-4 w-4 mr-2" />
               Download diagram-schema.json
+            </Button>
+          </div>
+        )}
+
+        {/* 하단 액션 버튼 - 이미지 형식 */}
+        {exportFormat === "image" && (
+          <div className="flex items-center justify-end gap-2 px-6 py-4 border-t bg-muted/50">
+            <Button
+              onClick={handleDownloadImage}
+              disabled={isExporting}
+            >
+              {isExporting ? (
+                <>
+                  <span className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download diagram.{imageFormat}
+                </>
+              )}
             </Button>
           </div>
         )}
