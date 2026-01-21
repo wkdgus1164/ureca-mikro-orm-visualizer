@@ -124,6 +124,11 @@
   }
 }
 
+/* SyntaxHighlighter 토큰 배경색 제거 */
+pre[class*="language-"] span {
+  background: transparent !important;
+}
+
 ::view-transition-old(root), ::view-transition-new(root) {
     animation: none;
     mix-blend-mode: normal;

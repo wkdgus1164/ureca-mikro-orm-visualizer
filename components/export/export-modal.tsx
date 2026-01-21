@@ -27,7 +27,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Copy, Download, Check, FileCode, FileJson, ImageIcon } from "lucide-react"
+import { Tree, Folder, File } from "@/components/ui/file-tree"
+import { Copy, Download, Check, FileCode, FileJson, ImageIcon, FileText } from "lucide-react"
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { vscDarkPlus, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism"
 import { toast } from "sonner"
@@ -257,7 +258,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-4xl max-h-[85vh] p-0 gap-0">
+      <DialogContent className="!max-w-[800px] !w-[48vw] max-h-[85vh] p-0 gap-0 overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle>Export Code</DialogTitle>
           <DialogDescription>
@@ -269,7 +270,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         <Tabs
           value={exportFormat}
           onValueChange={(value) => setExportFormat(value as ExportFormat)}
-          className="flex flex-col"
+          className="flex flex-col min-w-0 overflow-hidden"
         >
           <div className="px-6 border-b">
             <TabsList className="h-10">
@@ -289,34 +290,50 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
           </div>
 
           {/* TypeScript 형식 */}
-          <TabsContent value="typescript" className="m-0 flex-1">
-            <Tabs
-              value={currentEntity ?? undefined}
-              onValueChange={handleTabChange}
-              className="flex flex-col flex-1 min-h-0"
-            >
-              {/* Entity 탭 목록 */}
-              <div className="px-6 border-b bg-muted/30">
-                <ScrollArea className="w-full" type="scroll">
-                  <TabsList className="inline-flex h-9 w-max bg-transparent">
+          <TabsContent value="typescript" className="m-0 flex-1 overflow-hidden">
+            <div className="flex h-[450px] min-w-0 overflow-hidden">
+              {/* 파일 탐색기 (왼쪽) */}
+              <div className="w-56 shrink-0 border-r bg-muted/30 py-2 overflow-hidden">
+                <Tree
+                  initialSelectedId={currentEntity ?? undefined}
+                  initialExpandedItems={["entities"]}
+                  indicator={false}
+                  className="h-full"
+                >
+                  <Folder element="entities" value="entities">
                     {entityNames.map((name) => (
-                      <TabsTrigger key={name} value={name} className="gap-2 text-xs">
-                        <FileCode className="h-3 w-3" />
-                        {name}.ts
-                      </TabsTrigger>
+                      <File
+                        key={name}
+                        value={name}
+                        fileIcon={<FileText className="size-4 text-blue-500" />}
+                        onClick={() => handleTabChange(name)}
+                        isSelect={currentEntity === name}
+                      >
+                        <span className="text-xs">{name}.ts</span>
+                      </File>
                     ))}
-                  </TabsList>
-                </ScrollArea>
+                  </Folder>
+                </Tree>
               </div>
 
-              {/* 코드 미리보기 영역 */}
-              {entityNames.map((name) => (
-                <TabsContent
-                  key={name}
-                  value={name}
-                  className="flex-1 m-0 min-h-0 data-[state=inactive]:hidden"
+              {/* 코드 미리보기 (오른쪽) */}
+              <div className="flex-1 min-w-0 overflow-hidden relative">
+                {/* 복사 버튼 (우측 상단) */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2 z-10 h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
+                  onClick={() => currentEntity && handleCopyTs(currentEntity)}
+                  disabled={!currentEntity}
                 >
-                  <ScrollArea className="h-[350px]">
+                  {copied ? (
+                    <Check className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+                <ScrollArea className="h-full w-full bg-muted">
+                  <div className="overflow-x-auto">
                     <SyntaxHighlighter
                       language="typescript"
                       style={syntaxTheme}
@@ -326,37 +343,60 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
                         minHeight: "100%",
                         fontSize: "13px",
                         lineHeight: "1.5",
+                        whiteSpace: "pre",
+                        background: "transparent",
                       }}
                       showLineNumbers
-                      wrapLines
+                      wrapLines={false}
+                      wrapLongLines={false}
                     >
-                      {generatedTsCode.get(name) ?? ""}
+                      {currentEntity ? (generatedTsCode.get(currentEntity) ?? "") : ""}
                     </SyntaxHighlighter>
-                  </ScrollArea>
-                </TabsContent>
-              ))}
-            </Tabs>
+                  </div>
+                </ScrollArea>
+              </div>
+            </div>
           </TabsContent>
 
           {/* JSON Schema 형식 */}
-          <TabsContent value="json" className="m-0">
-            <ScrollArea className="h-[350px]">
-              <SyntaxHighlighter
-                language="json"
-                style={syntaxTheme}
-                customStyle={{
-                  margin: 0,
-                  borderRadius: 0,
-                  minHeight: "100%",
-                  fontSize: "13px",
-                  lineHeight: "1.5",
-                }}
-                showLineNumbers
-                wrapLines
+          <TabsContent value="json" className="m-0 overflow-hidden">
+            <div className="relative h-[450px] overflow-hidden">
+              {/* 복사 버튼 (우측 상단) */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 z-10 h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
+                onClick={handleCopyJson}
               >
-                {generatedJsonCode}
-              </SyntaxHighlighter>
-            </ScrollArea>
+                {copied ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+              <ScrollArea className="h-full w-full bg-muted">
+                <div className="overflow-x-auto">
+                  <SyntaxHighlighter
+                    language="json"
+                    style={syntaxTheme}
+                    customStyle={{
+                      margin: 0,
+                      borderRadius: 0,
+                      minHeight: "100%",
+                      fontSize: "13px",
+                      lineHeight: "1.5",
+                      whiteSpace: "pre",
+                      background: "transparent",
+                    }}
+                    showLineNumbers
+                    wrapLines={false}
+                    wrapLongLines={false}
+                  >
+                    {generatedJsonCode}
+                  </SyntaxHighlighter>
+                </div>
+              </ScrollArea>
+            </div>
           </TabsContent>
 
           {/* 이미지 형식 */}
@@ -417,48 +457,27 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
 
         {/* 하단 액션 버튼 - TypeScript 형식 */}
         {exportFormat === "typescript" && (
-          <div className="flex items-center justify-between px-6 py-4 border-t bg-muted/50">
-            <Button variant="outline" onClick={handleDownloadAllTs}>
+          <div className="flex items-center justify-between px-6 py-3 border-t bg-muted/50">
+            <Button variant="outline" size="sm" onClick={handleDownloadAllTs}>
               <Download className="h-4 w-4 mr-2" />
               Download All ({entityNames.length})
             </Button>
 
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => currentEntity && handleCopyTs(currentEntity)}
-                disabled={!currentEntity}
-              >
-                {copied ? (
-                  <Check className="h-4 w-4 mr-2 text-green-500" />
-                ) : (
-                  <Copy className="h-4 w-4 mr-2" />
-                )}
-                Copy to Clipboard
-              </Button>
-              <Button
-                onClick={() => currentEntity && handleDownloadTs(currentEntity)}
-                disabled={!currentEntity}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Download {currentEntity}.ts
-              </Button>
-            </div>
+            <Button
+              size="sm"
+              onClick={() => currentEntity && handleDownloadTs(currentEntity)}
+              disabled={!currentEntity}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download {currentEntity}.ts
+            </Button>
           </div>
         )}
 
         {/* 하단 액션 버튼 - JSON Schema 형식 */}
         {exportFormat === "json" && (
-          <div className="flex items-center justify-end gap-2 px-6 py-4 border-t bg-muted/50">
-            <Button variant="outline" onClick={handleCopyJson}>
-              {copied ? (
-                <Check className="h-4 w-4 mr-2 text-green-500" />
-              ) : (
-                <Copy className="h-4 w-4 mr-2" />
-              )}
-              Copy to Clipboard
-            </Button>
-            <Button onClick={handleDownloadJson}>
+          <div className="flex items-center justify-end gap-2 px-6 py-3 border-t bg-muted/50">
+            <Button size="sm" onClick={handleDownloadJson}>
               <Download className="h-4 w-4 mr-2" />
               Download diagram-schema.json
             </Button>
