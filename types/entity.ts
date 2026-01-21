@@ -46,6 +46,8 @@ export interface EntityData {
   tableName?: string
   /** Entity의 프로퍼티 목록 */
   properties: EntityProperty[]
+  /** ReactFlow 타입 호환을 위한 index signature */
+  [key: string]: unknown
 }
 
 /**

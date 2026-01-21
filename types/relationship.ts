@@ -38,6 +38,8 @@ export interface RelationshipData {
   cascade: boolean
   /** OrphanRemoval 옵션 (컬렉션에서 제거 시 삭제) */
   orphanRemoval: boolean
+  /** ReactFlow 타입 호환을 위한 index signature */
+  [key: string]: unknown
 }
 
 /**
