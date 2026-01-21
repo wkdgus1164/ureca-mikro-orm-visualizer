@@ -147,8 +147,8 @@ export function generateImports(
     `import { ${coreImports.sort().join(", ")} } from "@mikro-orm/core"`
   )
 
-  // Related entity imports
-  const entityImports = [...relatedEntities].map(
+  // Related entity imports (정렬하여 결정적인 순서 보장)
+  const entityImports = [...relatedEntities].sort().map(
     (entityName) => `import { ${entityName} } from "./${entityName}"`
   )
 

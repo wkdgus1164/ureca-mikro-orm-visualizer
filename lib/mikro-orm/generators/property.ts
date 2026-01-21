@@ -39,7 +39,9 @@ export function generatePropertyOptions(property: EntityProperty): string {
     ) {
       options.push(`default: ${value}`)
     } else {
-      options.push(`default: "${value}"`)
+      // 문자열 내 백슬래시와 따옴표를 이스케이프 처리
+      const escaped = value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+      options.push(`default: "${escaped}"`)
     }
   }
 
