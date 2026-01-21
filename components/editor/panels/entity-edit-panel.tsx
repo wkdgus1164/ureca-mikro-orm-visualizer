@@ -47,7 +47,7 @@ function EntityEditForm({ initialData, onSave, availableEnums }: EntityEditFormP
   // 로컬 편집 상태 (초기값으로 initialData 사용)
   const [localData, setLocalData] = useState<EntityData>(() => ({
     ...initialData,
-    properties: initialData.properties.map((p) => ({ ...p })),
+    properties: (initialData.properties ?? []).map((p) => ({ ...p })),
     indexes: (initialData.indexes ?? []).map((i) => ({ ...i })),
   }))
 
