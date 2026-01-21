@@ -18,6 +18,10 @@ export enum RelationType {
   ManyToOne = "ManyToOne",
   /** N:M 관계 - 양방향 까마귀발 */
   ManyToMany = "ManyToMany",
+  /** Composition - 강한 결합 (채워진 다이아몬드 ◆) */
+  Composition = "Composition",
+  /** Aggregation - 약한 결합 (빈 다이아몬드 ◇) */
+  Aggregation = "Aggregation",
 }
 
 /**
@@ -126,6 +130,8 @@ export const RELATION_TYPE_LABELS: Record<RelationType, string> = {
   [RelationType.OneToMany]: "One to Many (1:N)",
   [RelationType.ManyToOne]: "Many to One (N:1)",
   [RelationType.ManyToMany]: "Many to Many (N:M)",
+  [RelationType.Composition]: "Composition (◆ 강한 결합)",
+  [RelationType.Aggregation]: "Aggregation (◇ 약한 결합)",
 }
 
 /**
@@ -136,6 +142,8 @@ export const RELATION_TYPE_DECORATORS: Record<RelationType, string> = {
   [RelationType.OneToMany]: "@OneToMany",
   [RelationType.ManyToOne]: "@ManyToOne",
   [RelationType.ManyToMany]: "@ManyToMany",
+  [RelationType.Composition]: "@OneToMany",
+  [RelationType.Aggregation]: "@OneToMany",
 }
 
 /**
@@ -180,5 +188,9 @@ export function getInverseRelationType(type: RelationType): RelationType {
       return RelationType.OneToMany
     case RelationType.ManyToMany:
       return RelationType.ManyToMany
+    case RelationType.Composition:
+      return RelationType.ManyToOne
+    case RelationType.Aggregation:
+      return RelationType.ManyToOne
   }
 }

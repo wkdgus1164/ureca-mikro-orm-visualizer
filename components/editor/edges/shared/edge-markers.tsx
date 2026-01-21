@@ -17,6 +17,10 @@ export const MARKER_IDS = {
   crowFoot: "crow-foot-marker",
   /** 수직선 마커 (1 표시) */
   one: "one-marker",
+  /** Composition 마커 (채워진 다이아몬드 ◆) */
+  composition: "composition-marker",
+  /** Aggregation 마커 (빈 다이아몬드 ◇) */
+  aggregation: "aggregation-marker",
 } as const
 
 export type MarkerId = (typeof MARKER_IDS)[keyof typeof MARKER_IDS]
@@ -103,6 +107,58 @@ export function OneMarker() {
 }
 
 /**
+ * Composition 마커 컴포넌트 (채워진 다이아몬드 ◆)
+ *
+ * 강한 결합 관계 (부모 삭제 시 자식도 삭제)
+ */
+export function CompositionMarker() {
+  return (
+    <marker
+      id={MARKER_IDS.composition}
+      viewBox="0 0 20 10"
+      refX="0"
+      refY="5"
+      markerWidth="10"
+      markerHeight="10"
+      orient="auto-start-reverse"
+    >
+      <path
+        d="M 0 5 L 10 0 L 20 5 L 10 10 Z"
+        fill="#64748b"
+        className="transition-colors"
+      />
+    </marker>
+  )
+}
+
+/**
+ * Aggregation 마커 컴포넌트 (빈 다이아몬드 ◇)
+ *
+ * 약한 결합 관계 (부모 삭제 시 자식은 유지)
+ */
+export function AggregationMarker() {
+  return (
+    <marker
+      id={MARKER_IDS.aggregation}
+      viewBox="0 0 20 10"
+      refX="0"
+      refY="5"
+      markerWidth="10"
+      markerHeight="10"
+      orient="auto-start-reverse"
+    >
+      <path
+        d="M 0 5 L 10 0 L 20 5 L 10 10 Z"
+        fill="white"
+        stroke="#64748b"
+        strokeWidth="1.5"
+        className="transition-colors"
+      />
+    </marker>
+  )
+}
+
+/**
  * 모든 엣지 마커를 포함하는 SVG defs
  *
  * 엣지 컴포넌트 내부에서 한 번만 렌더링
@@ -120,6 +176,8 @@ export function EdgeMarkerDefs() {
       <ArrowMarker />
       <CrowFootMarker />
       <OneMarker />
+      <CompositionMarker />
+      <AggregationMarker />
     </>
   )
 }

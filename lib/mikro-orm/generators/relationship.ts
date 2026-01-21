@@ -20,6 +20,8 @@ export function getRelationDecorator(relationType: RelationType): string {
     case RelationType.OneToOne:
       return "OneToOne"
     case RelationType.OneToMany:
+    case RelationType.Composition:
+    case RelationType.Aggregation:
       return "OneToMany"
     case RelationType.ManyToOne:
       return "ManyToOne"
@@ -37,7 +39,9 @@ export function getRelationDecorator(relationType: RelationType): string {
 export function isCollectionRelation(relationType: RelationType): boolean {
   return (
     relationType === RelationType.OneToMany ||
-    relationType === RelationType.ManyToMany
+    relationType === RelationType.ManyToMany ||
+    relationType === RelationType.Composition ||
+    relationType === RelationType.Aggregation
   )
 }
 
@@ -66,7 +70,8 @@ export function generateRelationshipOptions(
     options.push("nullable: true")
   }
 
-  if (data.orphanRemoval) {
+  // Composition은 자동으로 orphanRemoval: true
+  if (data.orphanRemoval || data.relationType === RelationType.Composition) {
     options.push("orphanRemoval: true")
   }
 

@@ -47,6 +47,8 @@ function getMarkerEnd(relationType: RelationType): string {
       return `url(#${MARKER_IDS.arrow})`
     case RelationType.OneToMany:
     case RelationType.ManyToMany:
+    case RelationType.Composition:
+    case RelationType.Aggregation:
       return `url(#${MARKER_IDS.crowFoot})`
   }
 }
@@ -60,6 +62,10 @@ function getMarkerStart(relationType: RelationType): string | undefined {
       return `url(#${MARKER_IDS.arrow})`
     case RelationType.ManyToMany:
       return `url(#${MARKER_IDS.crowFoot})`
+    case RelationType.Composition:
+      return `url(#${MARKER_IDS.composition})`
+    case RelationType.Aggregation:
+      return `url(#${MARKER_IDS.aggregation})`
     default:
       return undefined
   }
