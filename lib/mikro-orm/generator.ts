@@ -12,8 +12,9 @@ import type {
   EmbeddableNode,
   DiagramNode,
   EnumDefinition,
+  EnumNode,
 } from "@/types/entity"
-import { isEntityNode, isEmbeddableNode } from "@/types/entity"
+import { isEntityNode, isEmbeddableNode, isEnumNode } from "@/types/entity"
 import type { RelationshipEdge, RelationshipData } from "@/types/relationship"
 import { RelationType, FetchType } from "@/types/relationship"
 
@@ -677,9 +678,53 @@ export function generateAllEmbeddablesCode(
 }
 
 /**
- * 모든 다이어그램 노드 (Entity + Embeddable)를 TypeScript 코드로 변환
+ * EnumNode를 TypeScript enum 코드로 변환
  *
- * @param nodes - 모든 노드 (Entity + Embeddable)
+ * @param enumNode - 변환할 Enum 노드
+ * @returns 생성된 TypeScript enum 코드
+ *
+ * @example
+ * ```ts
+ * const code = generateEnumNodeCode(userRoleNode)
+ * // 결과:
+ * // export enum UserRole {
+ * //   Admin = "admin",
+ * //   User = "user",
+ * // }
+ * ```
+ */
+export function generateEnumNodeCode(enumNode: EnumNode): string {
+  // EnumNode의 data를 EnumDefinition으로 사용
+  const enumDef: EnumDefinition = {
+    name: enumNode.data.name,
+    values: enumNode.data.values,
+  }
+  return generateEnumCode(enumDef)
+}
+
+/**
+ * 모든 EnumNode를 TypeScript 코드로 변환
+ *
+ * @param nodes - Enum 노드 목록
+ * @returns Enum 이름과 코드의 맵
+ */
+export function generateAllEnumNodesCode(
+  nodes: EnumNode[]
+): Map<string, string> {
+  const result = new Map<string, string>()
+
+  for (const node of nodes) {
+    const code = generateEnumNodeCode(node)
+    result.set(sanitizeClassName(node.data.name), code)
+  }
+
+  return result
+}
+
+/**
+ * 모든 다이어그램 노드 (Entity + Embeddable + Enum)를 TypeScript 코드로 변환
+ *
+ * @param nodes - 모든 노드 (Entity + Embeddable + Enum)
  * @param edges - Relationship 엣지 목록
  * @param options - 생성 옵션
  * @returns 노드 이름과 코드의 맵
@@ -695,6 +740,8 @@ export function generateAllDiagramCode(
   const entityNodes = nodes.filter(isEntityNode)
   // Embeddable 노드만 필터링
   const embeddableNodes = nodes.filter(isEmbeddableNode)
+  // Enum 노드만 필터링
+  const enumNodes = nodes.filter(isEnumNode)
 
   // Entity 코드 생성
   for (const entity of entityNodes) {
@@ -706,6 +753,12 @@ export function generateAllDiagramCode(
   for (const embeddable of embeddableNodes) {
     const code = generateEmbeddableCode(embeddable, options)
     result.set(sanitizeClassName(embeddable.data.name), code)
+  }
+
+  // Enum 코드 생성
+  for (const enumNode of enumNodes) {
+    const code = generateEnumNodeCode(enumNode)
+    result.set(sanitizeClassName(enumNode.data.name), code)
   }
 
   return result
