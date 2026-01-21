@@ -20,21 +20,23 @@ import type {
   EntityData,
   EmbeddableNode,
   EmbeddableData,
+  EnumNode,
+  EnumData,
 } from "@/types/entity"
 import type { RelationshipEdge, RelationshipData } from "@/types/relationship"
-import { RelationType } from "@/types/relationship"
+import { RelationType, FetchType } from "@/types/relationship"
 import {
   type Selection,
   type EditorUIState,
   INITIAL_UI_STATE,
 } from "@/types/editor"
-import { createDefaultEntity, createDefaultEmbeddable } from "@/types/entity"
+import { createDefaultEntity, createDefaultEmbeddable, createDefaultEnum } from "@/types/entity"
 
 /**
  * ReactFlow 노드 타입 (내부 사용)
- * Entity 또는 Embeddable 노드 모두 포함
+ * Entity, Embeddable, 또는 Enum 노드 모두 포함
  */
-type FlowNode = (EntityNode | EmbeddableNode) & {
+type FlowNode = (EntityNode | EmbeddableNode | EnumNode) & {
   selected?: boolean
   dragging?: boolean
 }
@@ -74,6 +76,12 @@ export interface UseEditorReturn {
   updateEmbeddable: (id: string, data: Partial<EmbeddableData>) => void
   /** Embeddable 노드 삭제 */
   deleteEmbeddable: (id: string) => void
+  /** Enum 노드 추가 */
+  addEnum: (position?: { x: number; y: number }) => void
+  /** Enum 노드 업데이트 */
+  updateEnum: (id: string, data: Partial<EnumData>) => void
+  /** Enum 노드 삭제 */
+  deleteEnum: (id: string) => void
   /** Relationship 엣지 업데이트 */
   updateRelationship: (id: string, data: Partial<RelationshipData>) => void
   /** Relationship 엣지 삭제 */
@@ -88,12 +96,16 @@ export interface UseEditorReturn {
   toggleExportModal: () => void
   /** 선택된 노드 가져오기 */
   getSelectedNode: () => EntityNode | null
+  /** 선택된 Enum 노드 가져오기 */
+  getSelectedEnum: () => EnumNode | null
   /** 선택된 엣지 가져오기 */
   getSelectedEdge: () => RelationshipEdge | null
   /** 다이어그램 불러오기 (노드/엣지 전체 교체) */
   loadDiagram: (nodes: FlowNode[], edges: FlowEdge[]) => void
   /** 다이어그램 초기화 (모든 노드/엣지 삭제) */
   clearDiagram: () => void
+  /** 모든 Enum 노드 가져오기 (Property Form에서 참조용) */
+  getAllEnums: () => EnumNode[]
 }
 
 /**
@@ -142,6 +154,7 @@ export function useEditor(): UseEditorReturn {
           isNullable: true,
           cascade: false,
           orphanRemoval: false,
+          fetchType: FetchType.Lazy,
         },
       }
 
@@ -174,7 +187,9 @@ export function useEditor(): UseEditorReturn {
     (id: string, data: Partial<EntityData>) => {
       setNodes((nds) =>
         nds.map((node) =>
-          node.id === id ? { ...node, data: { ...node.data, ...data } } : node
+          node.id === id
+            ? ({ ...node, data: { ...node.data, ...data } } as FlowNode)
+            : node
         )
       )
     },
@@ -219,7 +234,9 @@ export function useEditor(): UseEditorReturn {
     (id: string, data: Partial<EmbeddableData>) => {
       setNodes((nds) =>
         nds.map((node) =>
-          node.id === id ? { ...node, data: { ...node.data, ...data } } : node
+          node.id === id
+            ? ({ ...node, data: { ...node.data, ...data } } as FlowNode)
+            : node
         )
       )
     },
@@ -230,6 +247,53 @@ export function useEditor(): UseEditorReturn {
    * Embeddable 노드 삭제
    */
   const deleteEmbeddable = useCallback(
+    (id: string) => {
+      setNodes((nds) => nds.filter((node) => node.id !== id))
+      // 연관된 엣지도 삭제
+      setEdges((eds) =>
+        eds.filter((edge) => edge.source !== id && edge.target !== id)
+      )
+    },
+    [setNodes, setEdges]
+  )
+
+  /**
+   * Enum 노드 추가
+   */
+  const addEnum = useCallback(
+    (position?: { x: number; y: number }) => {
+      const id = generateId()
+      const defaultPosition = position ?? {
+        x: 100 + Math.random() * 200,
+        y: 100 + Math.random() * 200,
+      }
+
+      const newEnum = createDefaultEnum(id, defaultPosition)
+      setNodes((nds) => [...nds, newEnum as FlowNode])
+    },
+    [setNodes]
+  )
+
+  /**
+   * Enum 노드 업데이트
+   */
+  const updateEnum = useCallback(
+    (id: string, data: Partial<EnumData>) => {
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === id
+            ? ({ ...node, data: { ...node.data, ...data } } as FlowNode)
+            : node
+        )
+      )
+    },
+    [setNodes]
+  )
+
+  /**
+   * Enum 노드 삭제
+   */
+  const deleteEnum = useCallback(
     (id: string) => {
       setNodes((nds) => nds.filter((node) => node.id !== id))
       // 연관된 엣지도 삭제
@@ -323,6 +387,25 @@ export function useEditor(): UseEditorReturn {
   }, [edges, uiState.selection])
 
   /**
+   * 선택된 Enum 노드 가져오기
+   */
+  const getSelectedEnum = useCallback((): EnumNode | null => {
+    if (uiState.selection.type !== "node" || !uiState.selection.id) return null
+    const node = nodes.find((n) => n.id === uiState.selection.id)
+    if (node?.type === "enum") {
+      return node as EnumNode
+    }
+    return null
+  }, [nodes, uiState.selection])
+
+  /**
+   * 모든 Enum 노드 가져오기 (Property Form에서 참조용)
+   */
+  const getAllEnums = useCallback((): EnumNode[] => {
+    return nodes.filter((n) => n.type === "enum") as EnumNode[]
+  }, [nodes])
+
+  /**
    * 다이어그램 불러오기 (노드/엣지 전체 교체)
    */
   const loadDiagram = useCallback(
@@ -366,6 +449,9 @@ export function useEditor(): UseEditorReturn {
     addEmbeddable,
     updateEmbeddable,
     deleteEmbeddable,
+    addEnum,
+    updateEnum,
+    deleteEnum,
     updateRelationship,
     deleteRelationship,
     setSelection,
@@ -373,8 +459,10 @@ export function useEditor(): UseEditorReturn {
     toggleConnecting,
     toggleExportModal,
     getSelectedNode,
+    getSelectedEnum,
     getSelectedEdge,
     loadDiagram,
     clearDiagram,
+    getAllEnums,
   }
 }

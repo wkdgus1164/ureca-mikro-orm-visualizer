@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import {
   Plus,
   Package,
-  Link,
+  List,
   Undo2,
   Redo2,
   ZoomIn,
@@ -22,6 +22,7 @@ import {
   Save,
   FolderOpen,
 } from "lucide-react"
+import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler"
 import { useEditorContext } from "@/components/providers/editor-provider"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -56,11 +57,12 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
     edges,
     addEntity,
     addEmbeddable,
+    addEnum,
     uiState,
-    toggleConnecting,
     toggleExportModal,
     deleteEntity,
     deleteEmbeddable,
+    deleteEnum,
     deleteRelationship,
     loadDiagram,
   } = useEditorContext()
@@ -84,22 +86,23 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
   }
 
   /**
-   * Relationship 연결 모드 토글
+   * Enum 추가 핸들러
    */
-  const handleToggleConnecting = () => {
-    toggleConnecting()
+  const handleAddEnum = () => {
+    addEnum()
   }
 
   /**
    * 선택된 요소 삭제
-   * Entity와 Embeddable 모두 처리
+   * Entity, Embeddable, Enum 모두 처리
    */
   const handleDelete = () => {
     const { selection } = uiState
     if (selection.type === "node" && selection.id) {
-      // 노드 삭제 (Entity 또는 Embeddable)
+      // 노드 삭제 (Entity, Embeddable, 또는 Enum)
       deleteEntity(selection.id)
       deleteEmbeddable(selection.id)
+      deleteEnum(selection.id)
     } else if (selection.type === "edge" && selection.id) {
       deleteRelationship(selection.id)
     }
@@ -195,15 +198,15 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
           <span className="hidden sm:inline">Add Embeddable</span>
         </Button>
 
-        {/* Relationship 연결 모드 */}
+        {/* Enum 추가 */}
         <Button
-          variant={uiState.isConnecting ? "default" : "outline"}
+          variant="outline"
           size="sm"
-          onClick={handleToggleConnecting}
-          className="gap-2"
+          onClick={handleAddEnum}
+          className="gap-2 text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
         >
-          <Link className="h-4 w-4" />
-          <span className="hidden sm:inline">Connect</span>
+          <List className="h-4 w-4" />
+          <span className="hidden sm:inline">Add Enum</span>
         </Button>
 
         <ToolbarDivider />
@@ -315,6 +318,14 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
           <Download className="h-4 w-4" />
           <span className="hidden sm:inline">Export</span>
         </Button>
+
+        <ToolbarDivider />
+
+        {/* Theme Toggle */}
+        <AnimatedThemeToggler
+          className="rounded-full p-2 hover:bg-accent transition-colors [&>svg]:h-4 [&>svg]:w-4"
+          title="Toggle Theme"
+        />
       </div>
     </div>
   )

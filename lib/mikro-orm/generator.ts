@@ -15,7 +15,7 @@ import type {
 } from "@/types/entity"
 import { isEntityNode, isEmbeddableNode } from "@/types/entity"
 import type { RelationshipEdge, RelationshipData } from "@/types/relationship"
-import { RelationType } from "@/types/relationship"
+import { RelationType, FetchType } from "@/types/relationship"
 
 /**
  * 코드 생성 옵션
@@ -218,6 +218,11 @@ function generateRelationshipOptions(data: RelationshipData): string {
 
   if (data.orphanRemoval) {
     options.push("orphanRemoval: true")
+  }
+
+  // Eager loading (Lazy는 기본값이므로 생략)
+  if (data.fetchType === FetchType.Eager) {
+    options.push("eager: true")
   }
 
   return options.length > 0 ? `, { ${options.join(", ")} }` : ""

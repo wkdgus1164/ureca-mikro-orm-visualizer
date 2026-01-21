@@ -7,11 +7,12 @@
  * Entity와 시각적으로 구분되는 디자인 (다른 색상, 아이콘)
  */
 
-import { memo } from "react"
+import { memo, useState, useCallback } from "react"
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react"
 import type { EmbeddableData } from "@/types/entity"
-import { Package, Circle } from "lucide-react"
+import { Package, Circle, X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useEditorContext } from "@/components/providers/editor-provider"
 
 /**
  * Embeddable 노드 타입 (ReactFlow Node 확장)
@@ -43,8 +44,21 @@ const handleClassName =
  * <ReactFlow nodeTypes={nodeTypes} />
  * ```
  */
-function EmbeddableNodeComponent({ data, selected }: EmbeddableNodeProps) {
+function EmbeddableNodeComponent({ id, data, selected }: EmbeddableNodeProps) {
   const { name, properties } = data
+  const { deleteEmbeddable } = useEditorContext()
+  const [isHovered, setIsHovered] = useState(false)
+
+  /**
+   * 삭제 버튼 클릭 핸들러
+   */
+  const handleDelete = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation() // 노드 선택 이벤트 방지
+      deleteEmbeddable(id)
+    },
+    [deleteEmbeddable, id]
+  )
 
   return (
     <>
@@ -68,12 +82,32 @@ function EmbeddableNodeComponent({ data, selected }: EmbeddableNodeProps) {
       <div
         className={cn(
           "min-w-[180px] max-w-[280px] bg-background rounded-lg shadow-md",
-          "border-2 border-dashed transition-all",
+          "border-2 border-dashed transition-all relative",
           selected
             ? "border-violet-500 ring-2 ring-violet-500/20"
             : "border-violet-300 dark:border-violet-700 hover:border-violet-400 dark:hover:border-violet-600"
         )}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
+        {/* 삭제 버튼 (호버 시 표시) */}
+        {(isHovered || selected) && (
+          <button
+            onClick={handleDelete}
+            className={cn(
+              "absolute -top-2 -right-2 z-10",
+              "w-5 h-5 rounded-full",
+              "bg-destructive text-destructive-foreground",
+              "flex items-center justify-center",
+              "hover:bg-destructive/90 transition-colors",
+              "shadow-sm"
+            )}
+            title="Delete Embeddable"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        )}
+
         {/* 헤더: Embeddable 이름 */}
         <div className="px-3 py-2 bg-violet-50 dark:bg-violet-950/30 border-b border-dashed border-violet-200 dark:border-violet-800 rounded-t-md">
           <div className="text-sm font-semibold flex items-center gap-2">

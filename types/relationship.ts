@@ -21,6 +21,26 @@ export enum RelationType {
 }
 
 /**
+ * MikroORM Fetch 전략 열거형
+ *
+ * @see https://mikro-orm.io/docs/loading-strategies
+ */
+export enum FetchType {
+  /** Lazy Loading - 접근 시점에 쿼리 실행 (기본값) */
+  Lazy = "lazy",
+  /** Eager Loading - 부모 엔티티와 함께 즉시 로딩 */
+  Eager = "eager",
+}
+
+/**
+ * Fetch 타입별 레이블
+ */
+export const FETCH_TYPE_LABELS: Record<FetchType, string> = {
+  [FetchType.Lazy]: "Lazy (load on access)",
+  [FetchType.Eager]: "Eager (load immediately)",
+}
+
+/**
  * Relationship 엣지의 데이터 구조
  *
  * ReactFlow 엣지의 data 프로퍼티에 저장되는 정보
@@ -38,6 +58,8 @@ export interface RelationshipData {
   cascade: boolean
   /** OrphanRemoval 옵션 (컬렉션에서 제거 시 삭제) */
   orphanRemoval: boolean
+  /** Fetch 전략 (lazy/eager) */
+  fetchType?: FetchType
   /** ReactFlow 타입 호환을 위한 index signature */
   [key: string]: unknown
 }
@@ -104,6 +126,7 @@ export function createDefaultRelationship(
       isNullable: true,
       cascade: false,
       orphanRemoval: false,
+      fetchType: FetchType.Lazy,
     },
   }
 }

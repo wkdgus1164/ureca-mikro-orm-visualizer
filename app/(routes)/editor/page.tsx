@@ -8,6 +8,7 @@ import { EditorProvider } from "@/components/providers/editor-provider"
 import { EditorCanvas } from "@/components/editor/canvas/editor-canvas"
 import { EditorToolbar } from "@/components/editor/toolbar/editor-toolbar"
 import { EntityEditPanel } from "@/components/editor/panels/entity-edit-panel"
+import { EnumEditPanel } from "@/components/editor/panels/enum-edit-panel"
 import { RelationshipEditPanel } from "@/components/editor/panels/relationship-edit-panel"
 import { ExportModalWrapper } from "@/components/export/export-modal-wrapper"
 
@@ -30,6 +31,9 @@ export default function EditorPage() {
 
         {/* Entity 편집 패널 (우측 슬라이드) */}
         <EntityEditPanel />
+
+        {/* Enum 편집 패널 (우측 슬라이드) */}
+        <EnumEditPanel />
 
         {/* Relationship 편집 패널 (우측 슬라이드) */}
         <RelationshipEditPanel />

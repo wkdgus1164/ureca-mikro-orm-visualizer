@@ -5,9 +5,9 @@
  */
 
 /**
- * 노드 종류 (Entity 또는 Embeddable)
+ * 노드 종류 (Entity, Embeddable, 또는 Enum)
  */
-export type NodeKind = "entity" | "embeddable"
+export type NodeKind = "entity" | "embeddable" | "enum"
 
 /**
  * Enum 값 정의 (Phase 2)
@@ -42,6 +42,39 @@ export interface EnumDefinition {
   name: string
   /** Enum 값 목록 */
   values: EnumValue[]
+}
+
+/**
+ * Enum 노드의 데이터 구조
+ *
+ * ReactFlow 노드의 data 프로퍼티에 저장되는 정보
+ */
+export interface EnumData {
+  /** Enum 이름 (예: "UserRole", "PostStatus") - 타입명으로 사용 */
+  name: string
+  /** Enum 값 목록 */
+  values: EnumValue[]
+  /** ReactFlow 타입 호환을 위한 index signature */
+  [key: string]: unknown
+}
+
+/**
+ * ReactFlow Enum 노드 타입
+ *
+ * ReactFlow의 Node 타입을 기반으로 한 Enum 노드 정의
+ */
+export interface EnumNode {
+  /** 노드 고유 ID (uuid) */
+  id: string
+  /** 노드 타입 - 항상 "enum" */
+  type: "enum"
+  /** 캔버스 내 위치 */
+  position: {
+    x: number
+    y: number
+  }
+  /** Enum 데이터 */
+  data: EnumData
 }
 
 /**
@@ -263,9 +296,30 @@ export function createDefaultEmbeddable(
 }
 
 /**
- * 모든 다이어그램 노드 타입 (Entity 또는 Embeddable)
+ * 새 Enum 생성을 위한 기본값 팩토리
  */
-export type DiagramNode = EntityNode | EmbeddableNode
+export function createDefaultEnum(
+  id: string,
+  position: { x: number; y: number }
+): EnumNode {
+  return {
+    id,
+    type: "enum",
+    position,
+    data: {
+      name: "NewEnum",
+      values: [
+        { key: "Value1", value: "value1" },
+        { key: "Value2", value: "value2" },
+      ],
+    },
+  }
+}
+
+/**
+ * 모든 다이어그램 노드 타입 (Entity, Embeddable, 또는 Enum)
+ */
+export type DiagramNode = EntityNode | EmbeddableNode | EnumNode
 
 /**
  * 노드가 Entity인지 확인하는 타입 가드
@@ -279,4 +333,11 @@ export function isEntityNode(node: DiagramNode): node is EntityNode {
  */
 export function isEmbeddableNode(node: DiagramNode): node is EmbeddableNode {
   return node.type === "embeddable"
+}
+
+/**
+ * 노드가 Enum인지 확인하는 타입 가드
+ */
+export function isEnumNode(node: DiagramNode): node is EnumNode {
+  return node.type === "enum"
 }

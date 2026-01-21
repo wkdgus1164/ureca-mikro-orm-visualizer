@@ -8,12 +8,17 @@
 
 import { useState, useCallback } from "react"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
+  SelectSeparator,
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import {
@@ -22,7 +27,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { Trash2, Key, Asterisk, ChevronRight, GripVertical, Plus, List } from "lucide-react"
-import type { EntityProperty, EnumDefinition, EnumValue } from "@/types/entity"
+import type { EntityProperty, EnumDefinition, EnumValue, EnumNode } from "@/types/entity"
 import { PROPERTY_TYPES } from "@/types/entity"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
@@ -36,6 +41,8 @@ interface PropertyFormProps {
   onDelete: () => void
   /** 삭제 버튼 표시 여부 */
   showDelete?: boolean
+  /** 사용 가능한 Enum 노드 목록 (참조용) */
+  availableEnums?: EnumNode[]
 }
 
 /**
@@ -57,6 +64,7 @@ export function PropertyForm({
   onChange,
   onDelete,
   showDelete = true,
+  availableEnums = [],
 }: PropertyFormProps) {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -71,14 +79,13 @@ export function PropertyForm({
   )
 
   /**
-   * 타입이 목록에 있는지 확인
+   * Enum 참조 타입 여부 (기존 Enum 노드 참조)
    */
-  const isKnownType = PROPERTY_TYPES.includes(
-    property.type as (typeof PROPERTY_TYPES)[number]
-  )
+  const enumRefNode = availableEnums.find((e) => e.data.name === property.type)
+  const isEnumRef = enumRefNode !== undefined
 
   /**
-   * Enum 타입 여부
+   * 인라인 Enum 정의 타입 여부
    */
   const isEnumType = property.type === "enum"
 
@@ -166,9 +173,9 @@ export function PropertyForm({
               <Key className="h-3.5 w-3.5 text-yellow-500" />
             </span>
           )}
-          {isEnumType && (
-            <span title="Enum Type">
-              <List className="h-3.5 w-3.5 text-violet-500" />
+          {(isEnumType || isEnumRef) && (
+            <span title={isEnumRef ? `Enum: ${property.type}` : "Inline Enum"}>
+              <List className="h-3.5 w-3.5 text-amber-500" />
             </span>
           )}
           {!property.isNullable && !property.isPrimaryKey && (
@@ -188,34 +195,68 @@ export function PropertyForm({
 
         {/* 타입 선택 */}
         <Select
-          value={isKnownType ? property.type : "custom"}
+          value={isEnumRef ? `enumRef:${property.type}` : property.type}
           onValueChange={(value) => {
             if (value === "enum") {
-              // Enum 선택 시 기본 enumDef 생성
+              // 인라인 Enum 선택 시 기본 enumDef 생성
               onChange({
                 ...property,
                 type: value,
                 enumDef: property.enumDef ?? { name: "NewEnum", values: [] },
               })
-            } else if (value !== "custom") {
+            } else if (value.startsWith("enumRef:")) {
+              // Enum 참조 선택 시 Enum 이름을 타입으로 설정
+              const enumName = value.replace("enumRef:", "")
+              onChange({
+                ...property,
+                type: enumName,
+                enumDef: undefined, // 참조 시 인라인 정의 제거
+              })
+            } else {
               handleChange("type", value)
             }
           }}
         >
-          <SelectTrigger className="h-7 w-28 text-xs border-transparent bg-transparent hover:border-input focus:border-input flex-shrink-0">
+          <SelectTrigger className="h-7 w-32 text-xs border-transparent bg-transparent hover:border-input focus:border-input flex-shrink-0">
             <SelectValue placeholder="Type">
-              {isEnumType && property.enumDef?.name
-                ? property.enumDef.name
-                : property.type}
+              {isEnumRef
+                ? `${property.type}`
+                : isEnumType && property.enumDef?.name
+                  ? property.enumDef.name
+                  : property.type}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {PROPERTY_TYPES.map((type) => (
-              <SelectItem key={type} value={type}>
-                {type}
-              </SelectItem>
-            ))}
-            <SelectItem value="custom">Custom...</SelectItem>
+            {/* 기본 타입 그룹 */}
+            <SelectGroup>
+              <SelectLabel className="text-xs text-muted-foreground">Types</SelectLabel>
+              {PROPERTY_TYPES.map((type) => (
+                <SelectItem key={type} value={type}>
+                  {type}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+
+            {/* Enum 참조 그룹 (Enum 노드가 있는 경우만 표시) */}
+            {availableEnums.length > 0 && (
+              <>
+                <SelectSeparator />
+                <SelectGroup>
+                  <SelectLabel className="text-xs text-muted-foreground">Enums</SelectLabel>
+                  {availableEnums.map((enumNode) => (
+                    <SelectItem
+                      key={enumNode.id}
+                      value={`enumRef:${enumNode.data.name}`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <List className="h-3 w-3 text-amber-500" />
+                        {enumNode.data.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </>
+            )}
           </SelectContent>
         </Select>
 
@@ -242,21 +283,6 @@ export function PropertyForm({
       {/* 확장된 상세 설정 영역 */}
       <CollapsibleContent>
         <div className="ml-12 mr-2 pb-3 pt-1 space-y-3 border-l-2 border-muted pl-4">
-          {/* 커스텀 타입 입력 */}
-          {!isKnownType && (
-            <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">
-                Custom Type
-              </label>
-              <Input
-                value={property.type}
-                onChange={(e) => handleChange("type", e.target.value)}
-                className="h-8 text-sm"
-                placeholder="Enter custom type"
-              />
-            </div>
-          )}
-
           {/* Enum 정의 편집 */}
           {isEnumType && (
             <div className="space-y-3">
@@ -336,34 +362,52 @@ export function PropertyForm({
           )}
 
           {/* 체크박스 옵션 그룹 */}
-          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-            <label className="flex items-center gap-1.5 cursor-pointer">
-              <input
-                type="checkbox"
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            <div className="flex items-center gap-1.5">
+              <Checkbox
+                id={`pk-${property.name}`}
                 checked={property.isPrimaryKey}
-                onChange={(e) => handleChange("isPrimaryKey", e.target.checked)}
-                className="rounded border-border"
+                onCheckedChange={(checked) =>
+                  handleChange("isPrimaryKey", checked === true)
+                }
               />
-              <span>Primary Key</span>
-            </label>
-            <label className="flex items-center gap-1.5 cursor-pointer">
-              <input
-                type="checkbox"
+              <Label
+                htmlFor={`pk-${property.name}`}
+                className="text-xs cursor-pointer"
+              >
+                Primary Key
+              </Label>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Checkbox
+                id={`unique-${property.name}`}
                 checked={property.isUnique}
-                onChange={(e) => handleChange("isUnique", e.target.checked)}
-                className="rounded border-border"
+                onCheckedChange={(checked) =>
+                  handleChange("isUnique", checked === true)
+                }
               />
-              <span>Unique</span>
-            </label>
-            <label className="flex items-center gap-1.5 cursor-pointer">
-              <input
-                type="checkbox"
+              <Label
+                htmlFor={`unique-${property.name}`}
+                className="text-xs cursor-pointer"
+              >
+                Unique
+              </Label>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Checkbox
+                id={`nullable-${property.name}`}
                 checked={property.isNullable}
-                onChange={(e) => handleChange("isNullable", e.target.checked)}
-                className="rounded border-border"
+                onCheckedChange={(checked) =>
+                  handleChange("isNullable", checked === true)
+                }
               />
-              <span>Nullable</span>
-            </label>
+              <Label
+                htmlFor={`nullable-${property.name}`}
+                className="text-xs cursor-pointer"
+              >
+                Nullable
+              </Label>
+            </div>
           </div>
 
           {/* Default Value */}

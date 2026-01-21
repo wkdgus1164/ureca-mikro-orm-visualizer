@@ -21,10 +21,11 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { Plus, Database } from "lucide-react"
+import { toast } from "sonner"
 import { useEditorContext } from "@/components/providers/editor-provider"
 import { PropertyForm } from "@/components/editor/panels/property-form"
 import { IndexForm } from "@/components/editor/panels/index-form"
-import type { EntityData, EntityProperty, EntityIndex } from "@/types/entity"
+import type { EntityData, EntityProperty, EntityIndex, EnumNode } from "@/types/entity"
 import { createDefaultProperty } from "@/types/entity"
 
 /**
@@ -33,6 +34,8 @@ import { createDefaultProperty } from "@/types/entity"
 interface EntityEditFormProps {
   initialData: EntityData
   onSave: (data: EntityData) => void
+  /** 사용 가능한 Enum 노드 목록 */
+  availableEnums: EnumNode[]
 }
 
 /**
@@ -40,7 +43,7 @@ interface EntityEditFormProps {
  *
  * key prop으로 노드 ID를 전달받아 노드 변경 시 상태가 리셋됨
  */
-function EntityEditForm({ initialData, onSave }: EntityEditFormProps) {
+function EntityEditForm({ initialData, onSave, availableEnums }: EntityEditFormProps) {
   // 로컬 편집 상태 (초기값으로 initialData 사용)
   const [localData, setLocalData] = useState<EntityData>(() => ({
     ...initialData,
@@ -132,19 +135,24 @@ function EntityEditForm({ initialData, onSave }: EntityEditFormProps) {
    */
   const handleSave = useCallback(() => {
     onSave(localData)
+    toast.success("Changes saved!")
   }, [localData, onSave])
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)]">
       <div className="px-6 space-y-4">
         {/* Entity 이름 */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <Label htmlFor="entity-name">Entity Name</Label>
+          <p className="text-xs text-muted-foreground">
+            The TypeScript class name for this entity
+          </p>
           <Input
             id="entity-name"
             value={localData.name}
             onChange={(e) => handleNameChange(e.target.value)}
             placeholder="e.g., User, Post, Comment"
+            className="w-full"
           />
         </div>
       </div>
@@ -181,6 +189,7 @@ function EntityEditForm({ initialData, onSave }: EntityEditFormProps) {
                 property={property}
                 onChange={(p) => handlePropertyUpdate(index, p)}
                 onDelete={() => handlePropertyDelete(index)}
+                availableEnums={availableEnums}
               />
             ))}
             {localData.properties.length === 0 && (
@@ -257,8 +266,11 @@ function EntityEditForm({ initialData, onSave }: EntityEditFormProps) {
  * ```
  */
 export function EntityEditPanel() {
-  const { uiState, getSelectedNode, updateEntity, togglePanel } =
+  const { uiState, getSelectedNode, updateEntity, togglePanel, getAllEnums } =
     useEditorContext()
+
+  // 사용 가능한 Enum 노드 목록
+  const availableEnums = getAllEnums()
 
   // 선택된 노드 가져오기
   const selectedNode = getSelectedNode()
@@ -308,6 +320,7 @@ export function EntityEditPanel() {
             key={selectedNode.id}
             initialData={selectedNode.data}
             onSave={handleSave}
+            availableEnums={availableEnums}
           />
         )}
       </SheetContent>

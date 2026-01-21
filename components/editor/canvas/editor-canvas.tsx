@@ -22,6 +22,7 @@ import { useEditorContext } from "@/components/providers/editor-provider"
 import { cn } from "@/lib/utils"
 import { EntityNode } from "@/components/editor/nodes/entity-node"
 import { EmbeddableNode } from "@/components/editor/nodes/embeddable-node"
+import { EnumNode } from "@/components/editor/nodes/enum-node"
 import { RelationshipEdge } from "@/components/editor/edges/relationship-edge"
 
 /**
@@ -30,6 +31,7 @@ import { RelationshipEdge } from "@/components/editor/edges/relationship-edge"
 const nodeTypes = {
   entity: EntityNode,
   embeddable: EmbeddableNode,
+  enum: EnumNode,
 }
 
 /**

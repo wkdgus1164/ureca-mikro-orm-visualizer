@@ -29,8 +29,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Copy, Download, Check, FileCode, FileJson, ImageIcon } from "lucide-react"
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
-import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism"
+import { vscDarkPlus, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism"
 import { toast } from "sonner"
+import { useTheme } from "next-themes"
 import { useEditorContext } from "@/components/providers/editor-provider"
 import { generateAllDiagramCode } from "@/lib/mikro-orm/generator"
 import { exportDiagramAsJson } from "@/lib/export/json"
@@ -67,6 +68,10 @@ interface ExportModalProps {
  */
 export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const { nodes, edges } = useEditorContext()
+  const { resolvedTheme } = useTheme()
+
+  // 테마에 따른 SyntaxHighlighter 스타일
+  const syntaxTheme = resolvedTheme === "dark" ? vscDarkPlus : oneLight
 
   // Export 형식 (TypeScript, JSON Schema, 또는 Image)
   const [exportFormat, setExportFormat] = useState<ExportFormat>("typescript")
@@ -253,174 +258,162 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl max-h-[85vh] p-0 gap-0">
-        <DialogHeader className="px-6 pt-6 pb-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle>Export Code</DialogTitle>
-              <DialogDescription>
-                {exportFormat === "typescript" && `Generated MikroORM classes (${entityNames.length} files)`}
-                {exportFormat === "json" && "Diagram exported as JSON Schema"}
-                {exportFormat === "image" && "Export diagram as PNG or SVG image"}
-              </DialogDescription>
-            </div>
-            {/* Format 선택 드롭다운 */}
-            <Select
-              value={exportFormat}
-              onValueChange={(value) => setExportFormat(value as ExportFormat)}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select format" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="typescript">
-                  <div className="flex items-center gap-2">
-                    <FileCode className="h-4 w-4" />
-                    TypeScript
-                  </div>
-                </SelectItem>
-                <SelectItem value="json">
-                  <div className="flex items-center gap-2">
-                    <FileJson className="h-4 w-4" />
-                    JSON Schema
-                  </div>
-                </SelectItem>
-                <SelectItem value="image">
-                  <div className="flex items-center gap-2">
-                    <ImageIcon className="h-4 w-4" />
-                    Image (PNG/SVG)
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <DialogHeader className="px-6 pt-6 pb-2">
+          <DialogTitle>Export Code</DialogTitle>
+          <DialogDescription>
+            Export your diagram as TypeScript classes, JSON schema, or image
+          </DialogDescription>
         </DialogHeader>
 
-        {/* TypeScript 형식 */}
-        {exportFormat === "typescript" && (
-          <Tabs
-            value={currentEntity ?? undefined}
-            onValueChange={handleTabChange}
-            className="flex flex-col flex-1 min-h-0"
-          >
-            {/* Entity 탭 목록 */}
-            <div className="px-6 border-b">
-              <ScrollArea className="w-full" type="scroll">
-                <TabsList className="inline-flex h-10 w-max">
-                  {entityNames.map((name) => (
-                    <TabsTrigger key={name} value={name} className="gap-2">
-                      <FileCode className="h-3.5 w-3.5" />
-                      {name}.ts
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </ScrollArea>
-            </div>
-
-            {/* 코드 미리보기 영역 */}
-            {entityNames.map((name) => (
-              <TabsContent
-                key={name}
-                value={name}
-                className="flex-1 m-0 min-h-0 data-[state=inactive]:hidden"
-              >
-                <ScrollArea className="h-[400px]">
-                  <SyntaxHighlighter
-                    language="typescript"
-                    style={vscDarkPlus}
-                    customStyle={{
-                      margin: 0,
-                      borderRadius: 0,
-                      minHeight: "100%",
-                      fontSize: "13px",
-                      lineHeight: "1.5",
-                    }}
-                    showLineNumbers
-                    wrapLines
-                  >
-                    {generatedTsCode.get(name) ?? ""}
-                  </SyntaxHighlighter>
-                </ScrollArea>
-              </TabsContent>
-            ))}
-          </Tabs>
-        )}
-
-        {/* JSON Schema 형식 */}
-        {exportFormat === "json" && (
-          <ScrollArea className="h-[400px]">
-            <SyntaxHighlighter
-              language="json"
-              style={vscDarkPlus}
-              customStyle={{
-                margin: 0,
-                borderRadius: 0,
-                minHeight: "100%",
-                fontSize: "13px",
-                lineHeight: "1.5",
-              }}
-              showLineNumbers
-              wrapLines
-            >
-              {generatedJsonCode}
-            </SyntaxHighlighter>
-          </ScrollArea>
-        )}
-
-        {/* 이미지 형식 (Phase 2) */}
-        {exportFormat === "image" && (
-          <div className="px-6 py-8 flex flex-col items-center justify-center h-[400px] bg-muted/30">
-            <ImageIcon className="h-16 w-16 text-muted-foreground mb-6" />
-            <p className="text-lg font-medium mb-6">Export Diagram as Image</p>
-
-            <div className="flex flex-col gap-4 w-full max-w-sm">
-              {/* 이미지 형식 선택 */}
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Format</label>
-                <Select
-                  value={imageFormat}
-                  onValueChange={(value) => setImageFormat(value as ImageFormat)}
-                >
-                  <SelectTrigger className="w-[160px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {FORMAT_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* 해상도 선택 */}
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Resolution</label>
-                <Select
-                  value={String(imageScale)}
-                  onValueChange={(value) => setImageScale(Number(value) as ImageScale)}
-                >
-                  <SelectTrigger className="w-[160px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SCALE_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={String(option.value)}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <p className="text-sm text-muted-foreground mt-6 text-center">
-              {imageFormat === "svg"
-                ? "SVG is vector-based and can scale to any size without quality loss."
-                : `PNG will be exported at ${imageScale}x resolution for sharp display.`}
-            </p>
+        {/* 형식 선택 탭 */}
+        <Tabs
+          value={exportFormat}
+          onValueChange={(value) => setExportFormat(value as ExportFormat)}
+          className="flex flex-col"
+        >
+          <div className="px-6 border-b">
+            <TabsList className="h-10">
+              <TabsTrigger value="typescript" className="gap-2">
+                <FileCode className="h-4 w-4" />
+                TypeScript
+              </TabsTrigger>
+              <TabsTrigger value="json" className="gap-2">
+                <FileJson className="h-4 w-4" />
+                JSON
+              </TabsTrigger>
+              <TabsTrigger value="image" className="gap-2">
+                <ImageIcon className="h-4 w-4" />
+                Image
+              </TabsTrigger>
+            </TabsList>
           </div>
-        )}
+
+          {/* TypeScript 형식 */}
+          <TabsContent value="typescript" className="m-0 flex-1">
+            <Tabs
+              value={currentEntity ?? undefined}
+              onValueChange={handleTabChange}
+              className="flex flex-col flex-1 min-h-0"
+            >
+              {/* Entity 탭 목록 */}
+              <div className="px-6 border-b bg-muted/30">
+                <ScrollArea className="w-full" type="scroll">
+                  <TabsList className="inline-flex h-9 w-max bg-transparent">
+                    {entityNames.map((name) => (
+                      <TabsTrigger key={name} value={name} className="gap-2 text-xs">
+                        <FileCode className="h-3 w-3" />
+                        {name}.ts
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </ScrollArea>
+              </div>
+
+              {/* 코드 미리보기 영역 */}
+              {entityNames.map((name) => (
+                <TabsContent
+                  key={name}
+                  value={name}
+                  className="flex-1 m-0 min-h-0 data-[state=inactive]:hidden"
+                >
+                  <ScrollArea className="h-[350px]">
+                    <SyntaxHighlighter
+                      language="typescript"
+                      style={syntaxTheme}
+                      customStyle={{
+                        margin: 0,
+                        borderRadius: 0,
+                        minHeight: "100%",
+                        fontSize: "13px",
+                        lineHeight: "1.5",
+                      }}
+                      showLineNumbers
+                      wrapLines
+                    >
+                      {generatedTsCode.get(name) ?? ""}
+                    </SyntaxHighlighter>
+                  </ScrollArea>
+                </TabsContent>
+              ))}
+            </Tabs>
+          </TabsContent>
+
+          {/* JSON Schema 형식 */}
+          <TabsContent value="json" className="m-0">
+            <ScrollArea className="h-[350px]">
+              <SyntaxHighlighter
+                language="json"
+                style={syntaxTheme}
+                customStyle={{
+                  margin: 0,
+                  borderRadius: 0,
+                  minHeight: "100%",
+                  fontSize: "13px",
+                  lineHeight: "1.5",
+                }}
+                showLineNumbers
+                wrapLines
+              >
+                {generatedJsonCode}
+              </SyntaxHighlighter>
+            </ScrollArea>
+          </TabsContent>
+
+          {/* 이미지 형식 */}
+          <TabsContent value="image" className="m-0">
+            <div className="px-6 py-6 flex flex-col items-center justify-center h-[350px] bg-muted/30">
+              <ImageIcon className="h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-base font-medium mb-4">Export Diagram as Image</p>
+
+              <div className="flex flex-col gap-3 w-full max-w-sm">
+                {/* 이미지 형식 선택 */}
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">Format</label>
+                  <Select
+                    value={imageFormat}
+                    onValueChange={(value) => setImageFormat(value as ImageFormat)}
+                  >
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FORMAT_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* 해상도 선택 */}
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">Resolution</label>
+                  <Select
+                    value={String(imageScale)}
+                    onValueChange={(value) => setImageScale(Number(value) as ImageScale)}
+                  >
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SCALE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={String(option.value)}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <p className="text-xs text-muted-foreground mt-4 text-center max-w-sm">
+                {imageFormat === "svg"
+                  ? "SVG is vector-based and can scale to any size without quality loss."
+                  : `PNG will be exported at ${imageScale}x resolution for sharp display.`}
+              </p>
+            </div>
+          </TabsContent>
 
         {/* 하단 액션 버튼 - TypeScript 형식 */}
         {exportFormat === "typescript" && (
@@ -493,6 +486,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
             </Button>
           </div>
         )}
+        </Tabs>
       </DialogContent>
     </Dialog>
   )

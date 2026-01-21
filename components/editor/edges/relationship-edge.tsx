@@ -39,11 +39,13 @@ const MARKER_IDS = {
 
 /**
  * 관계 타입별 엣지 스타일
+ *
+ * 색상을 더 선명하게 하여 라이트/다크 모드에서 모두 잘 보이도록 함
  */
 function getEdgeStyle(relationType: RelationType, selected: boolean) {
   const baseStyle = {
     strokeWidth: selected ? 3 : 2,
-    stroke: selected ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
+    stroke: selected ? "hsl(var(--primary))" : "hsl(var(--foreground))",
   }
 
   return baseStyle
@@ -122,7 +124,7 @@ function RelationshipEdgeComponent({
     <>
       {/* SVG 마커 정의 */}
       <defs>
-        {/* 화살표 마커 */}
+        {/* 화살표 마커 - 더 선명한 색상 */}
         <marker
           id={MARKER_IDS.arrow}
           viewBox="0 0 10 10"
@@ -134,12 +136,12 @@ function RelationshipEdgeComponent({
         >
           <path
             d="M 0 0 L 10 5 L 0 10 z"
-            fill="hsl(var(--muted-foreground))"
+            fill="hsl(var(--foreground))"
             className="transition-colors"
           />
         </marker>
 
-        {/* 까마귀발 마커 (One-to-Many 끝) */}
+        {/* 까마귀발 마커 (One-to-Many 끝) - 더 선명한 색상 */}
         <marker
           id={MARKER_IDS.crowFoot}
           viewBox="0 0 12 12"
@@ -152,13 +154,13 @@ function RelationshipEdgeComponent({
           <path
             d="M 0 6 L 10 0 M 0 6 L 10 6 M 0 6 L 10 12"
             fill="none"
-            stroke="hsl(var(--muted-foreground))"
+            stroke="hsl(var(--foreground))"
             strokeWidth="2"
             className="transition-colors"
           />
         </marker>
 
-        {/* One 마커 (수직선) */}
+        {/* One 마커 (수직선) - 더 선명한 색상 */}
         <marker
           id={MARKER_IDS.one}
           viewBox="0 0 10 10"
@@ -173,7 +175,7 @@ function RelationshipEdgeComponent({
             y1="0"
             x2="5"
             y2="10"
-            stroke="hsl(var(--muted-foreground))"
+            stroke="hsl(var(--foreground))"
             strokeWidth="2"
           />
         </marker>
