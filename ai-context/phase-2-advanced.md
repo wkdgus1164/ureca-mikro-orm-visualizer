@@ -15,7 +15,7 @@
 - [x] Enum 타입 지원
 - [x] JSON Schema export
 - [x] ERD 이미지 export (PNG, SVG)
-- [ ] 다이어그램 저장/불러오기 (JSON)
+- [x] 다이어그램 저장/불러오기 (JSON)
 
 ---
 
@@ -371,10 +371,10 @@ feat(export): ERD 이미지 export 구현 (PNG, SVG)
 3. Load: 파일 선택 → JSON 파싱 → 상태 업데이트
 
 **완료 조건:**
-- [ ] Save 버튼 클릭 시 JSON 다운로드
-- [ ] Load 버튼 클릭 시 파일 선택 UI
-- [ ] JSON 파싱 및 캔버스 업데이트
-- [ ] 오류 처리 (잘못된 JSON)
+- [x] Save 버튼 클릭 시 JSON 다운로드
+- [x] Load 버튼 클릭 시 파일 선택 UI
+- [x] JSON 파싱 및 캔버스 업데이트
+- [x] 오류 처리 (잘못된 JSON)
 
 **커밋 메시지 템플릿:**
 ```

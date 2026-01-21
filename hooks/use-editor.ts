@@ -90,6 +90,10 @@ export interface UseEditorReturn {
   getSelectedNode: () => EntityNode | null
   /** 선택된 엣지 가져오기 */
   getSelectedEdge: () => RelationshipEdge | null
+  /** 다이어그램 불러오기 (노드/엣지 전체 교체) */
+  loadDiagram: (nodes: FlowNode[], edges: FlowEdge[]) => void
+  /** 다이어그램 초기화 (모든 노드/엣지 삭제) */
+  clearDiagram: () => void
 }
 
 /**
@@ -318,6 +322,37 @@ export function useEditor(): UseEditorReturn {
     )
   }, [edges, uiState.selection])
 
+  /**
+   * 다이어그램 불러오기 (노드/엣지 전체 교체)
+   */
+  const loadDiagram = useCallback(
+    (newNodes: FlowNode[], newEdges: FlowEdge[]) => {
+      setNodes(newNodes)
+      setEdges(newEdges)
+      // 선택 상태 초기화
+      setUIState((prev) => ({
+        ...prev,
+        selection: { type: null, id: null },
+        isPanelOpen: false,
+      }))
+    },
+    [setNodes, setEdges]
+  )
+
+  /**
+   * 다이어그램 초기화 (모든 노드/엣지 삭제)
+   */
+  const clearDiagram = useCallback(() => {
+    setNodes([])
+    setEdges([])
+    // 선택 상태 초기화
+    setUIState((prev) => ({
+      ...prev,
+      selection: { type: null, id: null },
+      isPanelOpen: false,
+    }))
+  }, [setNodes, setEdges])
+
   return {
     nodes,
     edges,
@@ -339,5 +374,7 @@ export function useEditor(): UseEditorReturn {
     toggleExportModal,
     getSelectedNode,
     getSelectedEdge,
+    loadDiagram,
+    clearDiagram,
   }
 }
