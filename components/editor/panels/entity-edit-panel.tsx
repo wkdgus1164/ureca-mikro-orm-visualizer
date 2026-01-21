@@ -136,9 +136,16 @@ function EntityEditForm({ initialData, onSave }: EntityEditFormProps) {
       <Separator className="my-4" />
 
       {/* 프로퍼티 목록 */}
-      <div className="px-6 flex-1 flex flex-col min-h-0">
-        <div className="flex items-center justify-between mb-3">
-          <Label className="text-base font-semibold">Properties</Label>
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="flex items-center justify-between px-6 mb-2">
+          <Label className="text-base font-semibold">
+            Properties
+            {localData.properties.length > 0 && (
+              <span className="ml-2 text-xs text-muted-foreground font-normal">
+                ({localData.properties.length})
+              </span>
+            )}
+          </Label>
           <Button
             variant="outline"
             size="sm"
@@ -146,12 +153,12 @@ function EntityEditForm({ initialData, onSave }: EntityEditFormProps) {
             className="gap-1"
           >
             <Plus className="h-3 w-3" />
-            Add Property
+            Add
           </Button>
         </div>
 
-        <ScrollArea className="flex-1 -mx-6 px-6">
-          <div className="space-y-3 pb-4">
+        <ScrollArea className="flex-1 px-4">
+          <div className="space-y-1 pb-4">
             {localData.properties.map((property, index) => (
               <PropertyForm
                 key={property.id}
@@ -162,7 +169,7 @@ function EntityEditForm({ initialData, onSave }: EntityEditFormProps) {
             ))}
             {localData.properties.length === 0 && (
               <div className="text-center py-8 text-muted-foreground text-sm">
-                No properties yet. Click &quot;Add Property&quot; to create one.
+                No properties yet. Click &quot;Add&quot; to create one.
               </div>
             )}
           </div>
