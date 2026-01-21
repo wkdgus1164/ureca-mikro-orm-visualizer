@@ -20,146 +20,11 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Plus, Trash2, Key, Asterisk } from "lucide-react"
+import { Plus } from "lucide-react"
 import { useEditorContext } from "@/components/providers/editor-provider"
+import { PropertyForm } from "@/components/editor/panels/property-form"
 import type { EntityData, EntityProperty } from "@/types/entity"
 import { createDefaultProperty } from "@/types/entity"
-
-/**
- * 프로퍼티 아이템 Props
- */
-interface PropertyItemProps {
-  property: EntityProperty
-  onUpdate: (property: EntityProperty) => void
-  onDelete: () => void
-}
-
-/**
- * 개별 프로퍼티 편집 아이템
- */
-function PropertyItem({ property, onUpdate, onDelete }: PropertyItemProps) {
-  return (
-    <Card className="bg-muted/50">
-      <CardHeader className="p-3 pb-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {property.isPrimaryKey && (
-              <span title="Primary Key">
-                <Key className="h-3 w-3 text-yellow-500" />
-              </span>
-            )}
-            {!property.isNullable && (
-              <span title="Required">
-                <Asterisk className="h-3 w-3 text-red-500" />
-              </span>
-            )}
-            <CardTitle className="text-sm font-medium">
-              {property.name}
-            </CardTitle>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
-            onClick={onDelete}
-          >
-            <Trash2 className="h-3 w-3" />
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="p-3 pt-0 space-y-3">
-        {/* 프로퍼티 이름 */}
-        <div className="space-y-1">
-          <Label htmlFor={`prop-name-${property.id}`} className="text-xs">
-            Name
-          </Label>
-          <Input
-            id={`prop-name-${property.id}`}
-            value={property.name}
-            onChange={(e) => onUpdate({ ...property, name: e.target.value })}
-            className="h-8 text-sm"
-          />
-        </div>
-
-        {/* 프로퍼티 타입 */}
-        <div className="space-y-1">
-          <Label htmlFor={`prop-type-${property.id}`} className="text-xs">
-            Type
-          </Label>
-          <Input
-            id={`prop-type-${property.id}`}
-            value={property.type}
-            onChange={(e) => onUpdate({ ...property, type: e.target.value })}
-            className="h-8 text-sm"
-            placeholder="string, number, boolean, Date..."
-          />
-        </div>
-
-        {/* 체크박스 그룹 */}
-        <div className="flex flex-wrap gap-4 text-xs">
-          <label className="flex items-center gap-1.5 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={property.isPrimaryKey}
-              onChange={(e) =>
-                onUpdate({ ...property, isPrimaryKey: e.target.checked })
-              }
-              className="rounded border-border"
-            />
-            <span>Primary Key</span>
-          </label>
-          <label className="flex items-center gap-1.5 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={property.isUnique}
-              onChange={(e) =>
-                onUpdate({ ...property, isUnique: e.target.checked })
-              }
-              className="rounded border-border"
-            />
-            <span>Unique</span>
-          </label>
-          <label className="flex items-center gap-1.5 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={property.isNullable}
-              onChange={(e) =>
-                onUpdate({ ...property, isNullable: e.target.checked })
-              }
-              className="rounded border-border"
-            />
-            <span>Nullable</span>
-          </label>
-        </div>
-
-        {/* Default Value */}
-        <div className="space-y-1">
-          <Label htmlFor={`prop-default-${property.id}`} className="text-xs">
-            Default Value
-          </Label>
-          <Input
-            id={`prop-default-${property.id}`}
-            value={property.defaultValue ?? ""}
-            onChange={(e) =>
-              onUpdate({
-                ...property,
-                defaultValue: e.target.value || undefined,
-              })
-            }
-            className="h-8 text-sm"
-            placeholder="(optional)"
-          />
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
 
 /**
  * Entity 편집 폼 Props
@@ -288,10 +153,10 @@ function EntityEditForm({ initialData, onSave }: EntityEditFormProps) {
         <ScrollArea className="flex-1 -mx-6 px-6">
           <div className="space-y-3 pb-4">
             {localData.properties.map((property, index) => (
-              <PropertyItem
+              <PropertyForm
                 key={property.id}
                 property={property}
-                onUpdate={(p) => handlePropertyUpdate(index, p)}
+                onChange={(p) => handlePropertyUpdate(index, p)}
                 onDelete={() => handlePropertyDelete(index)}
               />
             ))}
