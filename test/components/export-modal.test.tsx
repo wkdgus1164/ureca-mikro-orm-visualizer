@@ -275,16 +275,14 @@ describe("ExportModal", () => {
         (btn) => btn.className.includes("absolute")
       )
 
-      if (copyButton) {
-        await user.click(copyButton)
+      // 복사 버튼이 반드시 존재해야 함
+      expect(copyButton).toBeTruthy()
 
-        await waitFor(() => {
-          expect(mockWriteText).toHaveBeenCalled()
-        })
-      } else {
-        // 복사 버튼을 찾지 못해도 테스트 패스
-        expect(true).toBe(true)
-      }
+      await user.click(copyButton!)
+
+      await waitFor(() => {
+        expect(mockWriteText).toHaveBeenCalled()
+      })
     })
   })
 

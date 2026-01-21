@@ -498,9 +498,17 @@ describe("useEditor", () => {
       expect(result.current.uiState.isRightPanelOpen).toBe(true)
     })
 
-    it("setSelection에서 id가 null이면 패널을 닫지 않는다", () => {
+    it("setSelection에서 id가 null이면 패널을 닫는다", () => {
       const { result } = renderHook(() => useEditor())
 
+      // 먼저 패널을 열어둔 상태로 만듦
+      act(() => {
+        result.current.toggleRightPanel()
+      })
+
+      expect(result.current.uiState.isRightPanelOpen).toBe(true)
+
+      // id가 null인 selection을 설정하면 패널이 닫혀야 함
       act(() => {
         result.current.setSelection({ type: null, id: null })
       })
