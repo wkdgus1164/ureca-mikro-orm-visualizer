@@ -54,16 +54,6 @@ function EntityEditForm({ initialData, onSave }: EntityEditFormProps) {
   }, [])
 
   /**
-   * 테이블명 변경 핸들러
-   */
-  const handleTableNameChange = useCallback((tableName: string) => {
-    setLocalData((prev) => ({
-      ...prev,
-      tableName: tableName || undefined,
-    }))
-  }, [])
-
-  /**
    * 프로퍼티 업데이트 핸들러
    */
   const handlePropertyUpdate = useCallback(
@@ -115,20 +105,6 @@ function EntityEditForm({ initialData, onSave }: EntityEditFormProps) {
             value={localData.name}
             onChange={(e) => handleNameChange(e.target.value)}
             placeholder="e.g., User, Post, Comment"
-          />
-        </div>
-
-        {/* 커스텀 테이블명 */}
-        <div className="space-y-2">
-          <Label htmlFor="table-name">
-            Custom Table Name{" "}
-            <span className="text-muted-foreground">(optional)</span>
-          </Label>
-          <Input
-            id="table-name"
-            value={localData.tableName ?? ""}
-            onChange={(e) => handleTableNameChange(e.target.value)}
-            placeholder={`defaults to "${localData.name.toLowerCase()}"`}
           />
         </div>
       </div>
