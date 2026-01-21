@@ -150,18 +150,24 @@ ReactFlow 커스텀 엣지 컴포넌트.
 |-----|------|
 | `edge-markers.tsx` | SVG 마커 정의 (화살표, 까마귀발, 수직선) |
 
-**사용 예시:**
+**마커 사용 방법:**
+
+마커는 `GlobalEdgeMarkers` 컴포넌트를 통해 캔버스 레벨에서 한 번만 렌더링됩니다.
+개별 엣지 컴포넌트에서는 `MARKER_IDS`를 통해 마커 ID만 참조합니다.
 
 ```typescript
-import { MARKER_IDS, EdgeMarkerDefs } from "@/components/editor/edges/shared"
-
-// 엣지 컴포넌트 내부
-<defs>
-  <EdgeMarkerDefs />
-</defs>
+// 엣지 컴포넌트에서 마커 참조
+import { MARKER_IDS } from "@/components/editor/edges/shared"
 
 <BaseEdge markerEnd={`url(#${MARKER_IDS.arrow})`} />
 ```
+
+**관련 파일:**
+- `GlobalEdgeMarkers`: `components/editor/edges/shared/edge-markers.tsx` - 캔버스에 마커 정의 렌더링
+- `EdgeMarkerDefs`: `components/editor/edges/shared/edge-markers.tsx` - SVG 마커 정의
+- `MARKER_IDS`: `components/editor/edges/shared/edge-markers.tsx` - 마커 ID 상수
+- `BaseEdge`: ReactFlow 제공 컴포넌트 - 엣지 렌더링
+- `EditorCanvas`: `components/editor/canvas/editor-canvas.tsx` - GlobalEdgeMarkers 렌더링
 
 ### editor/panels/
 
