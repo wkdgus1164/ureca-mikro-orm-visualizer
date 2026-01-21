@@ -72,6 +72,7 @@ export function JsonExportTab({ jsonCode }: JsonExportTabProps) {
           size="icon"
           className="absolute top-2 right-2 z-10 h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
           onClick={handleCopy}
+          aria-label={copied ? "Copied" : "Copy JSON to clipboard"}
         >
           {copied ? (
             <Check className="h-4 w-4 text-green-500" />

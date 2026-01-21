@@ -139,6 +139,7 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
             className="absolute top-2 right-2 z-10 h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
             onClick={() => currentEntity && handleCopy(currentEntity)}
             disabled={!currentEntity}
+            aria-label={copied ? "Copied" : `Copy ${currentEntity ?? "code"} to clipboard`}
           >
             {copied ? (
               <Check className="h-4 w-4 text-green-500" />
