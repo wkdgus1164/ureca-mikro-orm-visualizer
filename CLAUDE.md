@@ -263,9 +263,87 @@ export function useEntityManager() {
 
 **작업 흐름:**
 1. `ai-context/phase-*.md`에서 현재 Phase의 Task 확인
-2. Task 시작 시 체크박스 업데이트: `- [ ]` → `- [x]`
-3. Task 완료 시 **반드시 한글 커밋 메시지** 작성
-4. 다음 Task로 이동
+2. **독립 작업 식별**: 파일/디렉토리가 겹치지 않는 Task들을 그룹핑
+3. Task 시작 시 체크박스 업데이트: `- [ ]` → `- [x]`
+4. **병렬 작업** 진행 (독립적인 Task들)
+5. Task 완료 시 **반드시 한글 커밋 메시지** 작성
+6. 다음 Task로 이동
+
+**병렬 작업 전략:**
+
+독립적인 작업(파일/디렉토리가 겹치지 않는 작업)은 **반드시 병렬로 진행**하여 개발 속도를 극대화합니다.
+
+```bash
+# ✅ 병렬 가능한 예시
+# Task 1.1: types/entity.ts 생성
+# Task 1.2: types/relationship.ts 생성
+# Task 1.3: hooks/use-editor.ts 생성
+# → 서로 다른 파일이므로 동시 작업 가능
+
+# ❌ 병렬 불가능한 예시
+# Task 2.1: components/editor/canvas.tsx 생성
+# Task 2.2: components/editor/canvas.tsx에 기능 추가
+# → 같은 파일이므로 순차 작업 필요
+```
+
+**병렬 작업 흐름:**
+
+1. **독립 작업 그룹 식별**
+   ```
+   Phase 1 예시:
+   - 그룹 A (병렬): types/entity.ts, types/relationship.ts, types/decorator.ts
+   - 그룹 B (병렬): hooks/use-editor.ts, hooks/use-nodes.ts, hooks/use-edges.ts
+   - 그룹 C (순차): components/editor/canvas/* (같은 디렉토리 내 의존성)
+   ```
+
+2. **병렬 작업 실행**
+   - 각 독립 작업을 동시에 진행
+   - 각 작업 완료 시 즉시 커밋 (lint/build 검증 후)
+   - 다른 작업이 진행 중이어도 완료된 작업은 바로 커밋
+
+3. **커밋 순서**
+   ```bash
+   # 그룹 A 작업들을 병렬로 완료 후 각각 커밋
+   # Task 1.1 완료
+   bun run lint && bun run build
+   git add types/entity.ts
+   git commit -m "feat(types): Entity 타입 정의 추가"
+
+   # Task 1.2 완료 (Task 1.1과 독립적)
+   bun run lint && bun run build
+   git add types/relationship.ts
+   git commit -m "feat(types): Relationship 타입 정의 추가"
+
+   # Task 1.3 완료 (Task 1.1, 1.2와 독립적)
+   bun run lint && bun run build
+   git add types/decorator.ts
+   git commit -m "feat(types): Decorator 타입 정의 추가"
+   ```
+
+**의존성 판단 기준:**
+
+✅ **병렬 가능 (독립 작업):**
+- 서로 다른 파일 생성/수정
+- 서로 다른 디렉토리 작업
+- Import 관계가 없는 모듈
+
+❌ **병렬 불가 (순차 작업):**
+- 같은 파일 수정
+- A 파일이 B 파일을 import하는 경우 (B → A 순서로 작업)
+- 같은 컴포넌트의 부모-자식 관계
+
+**커밋 전 필수 검증:**
+```bash
+# 모든 커밋 직전에 반드시 실행
+bun run lint    # ESLint 검사
+bun run build   # 프로덕션 빌드 검증
+
+# 검증 통과 후에만 커밋 진행
+git add .
+git commit -m "..."
+```
+
+> **중요:** lint 또는 build 실패 시 **절대 커밋 금지**. 모든 오류를 수정한 후 커밋할 것.
 
 **커밋 메시지 형식:**
 ```bash
@@ -305,6 +383,53 @@ git commit -m "feat(editor): EntityNode 컴포넌트 구현
 
 각 Phase는 `ai-context/phase-*.md`에 상세히 정의되어 있습니다. Phase별로 순차적으로 개발하며, 이전 Phase 완료 없이 다음 Phase 시작 금지.
 
+### 브랜치 전략
+
+**Phase별 브랜치 관리:**
+```bash
+# Phase 1 작업
+git checkout -b v1        # v1 브랜치 생성
+# ... Phase 1 작업 진행 ...
+git push origin v1        # Phase 1 완료 후 푸시
+
+# Phase 2 작업
+git checkout v1           # v1 브랜치로 이동
+git checkout -b v2        # v1에서 v2 브랜치 생성
+# ... Phase 2 작업 진행 ...
+git push origin v2        # Phase 2 완료 후 푸시
+
+# Phase 3, 4도 동일한 패턴
+```
+
+**브랜치 규칙:**
+- Phase N은 **반드시 `vN` 브랜치**에서 작업 (예: Phase 1 → v1, Phase 2 → v2)
+- Phase N 완료 후 **반드시 `vN` 브랜치에 최종 푸시**
+- Phase N+1은 **반드시 `vN` 브랜치에서 분기**하여 `vN+1` 브랜치 생성
+- `main` 브랜치는 안정 버전 병합용으로만 사용
+
+**작업 흐름 예시:**
+```bash
+# Phase 1 시작
+git checkout -b v1
+
+# Task 1.1 완료 → lint/build → 커밋
+bun run lint && bun run build
+git commit -m "feat(types): Entity 타입 정의 추가"
+
+# Task 1.2 완료 → lint/build → 커밋
+bun run lint && bun run build
+git commit -m "feat(editor): ReactFlow 캔버스 래퍼 구현"
+
+# ... Phase 1 모든 Task 완료 ...
+
+# Phase 1 최종 푸시
+git push origin v1
+
+# Phase 2 시작 (v1에서 분기)
+git checkout v1
+git checkout -b v2
+```
+
 ### Phase 개요
 
 1. **Phase 1 (MVP)**: 기본 비주얼 에디터, Entity/Relationship 노드, TypeScript 코드 export
@@ -316,9 +441,10 @@ git commit -m "feat(editor): EntityNode 컴포넌트 구현
 
 Phase 완료 조건:
 - ✅ 모든 필수 Task 완료 (체크박스 모두 체크)
-- ✅ 모든 Task에 대한 커밋 생성
+- ✅ 모든 Task에 대한 커밋 생성 (각 커밋 전 lint/build 검증 완료)
+- ✅ `vN` 브랜치에 최종 푸시 완료
 - ✅ 진행 상황 문서 업데이트 (`ai-context/progress/`)
-- ✅ 다음 Phase로 전환 승인
+- ✅ 다음 Phase로 전환 승인 후 `vN+1` 브랜치 생성
 
 ---
 
@@ -368,15 +494,30 @@ import { Button } from "@/components/ui/button"
 
 ## 기여 시 체크리스트
 
-새 기능 개발 전:
+Phase 시작 시:
+- [ ] 현재 Phase에 맞는 `vN` 브랜치 생성 또는 체크아웃
 - [ ] 해당 Phase PRD 확인 (`ai-context/phase-*.md`)
+- [ ] **병렬 가능한 Task 그룹 식별** (독립적인 파일/디렉토리 작업)
+
+새 기능 개발 전:
 - [ ] 디렉토리 구조 확인 (위 구조 준수)
 - [ ] 타입 정의 필요 여부 확인 (`types/`)
 - [ ] 의존성 설치 필요 시 `bun add` 사용
+- [ ] **다른 Task와의 파일 충돌 여부 확인** (병렬 가능 여부)
 
 코드 작성 후:
 - [ ] TypeScript strict 모드 통과
 - [ ] Import 경로 절대 경로 (`@/`) 사용
 - [ ] 타입 안전성 확인 (`any` 사용 금지)
+
+커밋 전 (필수):
+- [ ] `bun run lint` 실행 및 통과
+- [ ] `bun run build` 실행 및 통과
 - [ ] 커밋 메시지 작성 (한글, 상세)
 - [ ] PRD 체크박스 업데이트
+
+Phase 완료 시:
+- [ ] 모든 Task 완료 확인
+- [ ] `vN` 브랜치에 최종 푸시
+- [ ] 진행 상황 문서 업데이트 (`ai-context/progress/`)
+- [ ] 다음 Phase 시작 전 `vN`에서 `vN+1` 브랜치 생성
