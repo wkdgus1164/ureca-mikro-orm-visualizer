@@ -7,12 +7,11 @@
  * amber 색상 테마로 Entity/Embeddable과 시각적으로 구분
  */
 
-import { memo, useState, useCallback } from "react"
+import { memo } from "react"
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react"
 import type { EnumData } from "@/types/entity"
-import { List, X } from "lucide-react"
+import { List } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useEditorContext } from "@/components/providers/editor-provider"
 
 /**
  * Enum 노드 타입 (ReactFlow Node 확장)
@@ -44,21 +43,8 @@ const handleClassName =
  * <ReactFlow nodeTypes={nodeTypes} />
  * ```
  */
-function EnumNodeComponent({ id, data, selected }: EnumNodeProps) {
+function EnumNodeComponent({ data, selected }: EnumNodeProps) {
   const { name, values } = data
-  const { deleteEnum } = useEditorContext()
-  const [isHovered, setIsHovered] = useState(false)
-
-  /**
-   * 삭제 버튼 클릭 핸들러
-   */
-  const handleDelete = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation() // 노드 선택 이벤트 방지
-      deleteEnum(id)
-    },
-    [deleteEnum, id]
-  )
 
   return (
     <>
@@ -82,32 +68,12 @@ function EnumNodeComponent({ id, data, selected }: EnumNodeProps) {
       <div
         className={cn(
           "min-w-[160px] max-w-[240px] bg-background rounded-lg shadow-md",
-          "border-2 transition-all relative",
+          "border-2 transition-all",
           selected
             ? "border-amber-500 ring-2 ring-amber-500/20"
             : "border-amber-300 dark:border-amber-700 hover:border-amber-400 dark:hover:border-amber-600"
         )}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       >
-        {/* 삭제 버튼 (호버 시에만 표시) */}
-        {isHovered && (
-          <button
-            onClick={handleDelete}
-            className={cn(
-              "absolute -top-2 -right-2 z-10",
-              "w-5 h-5 rounded-full",
-              "bg-destructive text-destructive-foreground",
-              "flex items-center justify-center",
-              "hover:bg-destructive/90 transition-colors",
-              "shadow-sm"
-            )}
-            title="Delete Enum"
-          >
-            <X className="w-3 h-3" />
-          </button>
-        )}
-
         {/* 헤더: Enum 이름 */}
         <div className="px-3 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800 rounded-t-md">
           <div className="text-sm font-semibold flex items-center gap-2">

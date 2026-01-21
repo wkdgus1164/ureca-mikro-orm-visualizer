@@ -15,7 +15,6 @@ import {
   ZoomOut,
   Maximize2,
   Download,
-  Trash2,
   Save,
   FolderOpen,
 } from "lucide-react"
@@ -52,34 +51,13 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
   const {
     nodes,
     edges,
-    uiState,
     toggleExportModal,
-    deleteEntity,
-    deleteEmbeddable,
-    deleteEnum,
-    deleteRelationship,
     loadDiagram,
   } = useEditorContext()
   const { zoomIn, zoomOut, fitView } = useReactFlow()
 
   // 파일 입력 ref (Load 버튼용)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  /**
-   * 선택된 요소 삭제
-   * Entity, Embeddable, Enum 모두 처리
-   */
-  const handleDelete = () => {
-    const { selection } = uiState
-    if (selection.type === "node" && selection.id) {
-      // 노드 삭제 (Entity, Embeddable, 또는 Enum)
-      deleteEntity(selection.id)
-      deleteEmbeddable(selection.id)
-      deleteEnum(selection.id)
-    } else if (selection.type === "edge" && selection.id) {
-      deleteRelationship(selection.id)
-    }
-  }
 
   /**
    * 다이어그램 저장 핸들러
@@ -136,8 +114,6 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
   const handleExport = () => {
     toggleExportModal()
   }
-
-  const hasSelection = uiState.selection.id !== null
 
   return (
     <div
@@ -199,20 +175,6 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
           title="Fit View"
         >
           <Maximize2 className="h-4 w-4" />
-        </Button>
-
-        <ToolbarDivider />
-
-        {/* Delete */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleDelete}
-          disabled={!hasSelection}
-          title="Delete Selected"
-          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-        >
-          <Trash2 className="h-4 w-4" />
         </Button>
 
         {/* Spacer */}

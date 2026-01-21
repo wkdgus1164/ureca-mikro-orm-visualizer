@@ -6,12 +6,11 @@
  * ReactFlow 캔버스에서 MikroORM Entity를 시각적으로 표현
  */
 
-import { memo, useState, useCallback } from "react"
+import { memo } from "react"
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react"
 import type { EntityData } from "@/types/entity"
-import { Key, Fingerprint, Circle, X } from "lucide-react"
+import { Key, Fingerprint, Circle } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useEditorContext } from "@/components/providers/editor-provider"
 
 /**
  * Entity 노드 타입 (ReactFlow Node 확장)
@@ -38,21 +37,8 @@ const handleClassName =
  * <ReactFlow nodeTypes={nodeTypes} />
  * ```
  */
-function EntityNodeComponent({ id, data, selected }: EntityNodeProps) {
+function EntityNodeComponent({ data, selected }: EntityNodeProps) {
   const { name, properties } = data
-  const { deleteEntity } = useEditorContext()
-  const [isHovered, setIsHovered] = useState(false)
-
-  /**
-   * 삭제 버튼 클릭 핸들러
-   */
-  const handleDelete = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation() // 노드 선택 이벤트 방지
-      deleteEntity(id)
-    },
-    [deleteEntity, id]
-  )
 
   return (
     <>
@@ -76,32 +62,12 @@ function EntityNodeComponent({ id, data, selected }: EntityNodeProps) {
       <div
         className={cn(
           "min-w-[180px] max-w-[280px] bg-background rounded-lg shadow-md",
-          "border-2 transition-all relative",
+          "border-2 transition-all",
           selected
             ? "border-primary ring-2 ring-primary/20"
             : "border-border hover:border-muted-foreground/50"
         )}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       >
-        {/* 삭제 버튼 (호버 시에만 표시) */}
-        {isHovered && (
-          <button
-            onClick={handleDelete}
-            className={cn(
-              "absolute -top-2 -right-2 z-10",
-              "w-5 h-5 rounded-full",
-              "bg-destructive text-destructive-foreground",
-              "flex items-center justify-center",
-              "hover:bg-destructive/90 transition-colors",
-              "shadow-sm"
-            )}
-            title="Delete Entity"
-          >
-            <X className="w-3 h-3" />
-          </button>
-        )}
-
         {/* 헤더: Entity 이름 */}
         <div className="px-3 py-2 bg-muted/50 border-b border-border rounded-t-md">
           <div className="text-sm font-semibold flex items-center gap-2">
