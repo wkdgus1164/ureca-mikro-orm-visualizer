@@ -130,7 +130,7 @@ export function generateRelationship(
     // Collection 타입
     lines.push(`${ind}@${decorator}(() => ${targetName}${mappedBy}${options})`)
     lines.push(
-      `${ind}${data.sourceProperty} = new Collection<${targetName}>(this)`
+      `${ind}${data.sourceProperty}: Collection<${targetName}> = new Collection<${targetName}>(this)`
     )
   } else {
     // 단일 참조 타입
