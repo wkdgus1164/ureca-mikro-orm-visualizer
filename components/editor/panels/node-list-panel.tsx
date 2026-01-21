@@ -38,6 +38,15 @@ interface NodeListItemProps {
   onDelete: () => void
 }
 
+/**
+ * Render a selectable list row that displays a node name with a trailing delete button.
+ *
+ * @param name - The display name for the node; shows "Untitled" when falsy.
+ * @param isSelected - When true, applies selected styling to the row.
+ * @param onSelect - Callback invoked when the row is clicked.
+ * @param onDelete - Callback invoked when the delete button is clicked.
+ * @returns A JSX element representing the node list item row.
+ */
 function NodeListItem({
   name,
   isSelected,
@@ -88,6 +97,22 @@ interface CategorySectionProps {
   addLabel?: string
 }
 
+/**
+ * Renders a collapsible category section with a header that displays an icon, title, and item count.
+ *
+ * The section shows `children` inside a collapsible content area and maintains its open/closed state.
+ * If `onAdd` is provided, an Add button is rendered that stops event propagation and invokes `onAdd`;
+ * the button label uses `addLabel` when supplied or defaults to `Add new <title>` (title lowercased).
+ *
+ * @param title - Visible title for the section
+ * @param icon - Icon element shown to the left of the title
+ * @param count - Numeric badge shown on the right of the header
+ * @param defaultOpen - Initial open state of the collapsible section
+ * @param children - Content rendered inside the collapsible area
+ * @param onAdd - Optional callback invoked when the Add button is clicked
+ * @param addLabel - Optional label for the Add button; if omitted a default based on `title` is used
+ * @returns The rendered category section element
+ */
 function CategorySection({
   title,
   icon,
@@ -139,15 +164,11 @@ function CategorySection({
 }
 
 /**
- * 좌측 노드 목록 패널 컴포넌트
+ * Left-side panel that lists nodes grouped into Entities, Embeddables, and Enums and provides selection, add, and delete controls.
  *
- * Entity, Embeddable, Enum 노드를 카테고리별로 그룹화하여 표시
- * 클릭 시 노드 선택 및 우측 패널 열기
+ * Renders collapsible category sections showing counts and items; selecting an item updates editor selection and recenters the canvas, add buttons start a pending-add workflow, and per-item delete actions remove the corresponding node.
  *
- * @example
- * ```tsx
- * <NodeListPanel className="w-60" />
- * ```
+ * @returns The rendered sidebar element containing grouped node lists and their controls.
  */
 export function NodeListPanel({ className }: NodeListPanelProps) {
   const {

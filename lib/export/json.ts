@@ -97,7 +97,10 @@ export interface DiagramJsonSchema {
 // =============================================================================
 
 /**
- * RelationType을 문자열로 변환
+ * Convert a RelationType enum value to its canonical string representation.
+ *
+ * @param relationType - The relation type to convert
+ * @returns The string `"OneToOne"`, `"OneToMany"`, `"ManyToOne"`, or `"ManyToMany"` corresponding to `relationType`
  */
 function relationTypeToString(relationType: RelationType): string {
   switch (relationType) {
@@ -113,7 +116,10 @@ function relationTypeToString(relationType: RelationType): string {
 }
 
 /**
- * EntityProperty를 JsonPropertySchema로 변환
+ * Convert an EntityProperty into a JsonPropertySchema.
+ *
+ * @param property - The entity property to convert
+ * @returns A JsonPropertySchema representing the input property, including optional flags and enum definition when present
  */
 function convertProperty(property: EntityProperty): JsonPropertySchema {
   const result: JsonPropertySchema = {
@@ -145,7 +151,10 @@ function convertProperty(property: EntityProperty): JsonPropertySchema {
 }
 
 /**
- * EntityIndex를 JsonIndexSchema로 변환
+ * Convert an EntityIndex into its JSON Schema representation.
+ *
+ * @param index - The entity index to convert
+ * @returns The corresponding JsonIndexSchema containing `properties`, `isUnique`, and `name` when present
  */
 function convertIndex(index: EntityIndex): JsonIndexSchema {
   const result: JsonIndexSchema = {
@@ -161,7 +170,10 @@ function convertIndex(index: EntityIndex): JsonIndexSchema {
 }
 
 /**
- * EntityData를 JsonEntitySchema로 변환
+ * Convert an entity definition into a JSON Schema representation.
+ *
+ * @param data - The entity definition to convert.
+ * @returns The JSON Schema object representing the entity, including its properties; includes `tableName` and `indexes` when present.
  */
 function convertEntityData(data: EntityData): JsonEntitySchema {
   const result: JsonEntitySchema = {
@@ -182,7 +194,10 @@ function convertEntityData(data: EntityData): JsonEntitySchema {
 }
 
 /**
- * EmbeddableData를 JsonEmbeddableSchema로 변환
+ * Convert an EmbeddableData object into a JsonEmbeddableSchema.
+ *
+ * @param data - The embeddable definition to convert
+ * @returns The corresponding JsonEmbeddableSchema with `kind: "embeddable"`, `name`, and converted `properties`
  */
 function convertEmbeddableData(data: EmbeddableData): JsonEmbeddableSchema {
   return {
@@ -193,7 +208,13 @@ function convertEmbeddableData(data: EmbeddableData): JsonEmbeddableSchema {
 }
 
 /**
- * RelationshipData를 JsonRelationshipSchema로 변환
+ * Convert a relationship edge into a JsonRelationshipSchema.
+ *
+ * Returns `null` if the edge has no relationship data or if the source or target node cannot be resolved from `nodes`.
+ *
+ * @param edge - The relationship edge to convert
+ * @param nodes - Array of diagram nodes used to resolve source and target node names
+ * @returns A JsonRelationshipSchema describing the relationship, or `null` if conversion cannot be performed
  */
 function convertRelationship(
   edge: RelationshipEdge,
@@ -239,17 +260,11 @@ function convertRelationship(
 // =============================================================================
 
 /**
- * 다이어그램을 JSON Schema로 변환
+ * Produce a DiagramJsonSchema representing the provided diagram nodes and relationship edges.
  *
- * @param nodes - 모든 다이어그램 노드 (Entity + Embeddable)
- * @param edges - Relationship 엣지 목록
- * @returns JSON Schema 객체
- *
- * @example
- * ```ts
- * const schema = generateJsonSchema(nodes, edges)
- * const jsonString = JSON.stringify(schema, null, 2)
- * ```
+ * @param nodes - Array of diagram nodes (entities and embeddables)
+ * @param edges - Array of relationship edges connecting the nodes
+ * @returns A DiagramJsonSchema object containing `version`, `metadata` (`exportedAt`, `nodeCount`, `relationshipCount`), `entities`, `embeddables`, and `relationships`
  */
 export function generateJsonSchema(
   nodes: DiagramNode[],
@@ -287,11 +302,11 @@ export function generateJsonSchema(
 }
 
 /**
- * JSON Schema를 포맷된 문자열로 변환
+ * Format a DiagramJsonSchema as a pretty-printed JSON string.
  *
- * @param schema - JSON Schema 객체
- * @param indent - 들여쓰기 크기 (기본: 2)
- * @returns 포맷된 JSON 문자열
+ * @param schema - The DiagramJsonSchema to stringify
+ * @param indent - Number of spaces to use for indentation (default: 2)
+ * @returns The formatted JSON string representing `schema`
  */
 export function stringifyJsonSchema(
   schema: DiagramJsonSchema,
@@ -301,12 +316,12 @@ export function stringifyJsonSchema(
 }
 
 /**
- * 다이어그램을 JSON 문자열로 직접 변환
+ * Convert diagram nodes and relationships into a formatted JSON string.
  *
- * @param nodes - 모든 다이어그램 노드
- * @param edges - Relationship 엣지 목록
- * @param indent - 들여쓰기 크기 (기본: 2)
- * @returns 포맷된 JSON 문자열
+ * @param nodes - All diagram nodes to include in the export
+ * @param edges - Relationship edges to include in the export
+ * @param indent - Number of spaces to use for indentation (default: 2)
+ * @returns The formatted JSON string representing the diagram schema
  */
 export function exportDiagramAsJson(
   nodes: DiagramNode[],

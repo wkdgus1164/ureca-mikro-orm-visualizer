@@ -50,18 +50,14 @@ interface EditorCanvasProps {
 }
 
 /**
- * 에디터 캔버스 컴포넌트
+ * Render the main editor canvas used to visually create and edit MikroORM entity diagrams.
  *
- * @example
- * ```tsx
- * export default function EditorPage() {
- *   return (
- *     <div className="h-screen w-full">
- *       <EditorCanvas />
- *     </div>
- *   )
- * }
- * ```
+ * Renders a React Flow canvas with registered custom node and edge types, selection handlers,
+ * pane and mouse event handling, a minimap, background grid, zoom controls, and a ghost-node
+ * preview when a node is being added.
+ *
+ * @param className - Optional additional CSS class applied to the canvas container
+ * @returns The React element for the editor canvas
  */
 export function EditorCanvas({ className }: EditorCanvasProps) {
   const {

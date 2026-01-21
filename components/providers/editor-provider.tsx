@@ -17,9 +17,10 @@ import { useEditor, type UseEditorReturn } from "@/hooks/use-editor"
 const EditorContext = createContext<UseEditorReturn | null>(null)
 
 /**
- * 에디터 상태 사용 훅
+ * Accesses the editor state provided by the nearest EditorProvider.
  *
- * @throws Context 외부에서 호출 시 에러
+ * @returns The shared editor state (`UseEditorReturn`) from context.
+ * @throws Error if called outside of an EditorProvider
  */
 export function useEditorContext(): UseEditorReturn {
   const context = useContext(EditorContext)
@@ -34,7 +35,9 @@ interface EditorProviderProps {
 }
 
 /**
- * 에디터 상태를 제공하는 내부 Provider
+ * Provides editor state to descendant components via EditorContext.
+ *
+ * @param children - The React nodes rendered inside the provider
  */
 function EditorContextProvider({ children }: EditorProviderProps) {
   const editorState = useEditor()
@@ -47,9 +50,9 @@ function EditorContextProvider({ children }: EditorProviderProps) {
 }
 
 /**
- * 에디터 Provider 컴포넌트
+ * Provides editor state and React Flow context to descendant components.
  *
- * ReactFlowProvider와 EditorContext를 함께 제공
+ * Composes ReactFlowProvider and the internal EditorContextProvider so children can access the shared editor state and React Flow APIs.
  *
  * @example
  * ```tsx

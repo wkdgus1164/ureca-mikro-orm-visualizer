@@ -107,7 +107,9 @@ export const RELATION_TYPE_DECORATORS: Record<RelationType, string> = {
 }
 
 /**
- * 새 Relationship 생성을 위한 기본값 팩토리
+ * Create a RelationshipEdge populated with sensible defaults for a new relationship.
+ *
+ * @returns A RelationshipEdge configured with `relationType` set to `RelationType.OneToMany`, `fetchType` set to `FetchType.Lazy`, `isNullable: true`, `cascade: false`, and `orphanRemoval: false`
  */
 export function createDefaultRelationship(
   id: string,
@@ -132,10 +134,9 @@ export function createDefaultRelationship(
 }
 
 /**
- * 관계의 역방향 타입 반환
+ * Get the inverse RelationType for a given relation.
  *
- * @example
- * getInverseRelationType(RelationType.OneToMany) // RelationType.ManyToOne
+ * @returns The corresponding inverse `RelationType` (OneToMany ↔ ManyToOne; OneToOne and ManyToMany map to themselves)
  */
 export function getInverseRelationType(type: RelationType): RelationType {
   switch (type) {

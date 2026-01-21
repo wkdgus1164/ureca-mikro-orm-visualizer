@@ -190,7 +190,11 @@ export const PROPERTY_TYPES = [
 export type PropertyType = (typeof PROPERTY_TYPES)[number] | string
 
 /**
- * 새 Entity 생성을 위한 기본값 팩토리
+ * Create a default Entity node for the diagram.
+ *
+ * @param id - The node's unique identifier (UUID)
+ * @param position - The node's canvas position with `x` and `y` coordinates
+ * @returns An `EntityNode` initialized with name `"NewEntity"` and a single primary key property named `id`
  */
 export function createDefaultEntity(
   id: string,
@@ -217,7 +221,10 @@ export function createDefaultEntity(
 }
 
 /**
- * 새 Property 생성을 위한 기본값 팩토리
+ * Create a new EntityProperty with sensible defaults.
+ *
+ * @param id - The unique identifier for the new property
+ * @returns An EntityProperty with `name` set to `"newProperty"`, `type` set to `"string"`, `isPrimaryKey` `false`, `isUnique` `false`, and `isNullable` `true`
  */
 export function createDefaultProperty(id: string): EntityProperty {
   return {
@@ -269,7 +276,11 @@ export interface EmbeddableNode {
 }
 
 /**
- * 새 Embeddable 생성을 위한 기본값 팩토리
+ * Create a default Embeddable node for the diagram.
+ *
+ * @param id - Unique node id used for the node and its default property id
+ * @param position - Canvas coordinates for the node's initial position
+ * @returns An `EmbeddableNode` with `data.name` set to `"NewEmbeddable"` and a single default property (`id: \`${id}-prop-1\`, `name`: `"value"`, `type`: `"string"`, not a primary key, not unique, not nullable)
  */
 export function createDefaultEmbeddable(
   id: string,
@@ -296,7 +307,11 @@ export function createDefaultEmbeddable(
 }
 
 /**
- * 새 Enum 생성을 위한 기본값 팩토리
+ * Create a default Enum node for the diagram.
+ *
+ * @param id - The node's unique identifier (UUID)
+ * @param position - The canvas position for the node
+ * @returns An `EnumNode` with `name` set to `"NewEnum"` and two default enum values
  */
 export function createDefaultEnum(
   id: string,
@@ -322,21 +337,27 @@ export function createDefaultEnum(
 export type DiagramNode = EntityNode | EmbeddableNode | EnumNode
 
 /**
- * 노드가 Entity인지 확인하는 타입 가드
+ * Determines whether a diagram node is an entity node.
+ *
+ * @returns `true` if the node's type is "entity", `false` otherwise.
  */
 export function isEntityNode(node: DiagramNode): node is EntityNode {
   return node.type === "entity"
 }
 
 /**
- * 노드가 Embeddable인지 확인하는 타입 가드
+ * Determines whether a diagram node is an embeddable node.
+ *
+ * @returns `true` if the node's type is `"embeddable"`, `false` otherwise.
  */
 export function isEmbeddableNode(node: DiagramNode): node is EmbeddableNode {
   return node.type === "embeddable"
 }
 
 /**
- * 노드가 Enum인지 확인하는 타입 가드
+ * Determines whether a diagram node represents an enum.
+ *
+ * @returns `true` if `node` is an `EnumNode`, `false` otherwise.
  */
 export function isEnumNode(node: DiagramNode): node is EnumNode {
   return node.type === "enum"

@@ -34,19 +34,22 @@ interface EditorToolbarProps {
 }
 
 /**
- * 툴바 구분선 컴포넌트
+ * Renders a vertical divider used to separate groups of toolbar controls.
  */
 function ToolbarDivider() {
   return <div className="h-6 w-px bg-border" />
 }
 
 /**
- * 에디터 툴바 컴포넌트
+ * Render the editor toolbar with controls for undo/redo placeholders, zoom, fit view,
+ * load/save/export actions, and a theme toggle.
  *
- * @example
- * ```tsx
- * <EditorToolbar />
- * ```
+ * The toolbar integrates with the editor context and React Flow:
+ * - Save validates that the diagram contains nodes before downloading the diagram file.
+ * - Load opens a file picker, parses a diagram file, and loads nodes/edges into the editor.
+ * - Export opens the export modal.
+ *
+ * @param className - Optional additional CSS classes applied to the toolbar container
  */
 export function EditorToolbar({ className }: EditorToolbarProps) {
   const {

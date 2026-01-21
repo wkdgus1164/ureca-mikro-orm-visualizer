@@ -25,12 +25,9 @@ interface ZoomSliderProps {
 }
 
 /**
- * 줌 슬라이더 컴포넌트
+ * Render a zoom control UI with minus/plus buttons and a draggable slider that updates the viewport zoom.
  *
- * @example
- * ```tsx
- * <ZoomSlider className="absolute bottom-4 left-1/2 -translate-x-1/2" />
- * ```
+ * @returns The JSX element for the zoom control component.
  */
 export function ZoomSlider({ className }: ZoomSliderProps) {
   const { zoomTo } = useReactFlow()

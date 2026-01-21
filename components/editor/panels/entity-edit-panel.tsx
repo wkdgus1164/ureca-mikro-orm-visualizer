@@ -27,9 +27,11 @@ interface EntityEditInnerProps {
 }
 
 /**
- * Entity 편집 내부 컴포넌트
+ * Renders an inline editor for a selected Entity and applies edits through the editor context.
  *
- * 선택된 노드가 있을 때만 렌더링되는 내부 컴포넌트
+ * Displays controls to edit the entity name, manage properties (add, update, delete), and manage indexes (add, update, delete). All modifications are propagated immediately to the underlying entity via the editor context.
+ *
+ * @param selectedNode - The entity node being edited; its data provides the current name, properties, and indexes shown in the UI.
  */
 function EntityEditInner({ selectedNode }: EntityEditInnerProps) {
   const { updateEntity, getAllEnums } = useEditorContext()
@@ -207,16 +209,11 @@ function EntityEditInner({ selectedNode }: EntityEditInnerProps) {
 }
 
 /**
- * Entity 편집 컨텐츠 컴포넌트
+ * Renders an in-panel editor for the currently selected entity inside the property sidebar.
  *
- * PropertySidebar 내부에 렌더링되며, 변경 시 즉시 반영
+ * If no entity is selected, the component renders `null`.
  *
- * @example
- * ```tsx
- * <PropertySidebar>
- *   <EntityEditContent />
- * </PropertySidebar>
- * ```
+ * @returns The editor UI as a `JSX.Element`, or `null` when there is no selected entity.
  */
 export function EntityEditContent() {
   const { getSelectedNode } = useEditorContext()

@@ -30,12 +30,9 @@ const handleClassName =
   "!w-2.5 !h-2.5 !bg-violet-500 !border-2 !border-background hover:!bg-violet-400 transition-colors"
 
 /**
- * Embeddable 노드 컴포넌트
+ * Render a React Flow node that visually represents a MikroORM Embeddable entity.
  *
- * Entity와 시각적으로 구분되는 특징:
- * - 보라색 테마 (Entity는 기본 primary 색상)
- * - Package 아이콘 (Entity는 Circle)
- * - 점선 테두리 스타일
+ * Renders a compact card styled with a violet theme, a Package icon, and a dashed border to distinguish embeddables from regular entities; includes connection handles on top, left (targets) and right, bottom (sources), and lists the embeddable's properties or shows "No properties" when empty.
  *
  * @example
  * ```tsx

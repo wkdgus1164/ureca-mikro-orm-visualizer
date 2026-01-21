@@ -18,6 +18,14 @@ export const metadata = {
   description: "Visual editor for designing MikroORM entities",
 }
 
+/**
+ * Root editor page that provides editor context and renders the editor UI.
+ *
+ * Renders an EditorProvider that wraps the main editor surface, including the top toolbar,
+ * the three-panel editor layout (left node list, center canvas, right properties), and the export modal.
+ *
+ * @returns The React element for the editor page: an EditorProvider wrapping the main editor structure.
+ */
 export default function EditorPage() {
   return (
     <EditorProvider>
