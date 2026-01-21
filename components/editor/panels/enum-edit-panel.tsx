@@ -23,9 +23,10 @@ interface EnumEditInnerProps {
 }
 
 /**
- * Enum 편집 내부 컴포넌트
+ * Renders an editor UI for a selected enum, allowing immediate updates to its name and values.
  *
- * 선택된 Enum이 있을 때만 렌더링되는 내부 컴포넌트
+ * @param selectedEnum - The EnumNode currently selected for editing.
+ * @returns The UI element that lets users edit the enum's name and list of key/value entries.
  */
 function EnumEditInner({ selectedEnum }: EnumEditInnerProps) {
   const { updateEnum } = useEditorContext()
@@ -162,16 +163,11 @@ function EnumEditInner({ selectedEnum }: EnumEditInnerProps) {
 }
 
 /**
- * Enum 편집 컨텐츠 컴포넌트
+ * Renders an inline editor for the currently selected enum within a PropertySidebar.
  *
- * PropertySidebar 내부에 렌더링되며, 변경 시 즉시 반영
+ * When no enum is selected, renders `null`.
  *
- * @example
- * ```tsx
- * <PropertySidebar>
- *   <EnumEditContent />
- * </PropertySidebar>
- * ```
+ * @returns The editor component for the selected enum, or `null` if none is selected.
  */
 export function EnumEditContent() {
   const { getSelectedEnum } = useEditorContext()

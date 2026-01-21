@@ -5,6 +5,12 @@ import * as LabelPrimitive from "@radix-ui/react-label"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * A UI Label component that wraps Radix's Label.Root, applies default styling, and forwards props.
+ *
+ * @param className - Additional class names to append to the component's default classes
+ * @returns The rendered Radix Label Root element with merged class names and forwarded props
+ */
 function Label({
   className,
   ...props

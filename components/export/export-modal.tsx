@@ -60,12 +60,12 @@ interface ExportModalProps {
 }
 
 /**
- * Export 모달 컴포넌트
+ * Render an export modal that lets users preview and export the current diagram as TypeScript classes, a JSON schema, or an image.
  *
- * @example
- * ```tsx
- * <ExportModal isOpen={showExport} onClose={() => setShowExport(false)} />
- * ```
+ * The modal derives code and schema from editor nodes/edges when opened, provides per-entity TypeScript previews with copy/download actions, a JSON schema preview with copy/download actions, and image export options (format and scale) with download.
+ *
+ * @param isOpen - Whether the modal is visible.
+ * @param onClose - Callback invoked when the modal should be closed.
  */
 export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const { nodes, edges } = useEditorContext()

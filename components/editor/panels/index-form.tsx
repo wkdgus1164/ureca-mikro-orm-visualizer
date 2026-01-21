@@ -32,7 +32,12 @@ interface IndexFormProps {
 }
 
 /**
- * Index 편집 폼 컴포넌트
+ * Renders a collapsible editor for an EntityIndex, allowing the user to edit the index name, toggle uniqueness, select properties, and delete the index.
+ *
+ * @param index - The EntityIndex being edited.
+ * @param availableProperties - List of properties available for inclusion in the index.
+ * @param onChange - Called with the updated EntityIndex whenever any field changes.
+ * @param onDelete - Called when the delete action is triggered.
  *
  * @example
  * ```tsx

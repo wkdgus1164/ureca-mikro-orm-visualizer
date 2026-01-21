@@ -46,12 +46,15 @@ export interface LoadDiagramResult {
 }
 
 /**
- * 다이어그램 데이터를 JSON 파일 형식으로 변환
+ * Create a serializable DiagramFile from node and edge lists.
  *
- * @param nodes - 노드 목록
- * @param edges - 엣지 목록
- * @param name - 다이어그램 이름 (선택)
- * @returns DiagramFile 객체
+ * Nodes and edges are normalized by removing transient UI state (e.g., selection or dragging)
+ * before being stored in the file metadata.
+ *
+ * @param nodes - Array of diagram nodes; transient UI state will be stripped
+ * @param edges - Array of relationship edges; transient UI state will be stripped
+ * @param name - Optional diagram name to include in the file metadata
+ * @returns A DiagramFile containing the version, metadata (createdAt, updatedAt, name), and cleaned nodes and edges
  */
 export function createDiagramFile(
   nodes: DiagramNode[],
@@ -92,21 +95,20 @@ export function createDiagramFile(
 }
 
 /**
- * DiagramFile을 JSON 문자열로 변환
+ * Convert a DiagramFile into a human-readable JSON string.
  *
- * @param file - DiagramFile 객체
- * @returns 포맷된 JSON 문자열
+ * @returns A JSON string representation of the DiagramFile formatted with 2-space indentation
  */
 export function stringifyDiagramFile(file: DiagramFile): string {
   return JSON.stringify(file, null, 2)
 }
 
 /**
- * 다이어그램을 JSON 파일로 다운로드
+ * Trigger a browser download of the diagram as a `.mikro-diagram.json` file.
  *
- * @param nodes - 노드 목록
- * @param edges - 엣지 목록
- * @param filename - 파일명 (확장자 제외)
+ * @param nodes - Diagram nodes to include in the exported file
+ * @param edges - Diagram edges to include in the exported file
+ * @param filename - Base filename to use for the download (without extension)
  */
 export function downloadDiagram(
   nodes: DiagramNode[],
@@ -131,10 +133,13 @@ export function downloadDiagram(
 }
 
 /**
- * JSON 문자열을 DiagramFile로 파싱
+ * Parse a JSON string into a DiagramFile and validate its structure.
  *
- * @param jsonString - JSON 문자열
- * @returns 파싱 결과
+ * Validates top-level object shape and the presence/types of `version`, `nodes`, and `edges`,
+ * and ensures each node and edge conforms to expected schemas.
+ *
+ * @param jsonString - JSON text representing a serialized diagram file
+ * @returns A LoadDiagramResult: `success: true` with `data` containing the parsed `DiagramFile` when valid; `success: false` with `error` describing the validation or parse failure otherwise
  */
 export function parseDiagramFile(jsonString: string): LoadDiagramResult {
   try {
@@ -188,7 +193,10 @@ export function parseDiagramFile(jsonString: string): LoadDiagramResult {
 }
 
 /**
- * 노드 유효성 검증
+ * Checks whether a value conforms to the expected diagram node shape.
+ *
+ * @param node - The value to validate as a diagram node
+ * @returns `true` if `node` has a string `id`, a string `type`, and non-null object `position` and `data`, `false` otherwise
  */
 function isValidNode(node: unknown): boolean {
   if (typeof node !== "object" || node === null) return false
@@ -206,7 +214,10 @@ function isValidNode(node: unknown): boolean {
 }
 
 /**
- * 엣지 유효성 검증
+ * Check whether a value conforms to the required relationship edge structure.
+ *
+ * @param edge - The value to validate as an edge object
+ * @returns `true` if `edge` is an object with string `id`, `source`, and `target`; `false` otherwise
  */
 function isValidEdge(edge: unknown): boolean {
   if (typeof edge !== "object" || edge === null) return false
@@ -221,10 +232,10 @@ function isValidEdge(edge: unknown): boolean {
 }
 
 /**
- * 파일 입력으로부터 다이어그램 불러오기
+ * Load a diagram from a File object and parse it into a DiagramFile structure.
  *
- * @param file - 파일 객체
- * @returns Promise<LoadDiagramResult>
+ * @param file - The input File to read and parse
+ * @returns A LoadDiagramResult containing `data` with the parsed DiagramFile on success, or `error` with a message on failure
  */
 export async function loadDiagramFromFile(
   file: File

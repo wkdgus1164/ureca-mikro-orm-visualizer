@@ -5,6 +5,16 @@ import * as SliderPrimitive from "@radix-ui/react-slider"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * A styled Slider component built on Radix UI that supports single-value or range sliders and horizontal/vertical orientation.
+ *
+ * @param className - Additional CSS classes to apply to the root slider element
+ * @param defaultValue - Initial value or values for an uncontrolled slider
+ * @param value - Controlled value or values for the slider
+ * @param min - Minimum slider value (defaults to 0)
+ * @param max - Maximum slider value (defaults to 100)
+ * @returns The rendered Slider React element
+ */
 function Slider({
   className,
   defaultValue,

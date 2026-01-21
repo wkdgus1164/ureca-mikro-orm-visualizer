@@ -54,21 +54,13 @@ const nodeTypeConfig = {
 }
 
 /**
- * Ghost 노드 컴포넌트
+ * Renders a translucent, non-interactive preview of a node at a target flow position synchronized with the ReactFlow viewport.
  *
- * 반투명 미리보기로 노드가 생성될 위치를 시각적으로 표시
- * ReactFlow의 viewport transform과 동기화되어 zoom/pan 상태에서도 정확한 위치 표시
+ * The preview converts flow coordinates to screen coordinates using the viewport's pan (x, y) and zoom, and it centers and scales itself to match the current zoom level.
  *
- * @example
- * ```tsx
- * {uiState.pendingAdd && uiState.mousePosition && (
- *   <GhostNode
- *     type={uiState.pendingAdd}
- *     position={uiState.mousePosition}
- *     viewport={viewport}
- *   />
- * )}
- * ```
+ * @param type - The pending node type to preview (selects icon, label, and styling)
+ * @param position - Target position in ReactFlow flow coordinates ({ x, y })
+ * @param viewport - ReactFlow viewport containing pan offsets and zoom ({ x, y, zoom })
  */
 function GhostNodeComponent({ type, position, viewport }: GhostNodeProps) {
   const config = nodeTypeConfig[type]

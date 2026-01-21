@@ -122,22 +122,20 @@ export interface UseEditorReturn {
 }
 
 /**
- * UUID 생성 헬퍼
+ * Generate an RFC 4122 v4 UUID string.
+ *
+ * @returns An RFC 4122 v4 UUID string.
  */
 function generateId(): string {
   return crypto.randomUUID()
 }
 
 /**
- * 고유한 이름 생성 헬퍼
+ * Produce a unique name by appending a numeric suffix to `baseName` when needed.
  *
- * 기존 이름들 중 baseName과 "baseName N" 패턴을 검사하여
- * 사용 가능한 다음 번호를 가진 이름을 반환
- *
- * @example
- * generateUniqueName("NewEntity", ["NewEntity", "NewEntity 1"]) // "NewEntity 2"
- * generateUniqueName("NewEntity", []) // "NewEntity"
- * generateUniqueName("NewEntity", ["NewEntity"]) // "NewEntity 1"
+ * @param baseName - The desired base name to make unique
+ * @param existingNames - Array of names to check for collisions
+ * @returns `baseName` if it does not exist in `existingNames`; otherwise `baseName N` where `N` is the next available integer suffix
  */
 function generateUniqueName(baseName: string, existingNames: string[]): string {
   // 기본 이름이 없으면 그대로 반환
@@ -175,15 +173,17 @@ const NODE_SIZE_ESTIMATES = {
 } as const
 
 /**
- * 에디터 상태 관리 훅
+ * Centralized React hook that manages diagram editor state and provides actions to manipulate nodes, edges, selection, and UI.
  *
- * @example
- * ```tsx
- * function EditorCanvas() {
- *   const { nodes, edges, onNodesChange, onEdgesChange, onConnect } = useEditor()
- *   return <ReactFlow nodes={nodes} edges={edges} ... />
- * }
- * ```
+ * Exposes node and edge state synchronized with React Flow, handlers for node/edge changes and connections, CRUD operations
+ * for Entity/Embeddable/Enum nodes and Relationship edges, selection and right-panel controls, pending-add (ghost) workflow,
+ * diagram load/clear utilities, and convenience getters.
+ *
+ * @returns An object containing editor state and actions, including `nodes`, `edges`, `onNodesChange`, `onEdgesChange`, `onConnect`,
+ * CRUD methods for entities/embeddables/enums and relationships, UI state and toggles (`uiState`, `setSelection`, `toggleRightPanel`, `closeRightPanel`,
+ * `toggleConnecting`, `toggleExportModal`), selection getters (`getSelectedNode`, `getSelectedEnum`, `getSelectedEdge`), diagram operations
+ * (`loadDiagram`, `clearDiagram`), enum helpers (`getAllEnums`), pending-add controls (`startPendingAdd`, `cancelPendingAdd`, `updateMousePosition`, `finalizePendingAdd`),
+ * and the `setNodes` setter for external synchronization.
  */
 export function useEditor(): UseEditorReturn {
   // ReactFlow 노드/엣지 상태

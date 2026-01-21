@@ -10,10 +10,11 @@ import { useEditorContext } from "@/components/providers/editor-provider"
 import { ExportModal } from "./export-modal"
 
 /**
- * Export 모달 래퍼
+ * Connects editor context modal state to the ExportModal component.
  *
- * Context의 isExportModalOpen 상태와 toggleExportModal을 사용하여
- * ExportModal을 제어
+ * Renders ExportModal with its `isOpen` driven by the editor UI state and `onClose` bound to the context's toggle handler.
+ *
+ * @returns The ExportModal component with visibility and close behavior bound to the editor context.
  *
  * @example
  * ```tsx

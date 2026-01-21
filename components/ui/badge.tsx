@@ -25,6 +25,18 @@ const badgeVariants = cva(
   }
 )
 
+/**
+ * Render a styled badge element using variant-driven classes.
+ *
+ * Renders either a span or a Radix Slot (when `asChild` is true) with computed
+ * badge classes and all forwarded props. The rendered element includes
+ * `data-slot="badge"`.
+ *
+ * @param asChild - When true, render a Radix Slot so the badge can be used as a child element.
+ * @param variant - Visual variant of the badge (e.g., "default", "secondary", "destructive", "outline").
+ * @param className - Additional class names appended to the badge's computed classes.
+ * @returns The rendered badge element (a span or Slot) with applied classes and forwarded props.
+ */
 function Badge({
   className,
   variant,
