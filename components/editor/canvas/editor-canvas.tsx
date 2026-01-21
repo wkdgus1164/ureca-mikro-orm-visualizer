@@ -21,6 +21,7 @@ import "@xyflow/react/dist/style.css"
 import { useEditor } from "@/hooks/use-editor"
 import { cn } from "@/lib/utils"
 import { EntityNode } from "@/components/editor/nodes/entity-node"
+import { RelationshipEdge } from "@/components/editor/edges/relationship-edge"
 
 /**
  * 커스텀 노드 타입 등록
@@ -30,9 +31,11 @@ const nodeTypes = {
 }
 
 /**
- * 커스텀 엣지 타입 등록 (Task 1.5에서 추가 예정)
+ * 커스텀 엣지 타입 등록
  */
-const edgeTypes = {}
+const edgeTypes = {
+  relationship: RelationshipEdge,
+}
 
 interface EditorCanvasProps {
   /** 추가 CSS 클래스 */
