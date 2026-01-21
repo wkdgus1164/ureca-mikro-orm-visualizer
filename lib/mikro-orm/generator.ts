@@ -11,6 +11,7 @@ import type {
   EntityProperty,
   EmbeddableNode,
   DiagramNode,
+  EnumDefinition,
 } from "@/types/entity"
 import { isEntityNode, isEmbeddableNode } from "@/types/entity"
 import type { RelationshipEdge, RelationshipData } from "@/types/relationship"
@@ -36,6 +37,73 @@ const DEFAULT_OPTIONS: GeneratorOptions = {
  */
 function indent(level: number, size: number = 2): string {
   return " ".repeat(level * size)
+}
+
+// =============================================================================
+// Enum 코드 생성 (Phase 2)
+// =============================================================================
+
+/**
+ * Property 목록에서 고유한 Enum 정의를 수집
+ *
+ * @param properties - Property 목록
+ * @returns 고유한 Enum 정의 배열 (이름 기준 중복 제거)
+ */
+function collectEnumDefinitions(properties: EntityProperty[]): EnumDefinition[] {
+  const enumMap = new Map<string, EnumDefinition>()
+
+  for (const prop of properties) {
+    if (prop.type === "enum" && prop.enumDef) {
+      // 이름 기준으로 중복 제거 (동일 이름이면 마지막 정의 사용)
+      enumMap.set(prop.enumDef.name, prop.enumDef)
+    }
+  }
+
+  return Array.from(enumMap.values())
+}
+
+/**
+ * Enum 정의를 TypeScript enum 코드로 변환
+ *
+ * @param enumDef - Enum 정의
+ * @returns 생성된 TypeScript enum 코드
+ *
+ * @example
+ * ```ts
+ * const code = generateEnumCode({ name: "UserRole", values: [{ key: "Admin", value: "admin" }] })
+ * // 결과:
+ * // export enum UserRole {
+ * //   Admin = "admin",
+ * // }
+ * ```
+ */
+function generateEnumCode(enumDef: EnumDefinition): string {
+  const lines: string[] = []
+
+  lines.push(`export enum ${enumDef.name} {`)
+
+  for (const enumValue of enumDef.values) {
+    // 값이 숫자인지 문자열인지 판단
+    const isNumeric = !isNaN(Number(enumValue.value)) && enumValue.value !== ""
+    const formattedValue = isNumeric ? enumValue.value : `"${enumValue.value}"`
+    lines.push(`  ${enumValue.key} = ${formattedValue},`)
+  }
+
+  lines.push("}")
+
+  return lines.join("\n")
+}
+
+/**
+ * 여러 Enum 정의를 TypeScript 코드로 변환
+ *
+ * @param enumDefs - Enum 정의 배열
+ * @returns 생성된 TypeScript enum 코드 (줄바꿈으로 구분)
+ */
+function generateAllEnumsCode(enumDefs: EnumDefinition[]): string {
+  if (enumDefs.length === 0) return ""
+
+  return enumDefs.map(generateEnumCode).join("\n\n")
 }
 
 /**
@@ -83,6 +151,15 @@ function generateProperty(
 
   if (property.isPrimaryKey) {
     lines.push(`${ind}@PrimaryKey()`)
+  } else if (property.type === "enum" && property.enumDef) {
+    // Enum 타입 처리 (Phase 2)
+    const enumName = property.enumDef.name
+    const options = generatePropertyOptions(property)
+    if (options) {
+      lines.push(`${ind}@Enum({ items: () => ${enumName}, ${options.slice(2, -2)} })`)
+    } else {
+      lines.push(`${ind}@Enum(() => ${enumName})`)
+    }
   } else {
     const options = generatePropertyOptions(property)
     lines.push(`${ind}@Property(${options})`)
@@ -90,7 +167,11 @@ function generateProperty(
 
   // 타입 선언
   const nullable = property.isNullable ? "?" : "!"
-  lines.push(`${ind}${property.name}${nullable}: ${property.type}`)
+  // Enum인 경우 enum 이름을 타입으로 사용
+  const propertyType = property.type === "enum" && property.enumDef
+    ? property.enumDef.name
+    : property.type
+  lines.push(`${ind}${property.name}${nullable}: ${propertyType}`)
 
   return lines.join("\n")
 }
@@ -209,9 +290,20 @@ function collectImports(
     decorators.add("PrimaryKey")
   }
 
-  const hasRegularProps = entity.data.properties.some((p) => !p.isPrimaryKey)
+  // Enum이 아닌 일반 프로퍼티가 있는지 확인
+  const hasRegularProps = entity.data.properties.some(
+    (p) => !p.isPrimaryKey && p.type !== "enum"
+  )
   if (hasRegularProps) {
     decorators.add("Property")
+  }
+
+  // Enum 타입 프로퍼티 확인 (Phase 2)
+  const hasEnumProps = entity.data.properties.some(
+    (p) => p.type === "enum" && p.enumDef
+  )
+  if (hasEnumProps) {
+    decorators.add("Enum")
   }
 
   // Indexes (Phase 2)
@@ -356,6 +448,9 @@ export function generateEntityCode(
   const { decorators, relatedEntities, needsCollection, needsCascade } =
     collectImports(entity, edges, allNodes)
 
+  // Enum 정의 수집 (Phase 2)
+  const enumDefs = collectEnumDefinitions(entity.data.properties)
+
   const lines: string[] = []
 
   // Import 문
@@ -367,6 +462,13 @@ export function generateEntityCode(
   )
   lines.push(imports)
   lines.push("")
+
+  // Enum 정의 (Phase 2 - Import 문 뒤, 클래스 앞)
+  const enumsCode = generateAllEnumsCode(enumDefs)
+  if (enumsCode) {
+    lines.push(enumsCode)
+    lines.push("")
+  }
 
   // Index/Unique 데코레이터 (Phase 2)
   const indexDecorators = generateIndexDecorators(entity)
@@ -478,15 +580,35 @@ export function generateEmbeddableCode(
 
   // Import 문 (Embeddable은 관계가 없으므로 간단)
   const decorators = new Set<string>(["Embeddable"])
-  const hasProps = embeddable.data.properties.length > 0
-  if (hasProps) {
+
+  // Enum이 아닌 일반 프로퍼티가 있는지 확인
+  const hasRegularProps = embeddable.data.properties.some(
+    (p) => !p.isPrimaryKey && p.type !== "enum"
+  )
+  if (hasRegularProps) {
     decorators.add("Property")
+  }
+
+  // Enum 타입 프로퍼티 확인 (Phase 2)
+  const hasEnumProps = embeddable.data.properties.some(
+    (p) => p.type === "enum" && p.enumDef
+  )
+  if (hasEnumProps) {
+    decorators.add("Enum")
   }
 
   lines.push(
     `import { ${[...decorators].sort().join(", ")} } from "@mikro-orm/core"`
   )
   lines.push("")
+
+  // Enum 정의 (Phase 2)
+  const enumDefs = collectEnumDefinitions(embeddable.data.properties)
+  const enumsCode = generateAllEnumsCode(enumDefs)
+  if (enumsCode) {
+    lines.push(enumsCode)
+    lines.push("")
+  }
 
   // Embeddable 데코레이터
   lines.push("@Embeddable()")

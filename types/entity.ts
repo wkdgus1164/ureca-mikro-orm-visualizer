@@ -10,6 +10,41 @@
 export type NodeKind = "entity" | "embeddable"
 
 /**
+ * Enum 값 정의 (Phase 2)
+ *
+ * @example
+ * const adminValue: EnumValue = {
+ *   key: "Admin",
+ *   value: "admin",
+ * }
+ */
+export interface EnumValue {
+  /** Enum 키 (예: "Admin", "User") */
+  key: string
+  /** Enum 값 (예: "admin", "user") */
+  value: string
+}
+
+/**
+ * Enum 정의 (Phase 2)
+ *
+ * @example
+ * const userRole: EnumDefinition = {
+ *   name: "UserRole",
+ *   values: [
+ *     { key: "Admin", value: "admin" },
+ *     { key: "User", value: "user" },
+ *   ],
+ * }
+ */
+export interface EnumDefinition {
+  /** Enum 이름 (예: "UserRole", "PostStatus") */
+  name: string
+  /** Enum 값 목록 */
+  values: EnumValue[]
+}
+
+/**
  * Entity의 개별 프로퍼티 정의
  *
  * @example
@@ -27,7 +62,7 @@ export interface EntityProperty {
   id: string
   /** 프로퍼티 이름 (예: "email", "name") */
   name: string
-  /** 프로퍼티 타입 (예: "string", "number", "boolean", "Date") */
+  /** 프로퍼티 타입 (예: "string", "number", "boolean", "Date", "enum") */
   type: string
   /** Primary Key 여부 */
   isPrimaryKey: boolean
@@ -37,6 +72,8 @@ export interface EntityProperty {
   isNullable: boolean
   /** 기본값 (선택적) */
   defaultValue?: string
+  /** Enum 정의 (type이 "enum"일 때만 사용) */
+  enumDef?: EnumDefinition
 }
 
 /**
@@ -111,6 +148,7 @@ export const PROPERTY_TYPES = [
   "bigint",
   "Buffer",
   "uuid",
+  "enum",
 ] as const
 
 /**

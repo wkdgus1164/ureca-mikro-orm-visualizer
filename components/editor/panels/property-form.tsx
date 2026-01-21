@@ -21,10 +21,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { Trash2, Key, Asterisk, ChevronRight, GripVertical } from "lucide-react"
-import type { EntityProperty } from "@/types/entity"
+import { Trash2, Key, Asterisk, ChevronRight, GripVertical, Plus, List } from "lucide-react"
+import type { EntityProperty, EnumDefinition, EnumValue } from "@/types/entity"
 import { PROPERTY_TYPES } from "@/types/entity"
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 
 interface PropertyFormProps {
   /** 편집할 프로퍼티 */
@@ -76,6 +77,63 @@ export function PropertyForm({
     property.type as (typeof PROPERTY_TYPES)[number]
   )
 
+  /**
+   * Enum 타입 여부
+   */
+  const isEnumType = property.type === "enum"
+
+  /**
+   * Enum 정의 업데이트 핸들러
+   */
+  const handleEnumDefChange = useCallback(
+    (enumDef: EnumDefinition) => {
+      onChange({ ...property, enumDef })
+    },
+    [property, onChange]
+  )
+
+  /**
+   * Enum 값 추가 핸들러
+   */
+  const handleAddEnumValue = useCallback(() => {
+    const currentDef = property.enumDef ?? { name: "NewEnum", values: [] }
+    const newValue: EnumValue = {
+      key: `Value${currentDef.values.length + 1}`,
+      value: `value${currentDef.values.length + 1}`,
+    }
+    handleEnumDefChange({
+      ...currentDef,
+      values: [...currentDef.values, newValue],
+    })
+  }, [property.enumDef, handleEnumDefChange])
+
+  /**
+   * Enum 값 업데이트 핸들러
+   */
+  const handleUpdateEnumValue = useCallback(
+    (index: number, key: string, value: string) => {
+      const currentDef = property.enumDef ?? { name: "NewEnum", values: [] }
+      const newValues = [...currentDef.values]
+      newValues[index] = { key, value }
+      handleEnumDefChange({ ...currentDef, values: newValues })
+    },
+    [property.enumDef, handleEnumDefChange]
+  )
+
+  /**
+   * Enum 값 삭제 핸들러
+   */
+  const handleDeleteEnumValue = useCallback(
+    (index: number) => {
+      const currentDef = property.enumDef ?? { name: "NewEnum", values: [] }
+      handleEnumDefChange({
+        ...currentDef,
+        values: currentDef.values.filter((_, i) => i !== index),
+      })
+    },
+    [property.enumDef, handleEnumDefChange]
+  )
+
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       {/* 리스트 아이템 헤더 */}
@@ -108,6 +166,11 @@ export function PropertyForm({
               <Key className="h-3.5 w-3.5 text-yellow-500" />
             </span>
           )}
+          {isEnumType && (
+            <span title="Enum Type">
+              <List className="h-3.5 w-3.5 text-violet-500" />
+            </span>
+          )}
           {!property.isNullable && !property.isPrimaryKey && (
             <span title="Required">
               <Asterisk className="h-3.5 w-3.5 text-red-500" />
@@ -127,13 +190,24 @@ export function PropertyForm({
         <Select
           value={isKnownType ? property.type : "custom"}
           onValueChange={(value) => {
-            if (value !== "custom") {
+            if (value === "enum") {
+              // Enum 선택 시 기본 enumDef 생성
+              onChange({
+                ...property,
+                type: value,
+                enumDef: property.enumDef ?? { name: "NewEnum", values: [] },
+              })
+            } else if (value !== "custom") {
               handleChange("type", value)
             }
           }}
         >
           <SelectTrigger className="h-7 w-28 text-xs border-transparent bg-transparent hover:border-input focus:border-input flex-shrink-0">
-            <SelectValue placeholder="Type" />
+            <SelectValue placeholder="Type">
+              {isEnumType && property.enumDef?.name
+                ? property.enumDef.name
+                : property.type}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {PROPERTY_TYPES.map((type) => (
@@ -144,6 +218,13 @@ export function PropertyForm({
             <SelectItem value="custom">Custom...</SelectItem>
           </SelectContent>
         </Select>
+
+        {/* Enum 배지 표시 */}
+        {isEnumType && property.enumDef && property.enumDef.values.length > 0 && (
+          <Badge variant="secondary" className="text-xs px-1.5 py-0 flex-shrink-0">
+            {property.enumDef.values.length} values
+          </Badge>
+        )}
 
         {/* 삭제 버튼 */}
         {showDelete && (
@@ -173,6 +254,84 @@ export function PropertyForm({
                 className="h-8 text-sm"
                 placeholder="Enter custom type"
               />
+            </div>
+          )}
+
+          {/* Enum 정의 편집 */}
+          {isEnumType && (
+            <div className="space-y-3">
+              {/* Enum 이름 */}
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">
+                  Enum Name
+                </label>
+                <Input
+                  value={property.enumDef?.name ?? "NewEnum"}
+                  onChange={(e) =>
+                    handleEnumDefChange({
+                      ...(property.enumDef ?? { name: "NewEnum", values: [] }),
+                      name: e.target.value,
+                    })
+                  }
+                  className="h-8 text-sm"
+                  placeholder="e.g., UserRole, PostStatus"
+                />
+              </div>
+
+              {/* Enum 값 목록 */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-muted-foreground">
+                    Enum Values
+                  </label>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddEnumValue}
+                    className="h-6 text-xs gap-1"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Add
+                  </Button>
+                </div>
+
+                <div className="space-y-1.5">
+                  {(property.enumDef?.values ?? []).map((enumValue, idx) => (
+                    <div key={idx} className="flex items-center gap-1.5">
+                      <Input
+                        value={enumValue.key}
+                        onChange={(e) =>
+                          handleUpdateEnumValue(idx, e.target.value, enumValue.value)
+                        }
+                        className="h-7 text-xs flex-1"
+                        placeholder="Key (e.g., Admin)"
+                      />
+                      <span className="text-muted-foreground text-xs">=</span>
+                      <Input
+                        value={enumValue.value}
+                        onChange={(e) =>
+                          handleUpdateEnumValue(idx, enumValue.key, e.target.value)
+                        }
+                        className="h-7 text-xs flex-1"
+                        placeholder="Value (e.g., admin)"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => handleDeleteEnumValue(idx)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                  {(property.enumDef?.values ?? []).length === 0 && (
+                    <p className="text-xs text-muted-foreground italic py-2">
+                      No enum values yet. Click &quot;Add&quot; to create one.
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 

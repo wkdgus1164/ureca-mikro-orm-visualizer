@@ -12,7 +12,7 @@
 
 - [x] Embeddable 지원
 - [x] Index 및 Unique 제약조건
-- [ ] Enum 타입 지원
+- [x] Enum 타입 지원
 - [ ] JSON Schema export
 - [ ] ERD 이미지 export (PNG, SVG)
 - [ ] 다이어그램 저장/불러오기 (JSON)
@@ -281,9 +281,9 @@ feat(editor): Index 및 Unique 제약조건 UI 구현
 3. 코드 생성 로직에 Enum export 추가
 
 **완료 조건:**
-- [ ] Enum 타입 선택 가능
-- [ ] Enum 값 목록 편집 UI
-- [ ] `@Enum` 데코레이터 및 Enum export 코드 생성
+- [x] Enum 타입 선택 가능
+- [x] Enum 값 목록 편집 UI
+- [x] `@Enum` 데코레이터 및 Enum export 코드 생성
 
 **커밋 메시지 템플릿:**
 ```
