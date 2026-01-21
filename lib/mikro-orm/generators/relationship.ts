@@ -75,6 +75,11 @@ export function generateRelationshipOptions(
     options.push("eager: true")
   }
 
+  // Delete Rule
+  if (data.deleteRule) {
+    options.push(`deleteRule: '${data.deleteRule}'`)
+  }
+
   if (options.length === 0) {
     return ""
   }

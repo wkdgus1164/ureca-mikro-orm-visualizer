@@ -33,11 +33,41 @@ export enum FetchType {
 }
 
 /**
+ * MikroORM Delete Rule 열거형
+ *
+ * 부모 엔티티 삭제 시 자식 엔티티의 동작을 제어
+ * @see https://mikro-orm.io/docs/cascading
+ */
+export enum DeleteRule {
+  /** 부모 삭제 시 자식도 삭제 */
+  Cascade = "cascade",
+  /** 부모 삭제 시 자식의 FK를 NULL로 설정 */
+  SetNull = "set null",
+  /** 자식이 있으면 부모 삭제 불가 */
+  Restrict = "restrict",
+  /** DB 기본 동작 사용 */
+  NoAction = "no action",
+  /** 부모 삭제 시 자식의 FK를 기본값으로 설정 */
+  SetDefault = "set default",
+}
+
+/**
  * Fetch 타입별 레이블
  */
 export const FETCH_TYPE_LABELS: Record<FetchType, string> = {
   [FetchType.Lazy]: "Lazy (load on access)",
   [FetchType.Eager]: "Eager (load immediately)",
+}
+
+/**
+ * Delete Rule 타입별 레이블
+ */
+export const DELETE_RULE_LABELS: Record<DeleteRule, string> = {
+  [DeleteRule.Cascade]: "CASCADE (자식도 삭제)",
+  [DeleteRule.SetNull]: "SET NULL (FK를 NULL로)",
+  [DeleteRule.Restrict]: "RESTRICT (삭제 차단)",
+  [DeleteRule.NoAction]: "NO ACTION (DB 기본)",
+  [DeleteRule.SetDefault]: "SET DEFAULT (기본값 설정)",
 }
 
 /**
@@ -60,6 +90,8 @@ export interface RelationshipData {
   orphanRemoval: boolean
   /** Fetch 전략 (lazy/eager) */
   fetchType?: FetchType
+  /** Delete Rule (부모 삭제 시 자식 동작) */
+  deleteRule?: DeleteRule
   /** ReactFlow 타입 호환을 위한 index signature */
   [key: string]: unknown
 }

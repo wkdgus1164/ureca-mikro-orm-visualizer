@@ -26,6 +26,8 @@ import {
   RELATION_TYPE_LABELS,
   FetchType,
   FETCH_TYPE_LABELS,
+  DeleteRule,
+  DELETE_RULE_LABELS,
 } from "@/types/relationship"
 
 /**
@@ -199,6 +201,32 @@ export function RelationshipEditContent() {
             {Object.values(FetchType).map((type) => (
               <SelectItem key={type} value={type}>
                 {FETCH_TYPE_LABELS[type]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Delete Rule */}
+      <div className="space-y-1.5">
+        <Label htmlFor="delete-rule">Delete Rule</Label>
+        <p className="text-xs text-muted-foreground">
+          Action to take on related entities when parent is deleted
+        </p>
+        <Select
+          value={data.deleteRule ?? "none"}
+          onValueChange={(value) =>
+            handleChange("deleteRule", value === "none" ? undefined : (value as DeleteRule))
+          }
+        >
+          <SelectTrigger id="delete-rule">
+            <SelectValue placeholder="선택 안 함" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">선택 안 함</SelectItem>
+            {Object.values(DeleteRule).map((rule) => (
+              <SelectItem key={rule} value={rule}>
+                {DELETE_RULE_LABELS[rule]}
               </SelectItem>
             ))}
           </SelectContent>
