@@ -17,6 +17,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "MikroORM Visualizer",
   description: "Visualize and explore MikroORM entity relationships",
+  icons: {
+    icon: "/logo.svg",
+    shortcut: "/logo.svg",
+  },
 }
 
 export default function RootLayout({

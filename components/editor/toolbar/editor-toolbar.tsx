@@ -6,6 +6,7 @@
  * Entity 추가, Relationship 연결, 줌, Export 등 에디터 액션 버튼 제공
  */
 
+import Image from "next/image"
 import { useReactFlow } from "@xyflow/react"
 import { Button } from "@/components/ui/button"
 import {
@@ -125,6 +126,11 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
       )}
     >
       <div className="flex items-center gap-1 p-2">
+        <div className="flex items-center gap-2 pr-2">
+          <Image src="/logo.svg" alt="MikroORM Visualizer" width={28} height={28} priority />
+          <span className="text-sm font-semibold leading-none">MikroORM Visualizer</span>
+        </div>
+
         {/* Undo (Phase 4에서 구현 예정) */}
         <Button
           variant="ghost"
