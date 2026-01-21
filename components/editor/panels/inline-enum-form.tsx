@@ -6,7 +6,7 @@
  * Property에서 "enum" 타입 선택 시 표시되는 Enum 정의 편집 UI
  */
 
-import { useCallback } from "react"
+import { useCallback, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Plus, Trash2 } from "lucide-react"
@@ -25,6 +25,9 @@ interface InlineEnumFormProps {
  * Enum 이름과 값 목록을 편집할 수 있는 폼 컴포넌트
  */
 export function InlineEnumForm({ enumDef, onChange }: InlineEnumFormProps) {
+  /** 고유한 키 생성을 위한 카운터 */
+  const counterRef = useRef(0)
+
   /**
    * Enum 이름 변경 핸들러
    */
@@ -37,11 +40,15 @@ export function InlineEnumForm({ enumDef, onChange }: InlineEnumFormProps) {
 
   /**
    * Enum 값 추가 핸들러
+   *
+   * useRef 카운터를 사용하여 삭제 후에도 고유한 키/값 생성 보장
    */
   const handleAddValue = useCallback(() => {
+    counterRef.current += 1
+    const uniqueId = `${Date.now()}_${counterRef.current}`
     const newValue: EnumValue = {
-      key: `Value${enumDef.values.length + 1}`,
-      value: `value${enumDef.values.length + 1}`,
+      key: `Value_${uniqueId}`,
+      value: `value_${uniqueId}`,
     }
     onChange({
       ...enumDef,

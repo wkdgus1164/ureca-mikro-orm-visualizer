@@ -56,6 +56,7 @@ export function NodeListItem({
       <Button
         variant="ghost"
         size="icon"
+        aria-label="Delete node"
         className={cn(
           "h-6 w-6 flex-shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10",
           "opacity-0 group-hover:opacity-100 transition-opacity"
