@@ -172,7 +172,7 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
       </div>
 
       {/* 하단 액션 버튼 */}
-      <div className="flex items-center justify-between px-0 py-3 border-t bg-muted/50 -mx-6 px-6 mt-auto">
+      <div className="flex items-center justify-between py-3 border-t bg-muted/50 -mx-6 px-6 mt-auto">
         <Button variant="outline" size="sm" onClick={handleDownloadAll}>
           <Download className="h-4 w-4 mr-2" />
           Download All ({entityNames.length})
@@ -184,7 +184,7 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
           disabled={!currentEntity}
         >
           <Download className="h-4 w-4 mr-2" />
-          Download {currentEntity}.ts
+          Download {currentEntity ? `${currentEntity}.ts` : ""}
         </Button>
       </div>
     </div>
