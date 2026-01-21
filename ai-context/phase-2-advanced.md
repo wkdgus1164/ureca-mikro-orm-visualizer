@@ -11,7 +11,7 @@
 ## 진행 상황
 
 - [x] Embeddable 지원
-- [ ] Index 및 Unique 제약조건
+- [x] Index 및 Unique 제약조건
 - [ ] Enum 타입 지원
 - [ ] JSON Schema export
 - [ ] ERD 이미지 export (PNG, SVG)
@@ -251,9 +251,9 @@ feat(editor): Embeddable 노드 타입 구현
 3. 코드 생성 로직에 `@Index`, `@Unique` 데코레이터 추가
 
 **완료 조건:**
-- [ ] Indexes UI 구현
-- [ ] 복합 Index 지원
-- [ ] `@Index`, `@Unique` 코드 생성
+- [x] Indexes UI 구현
+- [x] 복합 Index 지원
+- [x] `@Index`, `@Unique` 코드 생성
 
 **커밋 메시지 템플릿:**
 ```

@@ -20,10 +20,11 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import { Plus } from "lucide-react"
+import { Plus, Database } from "lucide-react"
 import { useEditorContext } from "@/components/providers/editor-provider"
 import { PropertyForm } from "@/components/editor/panels/property-form"
-import type { EntityData, EntityProperty } from "@/types/entity"
+import { IndexForm } from "@/components/editor/panels/index-form"
+import type { EntityData, EntityProperty, EntityIndex } from "@/types/entity"
 import { createDefaultProperty } from "@/types/entity"
 
 /**
@@ -44,6 +45,7 @@ function EntityEditForm({ initialData, onSave }: EntityEditFormProps) {
   const [localData, setLocalData] = useState<EntityData>(() => ({
     ...initialData,
     properties: initialData.properties.map((p) => ({ ...p })),
+    indexes: (initialData.indexes ?? []).map((i) => ({ ...i })),
   }))
 
   /**
@@ -84,6 +86,44 @@ function EntityEditForm({ initialData, onSave }: EntityEditFormProps) {
     setLocalData((prev) => {
       const newProperty = createDefaultProperty(crypto.randomUUID())
       return { ...prev, properties: [...prev.properties, newProperty] }
+    })
+  }, [])
+
+  /**
+   * Index 업데이트 핸들러
+   */
+  const handleIndexUpdate = useCallback(
+    (idx: number, index: EntityIndex) => {
+      setLocalData((prev) => {
+        const indexes = [...(prev.indexes ?? [])]
+        indexes[idx] = index
+        return { ...prev, indexes }
+      })
+    },
+    []
+  )
+
+  /**
+   * Index 삭제 핸들러
+   */
+  const handleIndexDelete = useCallback((idx: number) => {
+    setLocalData((prev) => {
+      const indexes = (prev.indexes ?? []).filter((_, i) => i !== idx)
+      return { ...prev, indexes }
+    })
+  }, [])
+
+  /**
+   * Index 추가 핸들러
+   */
+  const handleAddIndex = useCallback(() => {
+    setLocalData((prev) => {
+      const newIndex: EntityIndex = {
+        id: crypto.randomUUID(),
+        properties: [],
+        isUnique: false,
+      }
+      return { ...prev, indexes: [...(prev.indexes ?? []), newIndex] }
     })
   }, [])
 
@@ -148,6 +188,49 @@ function EntityEditForm({ initialData, onSave }: EntityEditFormProps) {
                 No properties yet. Click &quot;Add&quot; to create one.
               </div>
             )}
+          </div>
+
+          {/* Indexes 섹션 */}
+          <Separator className="my-4" />
+
+          <div className="pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-base font-semibold flex items-center gap-2">
+                <Database className="h-4 w-4" />
+                Indexes
+                {(localData.indexes?.length ?? 0) > 0 && (
+                  <span className="ml-1 text-xs text-muted-foreground font-normal">
+                    ({localData.indexes?.length})
+                  </span>
+                )}
+              </Label>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAddIndex}
+                className="gap-1"
+              >
+                <Plus className="h-3 w-3" />
+                Add
+              </Button>
+            </div>
+
+            <div className="space-y-1">
+              {(localData.indexes ?? []).map((index, idx) => (
+                <IndexForm
+                  key={index.id}
+                  index={index}
+                  availableProperties={localData.properties}
+                  onChange={(i) => handleIndexUpdate(idx, i)}
+                  onDelete={() => handleIndexDelete(idx)}
+                />
+              ))}
+              {(localData.indexes?.length ?? 0) === 0 && (
+                <div className="text-center py-6 text-muted-foreground text-sm">
+                  No indexes yet. Click &quot;Add&quot; to create composite indexes or unique constraints.
+                </div>
+              )}
+            </div>
           </div>
         </ScrollArea>
       </div>

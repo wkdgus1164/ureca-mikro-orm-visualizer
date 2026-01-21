@@ -214,6 +214,18 @@ function collectImports(
     decorators.add("Property")
   }
 
+  // Indexes (Phase 2)
+  const indexes = entity.data.indexes ?? []
+  const hasRegularIndex = indexes.some((idx) => !idx.isUnique && idx.properties.length > 0)
+  const hasUniqueIndex = indexes.some((idx) => idx.isUnique && idx.properties.length > 0)
+
+  if (hasRegularIndex) {
+    decorators.add("Index")
+  }
+  if (hasUniqueIndex) {
+    decorators.add("Unique")
+  }
+
   // Relationships
   const entityEdges = edges.filter(
     (e) => e.source === entity.id || e.target === entity.id
@@ -244,6 +256,30 @@ function collectImports(
   }
 
   return { decorators, relatedEntities, needsCollection, needsCascade }
+}
+
+/**
+ * Entity 레벨 Index 데코레이터 생성
+ */
+function generateIndexDecorators(entity: EntityNode): string[] {
+  const indexes = entity.data.indexes ?? []
+  const lines: string[] = []
+
+  for (const index of indexes) {
+    // 프로퍼티가 없는 Index는 무시
+    if (index.properties.length === 0) continue
+
+    const decorator = index.isUnique ? "Unique" : "Index"
+    const propsArray = `[${index.properties.map((p) => `"${p}"`).join(", ")}]`
+
+    if (index.name) {
+      lines.push(`@${decorator}({ properties: ${propsArray}, name: "${index.name}" })`)
+    } else {
+      lines.push(`@${decorator}({ properties: ${propsArray} })`)
+    }
+  }
+
+  return lines
 }
 
 /**
@@ -331,6 +367,12 @@ export function generateEntityCode(
   )
   lines.push(imports)
   lines.push("")
+
+  // Index/Unique 데코레이터 (Phase 2)
+  const indexDecorators = generateIndexDecorators(entity)
+  for (const indexDec of indexDecorators) {
+    lines.push(indexDec)
+  }
 
   // Entity 데코레이터
   if (entity.data.tableName) {

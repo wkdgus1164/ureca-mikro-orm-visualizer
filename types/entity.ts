@@ -40,6 +40,30 @@ export interface EntityProperty {
 }
 
 /**
+ * Entity 레벨 Index 정의
+ *
+ * 복합 인덱스 또는 복합 Unique 제약조건을 정의
+ *
+ * @example
+ * const emailIndex: EntityIndex = {
+ *   id: "idx-1",
+ *   name: "idx_user_email",
+ *   properties: ["email"],
+ *   isUnique: true,
+ * }
+ */
+export interface EntityIndex {
+  /** Index 고유 ID (uuid) */
+  id: string
+  /** Index 이름 (선택적, 미지정시 자동 생성) */
+  name?: string
+  /** Index에 포함될 프로퍼티 이름 목록 */
+  properties: string[]
+  /** Unique 제약조건 여부 */
+  isUnique: boolean
+}
+
+/**
  * Entity 노드의 데이터 구조
  *
  * ReactFlow 노드의 data 프로퍼티에 저장되는 정보
@@ -51,6 +75,8 @@ export interface EntityData {
   tableName?: string
   /** Entity의 프로퍼티 목록 */
   properties: EntityProperty[]
+  /** Entity 레벨 Index 목록 (Phase 2) */
+  indexes?: EntityIndex[]
   /** ReactFlow 타입 호환을 위한 index signature */
   [key: string]: unknown
 }
