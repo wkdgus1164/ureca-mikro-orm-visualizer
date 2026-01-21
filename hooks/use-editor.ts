@@ -199,17 +199,17 @@ export function useEditor(): UseEditorReturn {
   // ============================================================================
 
   /**
-   * 선택된 노드 가져오기
+   * 선택된 노드 가져오기 (Entity 타입만 반환)
    */
   const getSelectedNode = useCallback((): EntityNode | null => {
     if (uiOps.uiState.selection.type !== "node" || !uiOps.uiState.selection.id) {
       return null
     }
-    return (
-      (nodeOps.nodes.find(
-        (node) => node.id === uiOps.uiState.selection.id
-      ) as EntityNode) ?? null
-    )
+    const node = nodeOps.nodes.find((n) => n.id === uiOps.uiState.selection.id)
+    if (node?.type === "entity") {
+      return node as EntityNode
+    }
+    return null
   }, [nodeOps.nodes, uiOps.uiState.selection])
 
   /**
