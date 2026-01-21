@@ -53,9 +53,9 @@ function EnumNodeComponent({ data, selected }: EnumNodeProps) {
         }
       >
         <NodeCardBody isEmpty={values.length === 0} emptyMessage="No values">
-          {values.map((enumValue, index) => (
+          {values.map((enumValue) => (
             <div
-              key={index}
+              key={`${enumValue.key}-${enumValue.value}`}
               className="flex items-center px-3 py-1 text-xs hover:bg-amber-50/50 dark:hover:bg-amber-950/20 transition-colors"
             >
               {/* Key */}

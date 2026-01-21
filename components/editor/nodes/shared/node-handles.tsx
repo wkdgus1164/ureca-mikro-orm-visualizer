@@ -30,7 +30,10 @@ const HANDLE_THEME_CLASSES: Record<HandleTheme, string> = {
 interface NodeHandlesProps {
   /** 핸들 색상 테마 */
   theme?: HandleTheme
-  /** 추가 CSS 클래스 */
+  /**
+   * 추가 CSS 클래스
+   * 각 개별 Handle 요소에 적용됨 (래퍼가 아닌 Fragment를 반환하므로 핸들별 스타일링에 사용)
+   */
   className?: string
   /** 핸들 사이에 렌더링할 자식 요소 (노드 본체) */
   children: React.ReactNode
@@ -41,6 +44,9 @@ interface NodeHandlesProps {
  *
  * - Top, Left: target 핸들 (연결 받는 쪽)
  * - Right, Bottom: source 핸들 (연결 시작 쪽)
+ *
+ * 주의: 이 컴포넌트는 Fragment(<>...</>)를 반환하므로 래퍼 요소가 없습니다.
+ * className prop은 각 개별 Handle 요소에 적용되며, 래퍼 스타일링이 아닌 핸들별 스타일링에 사용해야 합니다.
  *
  * @example
  * ```tsx
