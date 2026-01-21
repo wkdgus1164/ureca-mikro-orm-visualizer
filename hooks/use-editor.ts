@@ -163,6 +163,18 @@ function generateUniqueName(baseName: string, existingNames: string[]): string {
 }
 
 /**
+ * 노드 타입별 예상 크기 (중앙 정렬용 오프셋 계산에 사용)
+ *
+ * Ghost 노드는 translate(-50%, -50%)로 중앙 정렬되어 있으므로,
+ * 실제 노드 생성 시에도 클릭 위치가 노드 중앙이 되도록 오프셋 적용
+ */
+const NODE_SIZE_ESTIMATES = {
+  entity: { width: 180, height: 80 },
+  embeddable: { width: 180, height: 80 },
+  enum: { width: 180, height: 80 },
+} as const
+
+/**
  * 에디터 상태 관리 훅
  *
  * @example
@@ -591,16 +603,24 @@ export function useEditor(): UseEditorReturn {
       const pendingType = uiState.pendingAdd
       if (!pendingType) return
 
+      // 노드 중앙이 클릭 위치에 오도록 오프셋 적용
+      // ReactFlow 노드의 position은 좌측 상단 기준이므로, 크기의 절반을 빼줌
+      const size = NODE_SIZE_ESTIMATES[pendingType]
+      const centeredPosition = {
+        x: position.x - size.width / 2,
+        y: position.y - size.height / 2,
+      }
+
       // 타입에 따라 해당 노드 추가
       switch (pendingType) {
         case "entity":
-          addEntity(position)
+          addEntity(centeredPosition)
           break
         case "embeddable":
-          addEmbeddable(position)
+          addEmbeddable(centeredPosition)
           break
         case "enum":
-          addEnum(position)
+          addEnum(centeredPosition)
           break
       }
 

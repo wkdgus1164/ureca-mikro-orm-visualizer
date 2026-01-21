@@ -10,10 +10,10 @@ import { useCallback, useEffect } from "react"
 import {
   ReactFlow,
   Background,
-  Controls,
   MiniMap,
   BackgroundVariant,
   useReactFlow,
+  useViewport,
   type NodeMouseHandler,
   type EdgeMouseHandler,
 } from "@xyflow/react"
@@ -26,6 +26,7 @@ import { EmbeddableNode } from "@/components/editor/nodes/embeddable-node"
 import { EnumNode } from "@/components/editor/nodes/enum-node"
 import { RelationshipEdge } from "@/components/editor/edges/relationship-edge"
 import { GhostNode } from "@/components/editor/nodes/ghost-node"
+import { ZoomSlider } from "@/components/editor/toolbar/zoom-slider"
 
 /**
  * 커스텀 노드 타입 등록
@@ -77,6 +78,7 @@ export function EditorCanvas({ className }: EditorCanvasProps) {
   } = useEditorContext()
 
   const { screenToFlowPosition } = useReactFlow()
+  const viewport = useViewport()
 
   /**
    * 노드 클릭 핸들러 - 선택 상태 업데이트
@@ -121,22 +123,23 @@ export function EditorCanvas({ className }: EditorCanvasProps) {
 
   /**
    * 마우스 이동 핸들러 - Ghost 노드 위치 업데이트
-   * Ghost 노드는 DOM 요소이므로 컨테이너 기준 화면 좌표 사용
+   *
+   * screenToFlowPosition을 사용하여 Flow 좌표로 변환
+   * 이렇게 하면 zoom/pan 상태와 관계없이 정확한 위치 계산 가능
    */
   const onMouseMove = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
       if (!uiState.pendingAdd) return
 
-      // 컨테이너 기준 상대 좌표 계산
-      const container = event.currentTarget
-      const rect = container.getBoundingClientRect()
-      const position = {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top,
-      }
+      // 화면 좌표를 Flow 좌표로 변환
+      // 이 좌표는 실제 노드 생성 시 사용되는 좌표와 동일함
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      })
       updateMousePosition(position)
     },
-    [uiState.pendingAdd, updateMousePosition]
+    [uiState.pendingAdd, screenToFlowPosition, updateMousePosition]
   )
 
   /**
@@ -183,7 +186,9 @@ export function EditorCanvas({ className }: EditorCanvasProps) {
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        fitView
+        // fitView 제거 - 노드 추가 시 갑작스러운 확대 방지
+        // 초기 뷰는 중앙(0,0)에서 시작, zoom 1
+        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         snapToGrid
         snapGrid={[20, 20]}
         defaultEdgeOptions={{
@@ -200,26 +205,28 @@ export function EditorCanvas({ className }: EditorCanvasProps) {
           className="bg-background"
         />
 
-        {/* 줌/패닝 컨트롤 */}
-        <Controls
-          showZoom
-          showFitView
-          showInteractive
-          className="bg-background border border-border rounded-lg"
-        />
-
-        {/* 미니맵 */}
+        {/* 미니맵 - 전체 캔버스 표시, 뷰포트 드래그로 캔버스 이동 */}
         <MiniMap
           nodeStrokeWidth={3}
-          zoomable
-          pannable
+          zoomable={false}
+          pannable={true}
+          maskColor="rgba(0, 0, 0, 0.6)"
+          maskStrokeColor="hsl(var(--primary))"
+          maskStrokeWidth={2}
           className="bg-muted border border-border rounded-lg"
         />
+
+        {/* 줌 슬라이더 - 하단 중앙 */}
+        <ZoomSlider className="absolute bottom-4 left-1/2 -translate-x-1/2" />
       </ReactFlow>
 
-      {/* Ghost 노드 미리보기 */}
+      {/* Ghost 노드 미리보기 - viewport 동기화로 zoom/pan 상태에서도 정확한 위치 표시 */}
       {uiState.pendingAdd && uiState.mousePosition && (
-        <GhostNode type={uiState.pendingAdd} position={uiState.mousePosition} />
+        <GhostNode
+          type={uiState.pendingAdd}
+          position={uiState.mousePosition}
+          viewport={viewport}
+        />
       )}
     </div>
   )
