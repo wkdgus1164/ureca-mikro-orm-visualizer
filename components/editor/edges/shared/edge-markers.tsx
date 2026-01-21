@@ -121,6 +121,7 @@ export function CompositionMarker() {
       markerWidth="12"
       markerHeight="12"
       orient="auto-start-reverse"
+      overflow="visible"
     >
       <path
         d="M 0 5 L 10 0 L 20 5 L 10 10 Z"
@@ -146,6 +147,7 @@ export function AggregationMarker() {
       markerWidth="12"
       markerHeight="12"
       orient="auto-start-reverse"
+      overflow="visible"
     >
       <path
         d="M 0 5 L 10 0 L 20 5 L 10 10 Z"
