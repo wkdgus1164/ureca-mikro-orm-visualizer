@@ -169,6 +169,46 @@ import { MARKER_IDS } from "@/components/editor/edges/shared"
 - `BaseEdge`: ReactFlow 제공 컴포넌트 - 엣지 렌더링
 - `EditorCanvas`: `components/editor/canvas/editor-canvas.tsx` - GlobalEdgeMarkers 렌더링
 
+**주의사항 (markerStart 관련):**
+
+ReactFlow에서 `markerStart` 사용 시 다음 문제가 있습니다:
+
+1. **`BaseEdge`의 `markerStart` 미지원**: ReactFlow의 `BaseEdge` 컴포넌트에 `markerStart` prop을 전달해도 실제로 적용되지 않음
+2. **직접 `<path>` 사용 시에도 동일**: `BaseEdge` 대신 직접 `<path>` 요소를 사용해도 `markerStart` 속성이 작동하지 않음
+
+**해결 방법:**
+
+source 쪽에 마커(예: Composition/Aggregation 다이아몬드)를 표시해야 하는 경우, SVG marker 대신 별도의 `<polygon>` 또는 `<circle>` 요소로 직접 그려야 합니다.
+
+```typescript
+// 다이아몬드를 직접 polygon으로 그리기
+{isComposition && (
+  <polygon
+    points={diamondPoints}
+    fill="#64748b"
+  />
+)}
+```
+
+**다이아몬드 방향 계산 시 주의:**
+
+- **잘못된 방법**: `source → target` 직선 방향으로 계산하면 Bezier 곡선에서 다이아몬드 방향이 틀어짐
+- **올바른 방법**: `sourcePosition` (top/bottom/left/right) 기반으로 방향 계산
+
+```typescript
+// sourcePosition 기반 방향 벡터
+function getDirectionFromPosition(position: string) {
+  switch (position) {
+    case "right": return { ux: 1, uy: 0 }
+    case "left": return { ux: -1, uy: 0 }
+    case "top": return { ux: 0, uy: -1 }
+    case "bottom": return { ux: 0, uy: 1 }
+  }
+}
+```
+
+이렇게 하면 Bezier 곡선이 어떻게 구부러지든 source에서 나가는 방향에 맞춰 다이아몬드가 정렬됩니다.
+
 ### editor/panels/
 
 사이드 패널 컴포넌트들.
