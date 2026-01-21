@@ -7,6 +7,7 @@
 import { EditorProvider } from "@/components/providers/editor-provider"
 import { EditorCanvas } from "@/components/editor/canvas/editor-canvas"
 import { EditorToolbar } from "@/components/editor/toolbar/editor-toolbar"
+import { EntityEditPanel } from "@/components/editor/panels/entity-edit-panel"
 
 export const metadata = {
   title: "Editor | MikroORM Visualizer",
@@ -24,6 +25,9 @@ export default function EditorPage() {
         <div className="h-full pt-14">
           <EditorCanvas />
         </div>
+
+        {/* Entity 편집 패널 (우측 슬라이드) */}
+        <EntityEditPanel />
       </main>
     </EditorProvider>
   )
