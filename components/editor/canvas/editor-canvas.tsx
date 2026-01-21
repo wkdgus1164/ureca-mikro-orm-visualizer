@@ -18,7 +18,7 @@ import {
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
 
-import { useEditor } from "@/hooks/use-editor"
+import { useEditorContext } from "@/components/providers/editor-provider"
 import { cn } from "@/lib/utils"
 import { EntityNode } from "@/components/editor/nodes/entity-node"
 import { RelationshipEdge } from "@/components/editor/edges/relationship-edge"
@@ -64,7 +64,7 @@ export function EditorCanvas({ className }: EditorCanvasProps) {
     onEdgesChange,
     onConnect,
     setSelection,
-  } = useEditor()
+  } = useEditorContext()
 
   /**
    * 노드 클릭 핸들러 - 선택 상태 업데이트
