@@ -13,7 +13,7 @@
 - [x] Embeddable 지원
 - [x] Index 및 Unique 제약조건
 - [x] Enum 타입 지원
-- [ ] JSON Schema export
+- [x] JSON Schema export
 - [ ] ERD 이미지 export (PNG, SVG)
 - [ ] 다이어그램 저장/불러오기 (JSON)
 
@@ -310,9 +310,9 @@ feat(editor): Enum 타입 지원 구현
 3. Export 모달에 JSON Schema 옵션 추가
 
 **완료 조건:**
-- [ ] generateJsonSchema 함수 구현
-- [ ] Export 모달에서 JSON Schema 선택 가능
-- [ ] JSON 다운로드 기능
+- [x] generateJsonSchema 함수 구현
+- [x] Export 모달에서 JSON Schema 선택 가능
+- [x] JSON 다운로드 기능
 
 **커밋 메시지 템플릿:**
 ```
