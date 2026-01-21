@@ -10,7 +10,7 @@
 import { memo } from "react"
 import type { Node, NodeProps } from "@xyflow/react"
 import type { EmbeddableData } from "@/types/entity"
-import { Package, Circle } from "lucide-react"
+import { Circle } from "lucide-react"
 import { NodeHandles } from "@/components/editor/nodes/shared/node-handles"
 import {
   NodeCard,
@@ -45,9 +45,8 @@ function EmbeddableNodeComponent({ data, selected }: EmbeddableNodeProps) {
         selected={selected}
         header={
           <NodeCardHeader
-            icon={<Package className="w-4 h-4 text-violet-500" />}
             title={name}
-            badge="Embeddable"
+            badge="«VO»"
             theme="embeddable"
           />
         }
@@ -59,7 +58,7 @@ function EmbeddableNodeComponent({ data, selected }: EmbeddableNodeProps) {
           {properties.map((prop) => (
             <div
               key={prop.id}
-              className="flex items-center px-3 py-1 text-xs hover:bg-violet-50/50 dark:hover:bg-violet-950/20 transition-colors"
+              className="flex items-center px-3 py-1 text-xs hover:bg-muted/30 transition-colors"
             >
               {/* 아이콘 영역 (고정 너비) */}
               <div className="w-4 flex-shrink-0 flex items-center justify-center">

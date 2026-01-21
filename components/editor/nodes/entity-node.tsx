@@ -38,14 +38,14 @@ function EntityNodeComponent({ data, selected }: EntityNodeProps) {
   const { name, properties } = data
 
   return (
-    <NodeHandles theme="primary">
+    <NodeHandles theme="blue">
       <NodeCard
         theme="entity"
         selected={selected}
         header={
           <NodeCardHeader
-            icon={<Circle className="w-2 h-2 fill-primary text-primary" />}
             title={name}
+            badge="«Entity»"
             theme="entity"
           />
         }

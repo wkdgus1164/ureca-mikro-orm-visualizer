@@ -13,14 +13,14 @@ import { cn } from "@/lib/utils"
 /**
  * 핸들 색상 테마
  */
-export type HandleTheme = "primary" | "violet" | "amber"
+export type HandleTheme = "blue" | "violet" | "amber"
 
 /**
  * 테마별 핸들 클래스 맵핑
  */
 const HANDLE_THEME_CLASSES: Record<HandleTheme, string> = {
-  primary:
-    "!w-2.5 !h-2.5 !bg-primary !border-2 !border-background hover:!bg-primary/80 transition-colors",
+  blue:
+    "!w-2.5 !h-2.5 !bg-blue-500 !border-2 !border-background hover:!bg-blue-400 transition-colors",
   violet:
     "!w-2.5 !h-2.5 !bg-violet-500 !border-2 !border-background hover:!bg-violet-400 transition-colors",
   amber:
@@ -56,7 +56,7 @@ interface NodeHandlesProps {
  * ```
  */
 export function NodeHandles({
-  theme = "primary",
+  theme = "blue",
   className,
   children,
 }: NodeHandlesProps) {

@@ -54,15 +54,15 @@ export function PropertySidebar({
   return (
     <aside
       className={cn(
-        "flex-shrink-0 border-l bg-background transition-all duration-200 ease-in-out overflow-hidden",
+        "flex-shrink-0 border-l bg-background transition-all duration-200 ease-in-out overflow-hidden pt-[50px]",
         isOpen ? "w-[400px]" : "w-0",
         className
       )}
     >
       {isOpen && (
-        <div className="h-full flex flex-col w-[400px]">
+        <div className="h-full flex flex-col w-[400px] overflow-hidden">
           {/* 헤더 */}
-          <div className="flex items-start justify-between p-4 border-b">
+          <div className="flex items-start justify-between p-4 border-b flex-shrink-0">
             <div className="space-y-1">
               <h2 className="text-lg font-semibold">{title}</h2>
               {description && (
@@ -81,7 +81,7 @@ export function PropertySidebar({
           </div>
 
           {/* 컨텐츠 영역 */}
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 overflow-y-auto">
             <div className="p-4">{children}</div>
           </ScrollArea>
         </div>

@@ -37,30 +37,30 @@ interface ThemeStyles {
 
 const THEME_STYLES: Record<NodeCardTheme, ThemeStyles> = {
   entity: {
-    border: "border-border",
-    selectedBorder: "border-primary",
-    selectedRing: "ring-2 ring-primary/20",
-    hoverBorder: "hover:border-muted-foreground/50",
+    border: "border-blue-500",
+    selectedBorder: "border-blue-600",
+    selectedRing: "ring-2 ring-blue-500/30",
+    hoverBorder: "hover:border-blue-400",
     headerBg: "bg-muted/50",
     headerBorder: "border-b border-border",
     borderStyle: "border-2",
   },
   embeddable: {
-    border: "border-violet-300 dark:border-violet-700",
-    selectedBorder: "border-violet-500",
-    selectedRing: "ring-2 ring-violet-500/20",
-    hoverBorder: "hover:border-violet-400 dark:hover:border-violet-600",
-    headerBg: "bg-violet-50 dark:bg-violet-950/30",
-    headerBorder: "border-b border-dashed border-violet-200 dark:border-violet-800",
-    borderStyle: "border-2 border-dashed",
+    border: "border-violet-500",
+    selectedBorder: "border-violet-600",
+    selectedRing: "ring-2 ring-violet-500/30",
+    hoverBorder: "hover:border-violet-400",
+    headerBg: "bg-muted/50",
+    headerBorder: "border-b border-border",
+    borderStyle: "border-2",
   },
   enum: {
-    border: "border-amber-300 dark:border-amber-700",
-    selectedBorder: "border-amber-500",
-    selectedRing: "ring-2 ring-amber-500/20",
-    hoverBorder: "hover:border-amber-400 dark:hover:border-amber-600",
-    headerBg: "bg-amber-50 dark:bg-amber-950/30",
-    headerBorder: "border-b border-amber-200 dark:border-amber-800",
+    border: "border-amber-500",
+    selectedBorder: "border-amber-600",
+    selectedRing: "ring-2 ring-amber-500/30",
+    hoverBorder: "hover:border-amber-400",
+    headerBg: "bg-muted/50",
+    headerBorder: "border-b border-border",
     borderStyle: "border-2",
   },
 }
@@ -158,7 +158,7 @@ export function NodeCard({
 
 interface NodeCardHeaderProps {
   /** 헤더 아이콘 */
-  icon: ReactNode
+  icon?: ReactNode
   /** 노드 이름 */
   title: string
   /** 우측에 표시할 배지 (예: "Embeddable", "Enum") */
@@ -179,26 +179,30 @@ export function NodeCardHeader({
   theme = "entity",
 }: NodeCardHeaderProps) {
   const titleColorClass = {
-    entity: "text-foreground",
-    embeddable: "text-violet-700 dark:text-violet-300",
-    enum: "text-amber-700 dark:text-amber-300",
+    entity: "text-blue-600 dark:text-blue-400",
+    embeddable: "text-violet-600 dark:text-violet-400",
+    enum: "text-amber-600 dark:text-amber-400",
   }[theme]
 
   const badgeColorClass = {
-    entity: "text-muted-foreground",
-    embeddable: "text-violet-400 dark:text-violet-500",
-    enum: "text-amber-400 dark:text-amber-500",
+    entity: "text-blue-500 dark:text-blue-400",
+    embeddable: "text-violet-500 dark:text-violet-400",
+    enum: "text-amber-500 dark:text-amber-400",
   }[theme]
 
   return (
-    <div className="text-sm font-semibold flex items-center gap-2">
-      {icon}
-      <span className={cn("truncate", titleColorClass)}>{title}</span>
+    <div className="flex flex-col items-center gap-0.5">
+      {/* 스테레오 타입 (상단 가운데) */}
       {badge && (
-        <span className={cn("text-[10px] font-normal ml-auto", badgeColorClass)}>
+        <span className={cn("text-xs font-medium", badgeColorClass)}>
           {badge}
         </span>
       )}
+      {/* 아이콘 + 이름 */}
+      <div className="text-sm font-semibold flex items-center gap-2">
+        {icon}
+        <span className={cn("truncate", titleColorClass)}>{title}</span>
+      </div>
     </div>
   )
 }

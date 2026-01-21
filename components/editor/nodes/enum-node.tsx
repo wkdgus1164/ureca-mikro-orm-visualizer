@@ -10,7 +10,6 @@
 import { memo } from "react"
 import type { Node, NodeProps } from "@xyflow/react"
 import type { EnumData } from "@/types/entity"
-import { List } from "lucide-react"
 import { NodeHandles } from "@/components/editor/nodes/shared/node-handles"
 import {
   NodeCard,
@@ -45,9 +44,8 @@ function EnumNodeComponent({ data, selected }: EnumNodeProps) {
         selected={selected}
         header={
           <NodeCardHeader
-            icon={<List className="w-4 h-4 text-amber-500" />}
             title={name}
-            badge="Enum"
+            badge="«Enumeration»"
             theme="enum"
           />
         }
@@ -56,7 +54,7 @@ function EnumNodeComponent({ data, selected }: EnumNodeProps) {
           {values.map((enumValue) => (
             <div
               key={`${enumValue.key}-${enumValue.value}`}
-              className="flex items-center px-3 py-1 text-xs hover:bg-amber-50/50 dark:hover:bg-amber-950/20 transition-colors"
+              className="flex items-center px-3 py-1 text-xs hover:bg-muted/30 transition-colors"
             >
               {/* Key */}
               <span className="font-medium text-foreground truncate">
