@@ -110,8 +110,12 @@ export function collectImports(
     .filter((edge) => edge.data && edge.source === entity.id)
     .forEach((edge) => {
       const data = edge.data!
+      const decorator = getRelationDecorator(data.relationType)
 
-      decorators.add(getRelationDecorator(data.relationType))
+      // Inheritance/Implementation은 데코레이터가 아닌 extends/implements 사용
+      if (decorator === null) return
+
+      decorators.add(decorator)
 
       if (isCollectionRelation(data.relationType)) {
         needsCollection = true

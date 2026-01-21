@@ -89,8 +89,8 @@ export function generateProperty(property: EntityProperty, indentSize: number): 
 Relationship 관련 코드 생성.
 
 ```typescript
-// RelationType → 데코레이터 이름
-export function getRelationDecorator(relationType: RelationType): string
+// RelationType → 데코레이터 이름 (Inheritance/Implementation은 null 반환)
+export function getRelationDecorator(relationType: RelationType): string | null
 
 // Collection 관계 여부 확인
 export function isCollectionRelation(relationType: RelationType): boolean
@@ -221,6 +221,25 @@ export class User {
 
   @OneToMany(() => Post, post => post.author)
   posts = new Collection<Post>(this)
+}
+```
+
+### Entity with Inheritance/Implementation
+
+상속(`Inheritance`) 및 구현(`Implementation`) 관계가 있으면 클래스 선언에 `extends`/`implements` 키워드가 추가됩니다.
+
+```typescript
+import { Entity, PrimaryKey, Property } from "@mikro-orm/core"
+import { Animal } from "./Animal"
+import { IRunnable } from "./IRunnable"
+
+@Entity()
+export class Dog extends Animal implements IRunnable {
+  @PrimaryKey()
+  id!: number
+
+  @Property()
+  breed!: string
 }
 ```
 

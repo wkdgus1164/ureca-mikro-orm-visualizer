@@ -28,7 +28,9 @@ types/
 
 ### `relationship.ts`
 - `@OneToOne`, `@OneToMany`, `@ManyToOne`, `@ManyToMany`
-- 관계 옵션 (nullable, cascade, orphanRemoval 등)
+- `Composition` (강한 결합 ◆), `Aggregation` (약한 결합 ◇)
+- `Inheritance` (상속 △), `Implementation` (구현 △ 점선)
+- 관계 옵션 (nullable, cascade, orphanRemoval, fetchType, deleteRule 등)
 - 양방향/단방향 관계 표현
 
 ### `decorator.ts`

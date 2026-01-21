@@ -13,9 +13,9 @@ import { indent, sanitizeClassName } from "./utils"
  * Map a RelationType to the corresponding MikroORM relation decorator name.
  *
  * @param relationType - The relation type to map
- * @returns The decorator name: `"OneToOne"`, `"OneToMany"`, `"ManyToOne"`, or `"ManyToMany"`
+ * @returns The decorator name, or `null` for Inheritance/Implementation (which use extends/implements)
  */
-export function getRelationDecorator(relationType: RelationType): string {
+export function getRelationDecorator(relationType: RelationType): string | null {
   switch (relationType) {
     case RelationType.OneToOne:
       return "OneToOne"
@@ -27,6 +27,10 @@ export function getRelationDecorator(relationType: RelationType): string {
       return "ManyToOne"
     case RelationType.ManyToMany:
       return "ManyToMany"
+    case RelationType.Inheritance:
+    case RelationType.Implementation:
+      // 상속/구현은 데코레이터가 아닌 extends/implements 키워드 사용
+      return null
   }
 }
 
@@ -120,9 +124,13 @@ export function generateRelationship(
   // 현재 Entity가 source인 경우만 처리 (중복 방지)
   if (sourceEntity.id !== edge.source) return null
 
+  const decorator = getRelationDecorator(data.relationType)
+
+  // Inheritance/Implementation은 데코레이터가 아닌 extends/implements 사용
+  if (decorator === null) return null
+
   const lines: string[] = []
   const ind = indent(1, indentSize)
-  const decorator = getRelationDecorator(data.relationType)
   const targetName = sanitizeClassName(targetEntity.data.name)
   const options = generateRelationshipOptions(data, indentSize)
 

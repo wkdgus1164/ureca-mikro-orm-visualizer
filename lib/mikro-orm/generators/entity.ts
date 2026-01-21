@@ -6,6 +6,7 @@
 
 import type { EntityNode, EnumNode } from "@/types/entity"
 import type { RelationshipEdge } from "@/types/relationship"
+import { RelationType } from "@/types/relationship"
 import {
   type GeneratorOptions,
   DEFAULT_OPTIONS,
@@ -21,6 +22,38 @@ import { collectImports, generateImports } from "./imports"
  */
 function getEnumNames(enumNodes: EnumNode[]): Set<string> {
   return new Set(enumNodes.map((node) => node.data.name))
+}
+
+/**
+ * 상속/구현 관계에서 extends/implements 절 생성
+ */
+function getClassExtensions(
+  entity: EntityNode,
+  edges: RelationshipEdge[],
+  allNodes: EntityNode[]
+): { extendsClause: string; implementsClause: string } {
+  const parentClasses: string[] = []
+  const interfaces: string[] = []
+
+  edges
+    .filter((e) => e.source === entity.id && e.data)
+    .forEach((edge) => {
+      const targetNode = allNodes.find((n) => n.id === edge.target)
+      if (!targetNode) return
+
+      const targetName = sanitizeClassName(targetNode.data.name)
+
+      if (edge.data.relationType === RelationType.Inheritance) {
+        parentClasses.push(targetName)
+      } else if (edge.data.relationType === RelationType.Implementation) {
+        interfaces.push(targetName)
+      }
+    })
+
+  return {
+    extendsClause: parentClasses.length > 0 ? ` extends ${parentClasses[0]}` : "",
+    implementsClause: interfaces.length > 0 ? ` implements ${interfaces.join(", ")}` : "",
+  }
 }
 
 /**
@@ -108,8 +141,11 @@ export function generateEntityCode(
     lines.push("@Entity()")
   }
 
+  // 상속/구현 관계 확인
+  const { extendsClause, implementsClause } = getClassExtensions(entity, edges, allNodes)
+
   // 클래스 선언
-  lines.push(`export class ${sanitizeClassName(entity.data.name)} {`)
+  lines.push(`export class ${sanitizeClassName(entity.data.name)}${extendsClause}${implementsClause} {`)
 
   // Properties
   const propertyCode = entity.data.properties

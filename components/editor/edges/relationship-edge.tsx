@@ -29,11 +29,24 @@ type RelationshipEdgeType = Edge<RelationshipData, "relationship">
 type RelationshipEdgeProps = EdgeProps<RelationshipEdgeType>
 
 /**
- * 엣지 스타일 (선택 상태와 무관하게 동일한 스타일 유지)
+ * 엣지 기본 스타일
  */
-const EDGE_STYLE = {
+const EDGE_STYLE_BASE = {
   strokeWidth: 2,
   stroke: "#64748b",
+}
+
+/**
+ * 관계 타입에 따른 엣지 스타일 반환
+ */
+function getEdgeStyle(relationType: RelationType): React.CSSProperties {
+  if (relationType === RelationType.Implementation) {
+    return {
+      ...EDGE_STYLE_BASE,
+      strokeDasharray: "6 4",
+    }
+  }
+  return EDGE_STYLE_BASE
 }
 
 /**
@@ -49,6 +62,9 @@ function getMarkerEnd(relationType: RelationType): string {
     case RelationType.Composition:
     case RelationType.Aggregation:
       return `url(#${MARKER_IDS.crowFoot})`
+    case RelationType.Inheritance:
+    case RelationType.Implementation:
+      return `url(#${MARKER_IDS.triangle})`
   }
 }
 
@@ -61,7 +77,12 @@ function getMarkerStart(relationType: RelationType): string | undefined {
       return `url(#${MARKER_IDS.arrow})`
     case RelationType.ManyToMany:
       return `url(#${MARKER_IDS.crowFoot})`
-    default:
+    case RelationType.OneToMany:
+    case RelationType.ManyToOne:
+    case RelationType.Composition:
+    case RelationType.Aggregation:
+    case RelationType.Inheritance:
+    case RelationType.Implementation:
       return undefined
   }
 }
@@ -174,7 +195,7 @@ function RelationshipEdgeComponent({
         id={id}
         d={edgePath}
         fill="none"
-        style={EDGE_STYLE}
+        style={getEdgeStyle(relationType)}
         markerEnd={getMarkerEnd(relationType)}
         markerStart={getMarkerStart(relationType)}
       />

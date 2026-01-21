@@ -21,6 +21,8 @@ export const MARKER_IDS = {
   composition: "composition-marker",
   /** Aggregation 마커 (빈 다이아몬드 ◇) */
   aggregation: "aggregation-marker",
+  /** 빈 삼각형 마커 (상속/구현 △) */
+  triangle: "triangle-marker",
 } as const
 
 export type MarkerId = (typeof MARKER_IDS)[keyof typeof MARKER_IDS]
@@ -161,6 +163,33 @@ export function AggregationMarker() {
 }
 
 /**
+ * 빈 삼각형 마커 컴포넌트 (△)
+ *
+ * 상속(Inheritance) 및 구현(Implementation) 관계에 사용
+ */
+export function TriangleMarker() {
+  return (
+    <marker
+      id={MARKER_IDS.triangle}
+      viewBox="0 0 12 12"
+      refX="10"
+      refY="6"
+      markerWidth="10"
+      markerHeight="10"
+      orient="auto-start-reverse"
+    >
+      <path
+        d="M 0 0 L 10 6 L 0 12 Z"
+        fill="white"
+        stroke="#64748b"
+        strokeWidth="1.5"
+        className="transition-colors"
+      />
+    </marker>
+  )
+}
+
+/**
  * 모든 엣지 마커를 포함하는 SVG defs
  *
  * 엣지 컴포넌트 내부에서 한 번만 렌더링
@@ -180,6 +209,7 @@ export function EdgeMarkerDefs() {
       <OneMarker />
       <CompositionMarker />
       <AggregationMarker />
+      <TriangleMarker />
     </>
   )
 }
