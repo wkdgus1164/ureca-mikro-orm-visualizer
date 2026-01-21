@@ -116,11 +116,11 @@ export function CompositionMarker() {
     <marker
       id={MARKER_IDS.composition}
       viewBox="0 0 20 10"
-      refX="0"
+      refX="20"
       refY="5"
-      markerWidth="10"
-      markerHeight="10"
-      orient="auto-start-reverse"
+      markerWidth="12"
+      markerHeight="12"
+      orient="auto"
     >
       <path
         d="M 0 5 L 10 0 L 20 5 L 10 10 Z"
@@ -141,11 +141,11 @@ export function AggregationMarker() {
     <marker
       id={MARKER_IDS.aggregation}
       viewBox="0 0 20 10"
-      refX="0"
+      refX="20"
       refY="5"
-      markerWidth="10"
-      markerHeight="10"
-      orient="auto-start-reverse"
+      markerWidth="12"
+      markerHeight="12"
+      orient="auto"
     >
       <path
         d="M 0 5 L 10 0 L 20 5 L 10 10 Z"
