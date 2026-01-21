@@ -6,13 +6,14 @@
  * MikroORM Entity 다이어그램을 시각적으로 편집하는 메인 캔버스
  */
 
-import { useCallback } from "react"
+import { useCallback, useEffect } from "react"
 import {
   ReactFlow,
   Background,
   Controls,
   MiniMap,
   BackgroundVariant,
+  useReactFlow,
   type NodeMouseHandler,
   type EdgeMouseHandler,
 } from "@xyflow/react"
@@ -24,6 +25,7 @@ import { EntityNode } from "@/components/editor/nodes/entity-node"
 import { EmbeddableNode } from "@/components/editor/nodes/embeddable-node"
 import { EnumNode } from "@/components/editor/nodes/enum-node"
 import { RelationshipEdge } from "@/components/editor/edges/relationship-edge"
+import { GhostNode } from "@/components/editor/nodes/ghost-node"
 
 /**
  * 커스텀 노드 타입 등록
@@ -68,7 +70,13 @@ export function EditorCanvas({ className }: EditorCanvasProps) {
     onEdgesChange,
     onConnect,
     setSelection,
+    uiState,
+    updateMousePosition,
+    cancelPendingAdd,
+    finalizePendingAdd,
   } = useEditorContext()
+
+  const { screenToFlowPosition } = useReactFlow()
 
   /**
    * 노드 클릭 핸들러 - 선택 상태 업데이트
@@ -91,14 +99,79 @@ export function EditorCanvas({ className }: EditorCanvasProps) {
   )
 
   /**
-   * 빈 영역 클릭 핸들러 - 선택 해제
+   * 빈 영역 클릭 핸들러 - 선택 해제 또는 노드 생성
    */
-  const onPaneClick = useCallback(() => {
-    setSelection({ type: null, id: null })
-  }, [setSelection])
+  const onPaneClick = useCallback(
+    (event: React.MouseEvent) => {
+      // 노드 추가 대기 모드인 경우 해당 위치에 노드 생성
+      if (uiState.pendingAdd) {
+        const position = screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        })
+        finalizePendingAdd(position)
+        return
+      }
+
+      // 일반 모드에서는 선택 해제
+      setSelection({ type: null, id: null })
+    },
+    [uiState.pendingAdd, screenToFlowPosition, finalizePendingAdd, setSelection]
+  )
+
+  /**
+   * 마우스 이동 핸들러 - Ghost 노드 위치 업데이트
+   * Ghost 노드는 DOM 요소이므로 컨테이너 기준 화면 좌표 사용
+   */
+  const onMouseMove = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!uiState.pendingAdd) return
+
+      // 컨테이너 기준 상대 좌표 계산
+      const container = event.currentTarget
+      const rect = container.getBoundingClientRect()
+      const position = {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      }
+      updateMousePosition(position)
+    },
+    [uiState.pendingAdd, updateMousePosition]
+  )
+
+  /**
+   * 마우스 캔버스 벗어남 핸들러
+   */
+  const onMouseLeave = useCallback(() => {
+    if (uiState.pendingAdd) {
+      updateMousePosition(null)
+    }
+  }, [uiState.pendingAdd, updateMousePosition])
+
+  /**
+   * Escape 키 핸들러 - 노드 추가 대기 모드 취소
+   */
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && uiState.pendingAdd) {
+        cancelPendingAdd()
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [uiState.pendingAdd, cancelPendingAdd])
+
+  // 노드 추가 대기 모드일 때 커서 스타일 변경
+  const isPendingAdd = !!uiState.pendingAdd
 
   return (
-    <div className={cn("h-full w-full", className)}>
+    <div
+      className={cn("h-full w-full relative", className)}
+      onMouseMove={onMouseMove}
+      onMouseLeave={onMouseLeave}
+      style={{ cursor: isPendingAdd ? "crosshair" : undefined }}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -143,6 +216,11 @@ export function EditorCanvas({ className }: EditorCanvasProps) {
           className="bg-muted border border-border rounded-lg"
         />
       </ReactFlow>
+
+      {/* Ghost 노드 미리보기 */}
+      {uiState.pendingAdd && uiState.mousePosition && (
+        <GhostNode type={uiState.pendingAdd} position={uiState.mousePosition} />
+      )}
     </div>
   )
 }

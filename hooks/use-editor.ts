@@ -28,6 +28,7 @@ import { RelationType, FetchType } from "@/types/relationship"
 import {
   type Selection,
   type EditorUIState,
+  type PendingAddType,
   INITIAL_UI_STATE,
 } from "@/types/editor"
 import { createDefaultEntity, createDefaultEmbeddable, createDefaultEnum } from "@/types/entity"
@@ -108,6 +109,16 @@ export interface UseEditorReturn {
   clearDiagram: () => void
   /** 모든 Enum 노드 가져오기 (Property Form에서 참조용) */
   getAllEnums: () => EnumNode[]
+  /** 노드 추가 대기 모드 시작 (Ghost 노드 미리보기) */
+  startPendingAdd: (type: PendingAddType) => void
+  /** 노드 추가 대기 모드 취소 */
+  cancelPendingAdd: () => void
+  /** Ghost 노드용 마우스 위치 업데이트 */
+  updateMousePosition: (position: { x: number; y: number } | null) => void
+  /** 대기 중인 노드를 해당 위치에 생성 */
+  finalizePendingAdd: (position: { x: number; y: number }) => void
+  /** 노드 목록 직접 설정 (캔버스 동기화용) */
+  setNodes: React.Dispatch<React.SetStateAction<FlowNode[]>>
 }
 
 /**
@@ -115,6 +126,40 @@ export interface UseEditorReturn {
  */
 function generateId(): string {
   return crypto.randomUUID()
+}
+
+/**
+ * 고유한 이름 생성 헬퍼
+ *
+ * 기존 이름들 중 baseName과 "baseName N" 패턴을 검사하여
+ * 사용 가능한 다음 번호를 가진 이름을 반환
+ *
+ * @example
+ * generateUniqueName("NewEntity", ["NewEntity", "NewEntity 1"]) // "NewEntity 2"
+ * generateUniqueName("NewEntity", []) // "NewEntity"
+ * generateUniqueName("NewEntity", ["NewEntity"]) // "NewEntity 1"
+ */
+function generateUniqueName(baseName: string, existingNames: string[]): string {
+  // 기본 이름이 없으면 그대로 반환
+  if (!existingNames.includes(baseName)) {
+    return baseName
+  }
+
+  // "baseName N" 패턴에서 최대 N 찾기
+  const pattern = new RegExp(`^${baseName}(?: (\\d+))?$`)
+  let maxNumber = 0
+
+  existingNames.forEach((name) => {
+    const match = name.match(pattern)
+    if (match) {
+      const num = match[1] ? parseInt(match[1], 10) : 0
+      if (num > maxNumber) {
+        maxNumber = num
+      }
+    }
+  })
+
+  return `${baseName} ${maxNumber + 1}`
 }
 
 /**
@@ -177,7 +222,25 @@ export function useEditor(): UseEditorReturn {
       }
 
       const newEntity = createDefaultEntity(id, defaultPosition)
-      setNodes((nds) => [...nds, newEntity as FlowNode])
+
+      setNodes((nds) => {
+        // 기존 Entity 이름 목록 추출
+        const existingNames = nds
+          .filter((n) => n.type === "entity")
+          .map((n) => (n.data as EntityData).name)
+
+        // 고유한 이름 생성
+        const uniqueName = generateUniqueName("NewEntity", existingNames)
+
+        // 이름 업데이트하여 추가
+        return [
+          ...nds,
+          {
+            ...newEntity,
+            data: { ...newEntity.data, name: uniqueName },
+          } as FlowNode,
+        ]
+      })
     },
     [setNodes]
   )
@@ -224,7 +287,25 @@ export function useEditor(): UseEditorReturn {
       }
 
       const newEmbeddable = createDefaultEmbeddable(id, defaultPosition)
-      setNodes((nds) => [...nds, newEmbeddable as FlowNode])
+
+      setNodes((nds) => {
+        // 기존 Embeddable 이름 목록 추출
+        const existingNames = nds
+          .filter((n) => n.type === "embeddable")
+          .map((n) => (n.data as EmbeddableData).name)
+
+        // 고유한 이름 생성
+        const uniqueName = generateUniqueName("NewEmbeddable", existingNames)
+
+        // 이름 업데이트하여 추가
+        return [
+          ...nds,
+          {
+            ...newEmbeddable,
+            data: { ...newEmbeddable.data, name: uniqueName },
+          } as FlowNode,
+        ]
+      })
     },
     [setNodes]
   )
@@ -271,7 +352,25 @@ export function useEditor(): UseEditorReturn {
       }
 
       const newEnum = createDefaultEnum(id, defaultPosition)
-      setNodes((nds) => [...nds, newEnum as FlowNode])
+
+      setNodes((nds) => {
+        // 기존 Enum 이름 목록 추출
+        const existingNames = nds
+          .filter((n) => n.type === "enum")
+          .map((n) => (n.data as EnumData).name)
+
+        // 고유한 이름 생성
+        const uniqueName = generateUniqueName("NewEnum", existingNames)
+
+        // 이름 업데이트하여 추가
+        return [
+          ...nds,
+          {
+            ...newEnum,
+            data: { ...newEnum.data, name: uniqueName },
+          } as FlowNode,
+        ]
+      })
     },
     [setNodes]
   )
@@ -449,6 +548,72 @@ export function useEditor(): UseEditorReturn {
     }))
   }, [setNodes, setEdges])
 
+  /**
+   * 노드 추가 대기 모드 시작 (Ghost 노드 미리보기)
+   */
+  const startPendingAdd = useCallback((type: PendingAddType) => {
+    setUIState((prev) => ({
+      ...prev,
+      pendingAdd: type,
+      mousePosition: null,
+    }))
+  }, [])
+
+  /**
+   * 노드 추가 대기 모드 취소
+   */
+  const cancelPendingAdd = useCallback(() => {
+    setUIState((prev) => ({
+      ...prev,
+      pendingAdd: null,
+      mousePosition: null,
+    }))
+  }, [])
+
+  /**
+   * Ghost 노드용 마우스 위치 업데이트
+   */
+  const updateMousePosition = useCallback(
+    (position: { x: number; y: number } | null) => {
+      setUIState((prev) => ({
+        ...prev,
+        mousePosition: position,
+      }))
+    },
+    []
+  )
+
+  /**
+   * 대기 중인 노드를 해당 위치에 생성
+   */
+  const finalizePendingAdd = useCallback(
+    (position: { x: number; y: number }) => {
+      const pendingType = uiState.pendingAdd
+      if (!pendingType) return
+
+      // 타입에 따라 해당 노드 추가
+      switch (pendingType) {
+        case "entity":
+          addEntity(position)
+          break
+        case "embeddable":
+          addEmbeddable(position)
+          break
+        case "enum":
+          addEnum(position)
+          break
+      }
+
+      // 대기 모드 종료
+      setUIState((prev) => ({
+        ...prev,
+        pendingAdd: null,
+        mousePosition: null,
+      }))
+    },
+    [uiState.pendingAdd, addEntity, addEmbeddable, addEnum]
+  )
+
   return {
     nodes,
     edges,
@@ -478,5 +643,10 @@ export function useEditor(): UseEditorReturn {
     loadDiagram,
     clearDiagram,
     getAllEnums,
+    startPendingAdd,
+    cancelPendingAdd,
+    updateMousePosition,
+    finalizePendingAdd,
+    setNodes,
   }
 }

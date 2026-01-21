@@ -84,8 +84,8 @@ function EntityNodeComponent({ id, data, selected }: EntityNodeProps) {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* 삭제 버튼 (호버 시 표시) */}
-        {(isHovered || selected) && (
+        {/* 삭제 버튼 (호버 시에만 표시) */}
+        {isHovered && (
           <button
             onClick={handleDelete}
             className={cn(

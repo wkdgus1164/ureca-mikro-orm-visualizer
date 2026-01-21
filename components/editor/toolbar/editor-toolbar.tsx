@@ -9,9 +9,6 @@
 import { useReactFlow } from "@xyflow/react"
 import { Button } from "@/components/ui/button"
 import {
-  Plus,
-  Package,
-  List,
   Undo2,
   Redo2,
   ZoomIn,
@@ -55,9 +52,6 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
   const {
     nodes,
     edges,
-    addEntity,
-    addEmbeddable,
-    addEnum,
     uiState,
     toggleExportModal,
     deleteEntity,
@@ -70,27 +64,6 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
 
   // 파일 입력 ref (Load 버튼용)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  /**
-   * Entity 추가 핸들러
-   */
-  const handleAddEntity = () => {
-    addEntity()
-  }
-
-  /**
-   * Embeddable 추가 핸들러
-   */
-  const handleAddEmbeddable = () => {
-    addEmbeddable()
-  }
-
-  /**
-   * Enum 추가 핸들러
-   */
-  const handleAddEnum = () => {
-    addEnum()
-  }
 
   /**
    * 선택된 요소 삭제
@@ -176,41 +149,6 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
       )}
     >
       <div className="flex items-center gap-1 p-2">
-        {/* Entity 추가 */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleAddEntity}
-          className="gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Add Entity</span>
-        </Button>
-
-        {/* Embeddable 추가 */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleAddEmbeddable}
-          className="gap-2 text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
-        >
-          <Package className="h-4 w-4" />
-          <span className="hidden sm:inline">Add Embeddable</span>
-        </Button>
-
-        {/* Enum 추가 */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleAddEnum}
-          className="gap-2 text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
-        >
-          <List className="h-4 w-4" />
-          <span className="hidden sm:inline">Add Enum</span>
-        </Button>
-
-        <ToolbarDivider />
-
         {/* Undo (Phase 4에서 구현 예정) */}
         <Button
           variant="ghost"

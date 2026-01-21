@@ -25,6 +25,12 @@ export interface EditorState {
 export type SelectionType = "node" | "edge" | null
 
 /**
+ * 추가 대기 중인 노드 타입
+ * Ghost 노드 미리보기에서 사용
+ */
+export type PendingAddType = "entity" | "embeddable" | "enum" | null
+
+/**
  * 현재 선택된 요소 정보
  */
 export interface Selection {
@@ -46,6 +52,10 @@ export interface EditorUIState {
   isConnecting: boolean
   /** Export 모달 열림 여부 */
   isExportModalOpen: boolean
+  /** 추가 대기 모드 (Ghost 노드 미리보기) */
+  pendingAdd: PendingAddType
+  /** Ghost 노드용 마우스 위치 (flow 좌표) */
+  mousePosition: { x: number; y: number } | null
 }
 
 /**
@@ -128,4 +138,6 @@ export const INITIAL_UI_STATE: EditorUIState = {
   isRightPanelOpen: false,
   isConnecting: false,
   isExportModalOpen: false,
+  pendingAdd: null,
+  mousePosition: null,
 }

@@ -7,8 +7,9 @@
  * 노드를 카테고리별로 그룹화하여 표시
  */
 
-import { useMemo, useState } from "react"
-import { ChevronRight, Box, List, Trash2 } from "lucide-react"
+import { useMemo, useState, useCallback } from "react"
+import { useReactFlow } from "@xyflow/react"
+import { ChevronRight, Box, List, Trash2, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
@@ -19,6 +20,7 @@ import {
 import { cn } from "@/lib/utils"
 import { useEditorContext } from "@/components/providers/editor-provider"
 import type { EntityNode, EmbeddableNode, EnumNode } from "@/types/entity"
+import type { PendingAddType } from "@/types/editor"
 
 interface NodeListPanelProps {
   /** 추가 CSS 클래스 */
@@ -79,6 +81,10 @@ interface CategorySectionProps {
   count: number
   defaultOpen?: boolean
   children: React.ReactNode
+  /** Add 버튼 클릭 핸들러 */
+  onAdd?: () => void
+  /** Add 버튼 레이블 */
+  addLabel?: string
 }
 
 function CategorySection({
@@ -87,6 +93,8 @@ function CategorySection({
   count,
   defaultOpen = true,
   children,
+  onAdd,
+  addLabel,
 }: CategorySectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
@@ -105,6 +113,23 @@ function CategorySection({
       </CollapsibleTrigger>
       <CollapsibleContent className="pl-6 pr-2 space-y-0.5">
         {children}
+        {/* Add 버튼 */}
+        {onAdd && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onAdd()
+            }}
+            className={cn(
+              "flex items-center gap-2 w-full px-3 py-1.5 rounded-md",
+              "text-xs text-muted-foreground",
+              "hover:bg-muted/50 hover:text-foreground transition-colors"
+            )}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>{addLabel ?? `+ Add new ${title.toLowerCase()}`}</span>
+          </button>
+        )}
       </CollapsibleContent>
     </Collapsible>
   )
@@ -126,10 +151,14 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
     nodes,
     uiState,
     setSelection,
+    setNodes,
     deleteEntity,
     deleteEmbeddable,
     deleteEnum,
+    startPendingAdd,
   } = useEditorContext()
+
+  const { setCenter } = useReactFlow()
 
   // 노드를 카테고리별로 그룹화
   const groupedNodes = useMemo(() => {
@@ -155,11 +184,40 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
   }, [nodes])
 
   /**
-   * 노드 선택 핸들러
+   * 노드 선택 핸들러 (캔버스 선택 동기화 포함)
    */
-  const handleSelectNode = (id: string) => {
-    setSelection({ type: "node", id })
-  }
+  const handleSelectNode = useCallback(
+    (id: string) => {
+      // 에디터 선택 상태 업데이트
+      setSelection({ type: "node", id })
+
+      // ReactFlow 노드 선택 상태 동기화
+      setNodes((nds) =>
+        nds.map((node) => ({
+          ...node,
+          selected: node.id === id,
+        }))
+      )
+
+      // 선택한 노드로 뷰 이동
+      const node = nodes.find((n) => n.id === id)
+      if (node) {
+        // 노드 중심 위치로 이동 (대략적인 노드 크기 고려)
+        setCenter(node.position.x + 90, node.position.y + 50, { duration: 300 })
+      }
+    },
+    [setSelection, setNodes, nodes, setCenter]
+  )
+
+  /**
+   * 노드 추가 대기 모드 시작
+   */
+  const handleStartAdd = useCallback(
+    (type: PendingAddType) => {
+      startPendingAdd(type)
+    },
+    [startPendingAdd]
+  )
 
   /**
    * 선택 여부 확인
@@ -189,6 +247,8 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
             title="Entities"
             icon={<Box className="h-4 w-4 text-blue-500" />}
             count={groupedNodes.entities.length}
+            onAdd={() => handleStartAdd("entity")}
+            addLabel="+ Add new entity"
           >
             {groupedNodes.entities.length === 0 ? (
               <p className="text-xs text-muted-foreground px-3 py-2">
@@ -212,6 +272,8 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
             title="Embeddables"
             icon={<Box className="h-4 w-4 text-purple-500" />}
             count={groupedNodes.embeddables.length}
+            onAdd={() => handleStartAdd("embeddable")}
+            addLabel="+ Add new embeddable"
           >
             {groupedNodes.embeddables.length === 0 ? (
               <p className="text-xs text-muted-foreground px-3 py-2">
@@ -233,8 +295,10 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
           {/* Enum 섹션 */}
           <CategorySection
             title="Enums"
-            icon={<List className="h-4 w-4 text-green-500" />}
+            icon={<List className="h-4 w-4 text-amber-500" />}
             count={groupedNodes.enums.length}
+            onAdd={() => handleStartAdd("enum")}
+            addLabel="+ Add new enum"
           >
             {groupedNodes.enums.length === 0 ? (
               <p className="text-xs text-muted-foreground px-3 py-2">
