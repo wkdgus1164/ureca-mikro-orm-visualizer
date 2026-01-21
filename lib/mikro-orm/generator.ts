@@ -79,9 +79,9 @@ export function generateAllDiagramCode(
     result.set(sanitizeClassName(entity.data.name), code)
   })
 
-  // Embeddable 코드 생성
+  // Embeddable 코드 생성 (EnumNode 전달하여 Enum 참조 처리)
   embeddableNodes.forEach((embeddable) => {
-    const code = generateEmbeddableCode(embeddable, options)
+    const code = generateEmbeddableCode(embeddable, options, enumNodes)
     result.set(sanitizeClassName(embeddable.data.name), code)
   })
 
