@@ -75,16 +75,16 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const syntaxTheme = resolvedTheme === "dark" ? vscDarkPlus : oneLight
 
   // Export 형식 (TypeScript, JSON Schema, 또는 Image)
-  const [exportFormat, setExportFormat] = useState<ExportFormat>("typescript")
+  const [ exportFormat, setExportFormat ] = useState<ExportFormat>("typescript")
   // 선택된 Entity 탭 (복사/다운로드 시 사용, TypeScript 모드에서만)
-  const [selectedEntity, setSelectedEntity] = useState<string | null>(null)
+  const [ selectedEntity, setSelectedEntity ] = useState<string | null>(null)
   // 복사 완료 상태 (아이콘 피드백용)
-  const [copied, setCopied] = useState(false)
+  const [ copied, setCopied ] = useState(false)
 
   // 이미지 export 옵션 (Phase 2)
-  const [imageFormat, setImageFormat] = useState<ImageFormat>("png")
-  const [imageScale, setImageScale] = useState<ImageScale>(2)
-  const [isExporting, setIsExporting] = useState(false)
+  const [ imageFormat, setImageFormat ] = useState<ImageFormat>("png")
+  const [ imageScale, setImageScale ] = useState<ImageScale>(2)
+  const [ isExporting, setIsExporting ] = useState(false)
 
   /**
    * 모든 다이어그램 노드 (Entity + Embeddable) TypeScript 코드 생성
@@ -92,7 +92,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const generatedTsCode = useMemo(() => {
     if (!isOpen || nodes.length === 0) return new Map<string, string>()
     return generateAllDiagramCode(nodes, edges)
-  }, [isOpen, nodes, edges])
+  }, [ isOpen, nodes, edges ])
 
   /**
    * JSON Schema 코드 생성
@@ -100,14 +100,14 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const generatedJsonCode = useMemo(() => {
     if (!isOpen || nodes.length === 0) return ""
     return exportDiagramAsJson(nodes, edges)
-  }, [isOpen, nodes, edges])
+  }, [ isOpen, nodes, edges ])
 
   /**
    * 클래스 이름 목록 (Entity + Embeddable)
    */
   const entityNames = useMemo(
     () => Array.from(generatedTsCode.keys()),
-    [generatedTsCode]
+    [ generatedTsCode ]
   )
 
   /**
@@ -117,8 +117,8 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     if (selectedEntity && entityNames.includes(selectedEntity)) {
       return selectedEntity
     }
-    return entityNames[0] ?? null
-  }, [selectedEntity, entityNames])
+    return entityNames[ 0 ] ?? null
+  }, [ selectedEntity, entityNames ])
 
 
   /**
@@ -138,7 +138,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
         toast.error("Failed to copy to clipboard")
       }
     },
-    [generatedTsCode]
+    [ generatedTsCode ]
   )
 
   /**
@@ -153,7 +153,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     } catch {
       toast.error("Failed to copy to clipboard")
     }
-  }, [generatedJsonCode])
+  }, [ generatedJsonCode ])
 
   /**
    * 파일 다운로드 핸들러 (TypeScript)
@@ -163,7 +163,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
       const code = generatedTsCode.get(entityName)
       if (!code) return
 
-      const blob = new Blob([code], { type: "text/typescript" })
+      const blob = new Blob([ code ], { type: "text/typescript" })
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
@@ -175,14 +175,14 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
 
       toast.success(`${entityName}.ts downloaded!`)
     },
-    [generatedTsCode]
+    [ generatedTsCode ]
   )
 
   /**
    * 파일 다운로드 핸들러 (JSON)
    */
   const handleDownloadJson = useCallback(() => {
-    const blob = new Blob([generatedJsonCode], { type: "application/json" })
+    const blob = new Blob([ generatedJsonCode ], { type: "application/json" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
@@ -193,7 +193,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     URL.revokeObjectURL(url)
 
     toast.success("diagram-schema.json downloaded!")
-  }, [generatedJsonCode])
+  }, [ generatedJsonCode ])
 
   /**
    * 모든 TypeScript 파일 다운로드
@@ -202,7 +202,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     for (const entityName of entityNames) {
       handleDownloadTs(entityName)
     }
-  }, [entityNames, handleDownloadTs])
+  }, [ entityNames, handleDownloadTs ])
 
   /**
    * 이미지 다운로드 핸들러
@@ -225,7 +225,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
     } finally {
       setIsExporting(false)
     }
-  }, [nodes, imageFormat, imageScale])
+  }, [ nodes, imageFormat, imageScale ])
 
   /**
    * 탭 변경 핸들러
@@ -272,7 +272,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
           onValueChange={(value) => setExportFormat(value as ExportFormat)}
           className="flex flex-col min-w-0 overflow-hidden"
         >
-          <div className="px-6 border-b">
+          <div className="px-6">
             <TabsList className="h-10">
               <TabsTrigger value="typescript" className="gap-2">
                 <FileCode className="h-4 w-4" />
@@ -290,13 +290,13 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
           </div>
 
           {/* TypeScript 형식 */}
-          <TabsContent value="typescript" className="m-0 flex-1 overflow-hidden">
-            <div className="flex h-[450px] min-w-0 overflow-hidden">
+          <TabsContent value="typescript" className="m-0 flex-1 overflow-hidden px-6 pt-2">
+            <div className="flex h-[450px] min-w-0 overflow-hidden rounded-lg border">
               {/* 파일 탐색기 (왼쪽) */}
-              <div className="w-56 shrink-0 border-r bg-muted/30 py-2 overflow-hidden">
+              <div className="w-56 shrink-0 border-r bg-muted/30 py-2 overflow-hidden rounded-l-lg">
                 <Tree
                   initialSelectedId={currentEntity ?? undefined}
-                  initialExpandedItems={["entities"]}
+                  initialExpandedItems={[ "entities" ]}
                   indicator={false}
                   className="h-full"
                 >
@@ -317,7 +317,7 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
               </div>
 
               {/* 코드 미리보기 (오른쪽) */}
-              <div className="flex-1 min-w-0 overflow-hidden relative">
+              <div className="flex-1 min-w-0 overflow-hidden relative rounded-r-lg">
                 {/* 복사 버튼 (우측 상단) */}
                 <Button
                   variant="ghost"
@@ -359,8 +359,8 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
           </TabsContent>
 
           {/* JSON Schema 형식 */}
-          <TabsContent value="json" className="m-0 overflow-hidden">
-            <div className="relative h-[450px] overflow-hidden">
+          <TabsContent value="json" className="m-0 overflow-hidden px-6 pt-2">
+            <div className="relative h-[450px] overflow-hidden rounded-lg border">
               {/* 복사 버튼 (우측 상단) */}
               <Button
                 variant="ghost"
@@ -455,56 +455,56 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
             </div>
           </TabsContent>
 
-        {/* 하단 액션 버튼 - TypeScript 형식 */}
-        {exportFormat === "typescript" && (
-          <div className="flex items-center justify-between px-6 py-3 border-t bg-muted/50">
-            <Button variant="outline" size="sm" onClick={handleDownloadAllTs}>
-              <Download className="h-4 w-4 mr-2" />
-              Download All ({entityNames.length})
-            </Button>
+          {/* 하단 액션 버튼 - TypeScript 형식 */}
+          {exportFormat === "typescript" && (
+            <div className="flex items-center justify-between px-6 py-3 border-t bg-muted/50">
+              <Button variant="outline" size="sm" onClick={handleDownloadAllTs}>
+                <Download className="h-4 w-4 mr-2" />
+                Download All ({entityNames.length})
+              </Button>
 
-            <Button
-              size="sm"
-              onClick={() => currentEntity && handleDownloadTs(currentEntity)}
-              disabled={!currentEntity}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Download {currentEntity}.ts
-            </Button>
-          </div>
-        )}
+              <Button
+                size="sm"
+                onClick={() => currentEntity && handleDownloadTs(currentEntity)}
+                disabled={!currentEntity}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download {currentEntity}.ts
+              </Button>
+            </div>
+          )}
 
-        {/* 하단 액션 버튼 - JSON Schema 형식 */}
-        {exportFormat === "json" && (
-          <div className="flex items-center justify-end gap-2 px-6 py-3 border-t bg-muted/50">
-            <Button size="sm" onClick={handleDownloadJson}>
-              <Download className="h-4 w-4 mr-2" />
-              Download diagram-schema.json
-            </Button>
-          </div>
-        )}
+          {/* 하단 액션 버튼 - JSON Schema 형식 */}
+          {exportFormat === "json" && (
+            <div className="flex items-center justify-end gap-2 px-6 py-3 border-t bg-muted/50">
+              <Button size="sm" onClick={handleDownloadJson}>
+                <Download className="h-4 w-4 mr-2" />
+                Download diagram-schema.json
+              </Button>
+            </div>
+          )}
 
-        {/* 하단 액션 버튼 - 이미지 형식 */}
-        {exportFormat === "image" && (
-          <div className="flex items-center justify-end gap-2 px-6 py-4 border-t bg-muted/50">
-            <Button
-              onClick={handleDownloadImage}
-              disabled={isExporting}
-            >
-              {isExporting ? (
-                <>
-                  <span className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  Exporting...
-                </>
-              ) : (
-                <>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download diagram.{imageFormat}
-                </>
-              )}
-            </Button>
-          </div>
-        )}
+          {/* 하단 액션 버튼 - 이미지 형식 */}
+          {exportFormat === "image" && (
+            <div className="flex items-center justify-end gap-2 px-6 py-4 border-t bg-muted/50">
+              <Button
+                onClick={handleDownloadImage}
+                disabled={isExporting}
+              >
+                {isExporting ? (
+                  <>
+                    <span className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download diagram.{imageFormat}
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </Tabs>
       </DialogContent>
     </Dialog>
