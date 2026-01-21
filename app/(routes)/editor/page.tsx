@@ -8,6 +8,7 @@ import { EditorProvider } from "@/components/providers/editor-provider"
 import { EditorCanvas } from "@/components/editor/canvas/editor-canvas"
 import { EditorToolbar } from "@/components/editor/toolbar/editor-toolbar"
 import { EntityEditPanel } from "@/components/editor/panels/entity-edit-panel"
+import { RelationshipEditPanel } from "@/components/editor/panels/relationship-edit-panel"
 
 export const metadata = {
   title: "Editor | MikroORM Visualizer",
@@ -28,6 +29,9 @@ export default function EditorPage() {
 
         {/* Entity 편집 패널 (우측 슬라이드) */}
         <EntityEditPanel />
+
+        {/* Relationship 편집 패널 (우측 슬라이드) */}
+        <RelationshipEditPanel />
       </main>
     </EditorProvider>
   )
