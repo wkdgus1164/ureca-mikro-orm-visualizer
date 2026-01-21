@@ -39,7 +39,7 @@ export function ArrowMarker() {
     >
       <path
         d="M 0 0 L 10 5 L 0 10 z"
-        fill="hsl(var(--foreground))"
+        fill="#64748b"
         className="transition-colors"
       />
     </marker>
@@ -65,7 +65,7 @@ export function CrowFootMarker() {
       <path
         d="M 0 6 L 10 0 M 0 6 L 10 6 M 0 6 L 10 12"
         fill="none"
-        stroke="hsl(var(--foreground))"
+        stroke="#64748b"
         strokeWidth="2"
         className="transition-colors"
       />
@@ -94,7 +94,7 @@ export function OneMarker() {
         y1="0"
         x2="5"
         y2="10"
-        stroke="hsl(var(--foreground))"
+        stroke="#64748b"
         strokeWidth="2"
         className="transition-colors"
       />

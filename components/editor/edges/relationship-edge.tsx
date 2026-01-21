@@ -30,15 +30,11 @@ type RelationshipEdgeType = Edge<RelationshipData, "relationship">
 type RelationshipEdgeProps = EdgeProps<RelationshipEdgeType>
 
 /**
- * 엣지 스타일 계산
- *
- * 선택 상태에 따라 strokeWidth와 색상 결정
+ * 엣지 스타일 (선택 상태와 무관하게 동일한 스타일 유지)
  */
-function getEdgeStyle(selected: boolean) {
-  return {
-    strokeWidth: selected ? 3 : 2,
-    stroke: selected ? "hsl(var(--primary))" : "hsl(var(--foreground))",
-  }
+const EDGE_STYLE = {
+  strokeWidth: 2,
+  stroke: "#64748b",
 }
 
 /**
@@ -99,7 +95,6 @@ function RelationshipEdgeComponent({
 
   const relationType = data?.relationType ?? RelationType.OneToMany
   const sourceProperty = data?.sourceProperty ?? "relation"
-  const style = getEdgeStyle(selected ?? false)
 
   return (
     <>
@@ -107,7 +102,7 @@ function RelationshipEdgeComponent({
       <BaseEdge
         id={id}
         path={edgePath}
-        style={style}
+        style={EDGE_STYLE}
         markerEnd={getMarkerEnd(relationType)}
         markerStart={getMarkerStart(relationType)}
       />
@@ -125,7 +120,7 @@ function RelationshipEdgeComponent({
             "px-2 py-1 rounded-md text-xs font-medium",
             "bg-background border border-border shadow-sm",
             "transition-all",
-            selected && "border-primary bg-primary/5"
+            selected && "border-primary border-2"
           )}
         >
           <div className="flex flex-col items-center gap-0.5">
