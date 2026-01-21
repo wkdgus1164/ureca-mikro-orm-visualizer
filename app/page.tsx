@@ -1,29 +1,44 @@
-import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+/**
+ * 루트 라우트 페이지
+ *
+ * MikroORM Entity 비주얼 에디터 메인 페이지
+ * 피그마 스타일의 3-패널 레이아웃:
+ * - 좌측: 노드 목록
+ * - 중앙: ReactFlow 캔버스
+ * - 우측: 프로퍼티 편집 패널
+ */
 
-export default function Home() {
+import { EditorProvider } from "@/components/providers/editor-provider"
+import { EditorToolbar } from "@/components/editor/toolbar/editor-toolbar"
+import { EditorLayout } from "@/components/editor/editor-layout"
+import { ExportModalWrapper } from "@/components/export/export-modal-wrapper"
+
+export const metadata = {
+  title: "Editor | MikroORM Visualizer",
+  description: "Visual editor for designing MikroORM entities",
+}
+
+/**
+ * Root editor page that provides editor context and renders the editor UI.
+ *
+ * Renders an EditorProvider that wraps the main editor surface, including the top toolbar,
+ * the three-panel editor layout (left node list, center canvas, right properties), and the export modal.
+ *
+ * @returns The React element for the editor page: an EditorProvider wrapping the main editor structure.
+ */
+export default function EditorPage() {
   return (
-    <main className="min-h-screen p-8">
-      <div className="mx-auto max-w-4xl space-y-8">
-        <header className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">MikroORM Visualizer</h1>
-          <AnimatedThemeToggler className="rounded-full p-2 hover:bg-accent transition-colors" />
-        </header>
+    <EditorProvider>
+      <main className="h-screen w-full overflow-hidden flex flex-col">
+        {/* 툴바 */}
+        <EditorToolbar />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Welcome</CardTitle>
-            <CardDescription>
-              MikroORM 엔티티 관계를 시각화하는 도구입니다.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              프로젝트 초기 설정이 완료되었습니다. 이제 MikroORM 연동을 시작할 수 있습니다.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    </main>
+        {/* 3-패널 레이아웃 (좌측 목록 + 중앙 캔버스 + 우측 프로퍼티) */}
+        <EditorLayout />
+
+        {/* Export 모달 */}
+        <ExportModalWrapper />
+      </main>
+    </EditorProvider>
   )
 }

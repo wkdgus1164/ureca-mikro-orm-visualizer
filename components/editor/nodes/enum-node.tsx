@@ -1,0 +1,140 @@
+"use client"
+
+/**
+ * Enum 노드 커스텀 컴포넌트
+ *
+ * ReactFlow 캔버스에서 TypeScript Enum을 시각적으로 표현
+ * amber 색상 테마로 Entity/Embeddable과 시각적으로 구분
+ */
+
+import { memo } from "react"
+import { Handle, Position, type Node, type NodeProps } from "@xyflow/react"
+import type { EnumData } from "@/types/entity"
+import { List } from "lucide-react"
+import { cn } from "@/lib/utils"
+
+/**
+ * Enum 노드 타입 (ReactFlow Node 확장)
+ */
+type EnumNodeType = Node<EnumData, "enum">
+
+/**
+ * Enum 노드 Props 타입
+ */
+type EnumNodeProps = NodeProps<EnumNodeType>
+
+/**
+ * 핸들 스타일 (Enum 전용 - amber 계열)
+ */
+const handleClassName =
+  "!w-2.5 !h-2.5 !bg-amber-500 !border-2 !border-background hover:!bg-amber-400 transition-colors"
+
+/**
+ * Render a React Flow node that visualizes a TypeScript-style enum using an amber theme.
+ *
+ * The node displays a header with the enum name and an "Enum" badge, a body that lists
+ * values as `Key = "Value"` (or a "No values" placeholder), and four connection handles
+ * (top/left as targets, right/bottom as sources). Selection state changes the node's
+ * border and ring styling.
+ *
+ * @param data - Node data containing `name` and `values` to render
+ * @param selected - Whether the node is selected, which alters visual emphasis
+ * @returns The JSX element representing the Enum node
+ */
+function EnumNodeComponent({ data, selected }: EnumNodeProps) {
+  const { name, values } = data
+
+  return (
+    <>
+      {/* 상단 핸들 (Target) */}
+      <Handle
+        type="target"
+        position={Position.Top}
+        id="top"
+        className={handleClassName}
+      />
+
+      {/* 좌측 핸들 (Target) */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="left"
+        className={handleClassName}
+      />
+
+      {/* 메인 카드 */}
+      <div
+        className={cn(
+          "min-w-[160px] max-w-[240px] bg-background rounded-lg shadow-md",
+          "border-2 transition-all",
+          selected
+            ? "border-amber-500 ring-2 ring-amber-500/20"
+            : "border-amber-300 dark:border-amber-700 hover:border-amber-400 dark:hover:border-amber-600"
+        )}
+      >
+        {/* 헤더: Enum 이름 */}
+        <div className="px-3 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800 rounded-t-md">
+          <div className="text-sm font-semibold flex items-center gap-2">
+            <List className="w-4 h-4 text-amber-500" />
+            <span className="truncate text-amber-700 dark:text-amber-300">
+              {name}
+            </span>
+            <span className="text-[10px] font-normal text-amber-400 dark:text-amber-500 ml-auto">
+              Enum
+            </span>
+          </div>
+        </div>
+
+        {/* 바디: Enum 값 목록 */}
+        {values.length === 0 ? (
+          <div className="px-3 py-2 text-xs text-muted-foreground italic">
+            No values
+          </div>
+        ) : (
+          <div className="py-1">
+            {values.map((enumValue, index) => (
+              <div
+                key={index}
+                className="flex items-center px-3 py-1 text-xs hover:bg-amber-50/50 dark:hover:bg-amber-950/20 transition-colors"
+              >
+                {/* Key */}
+                <span className="font-medium text-foreground truncate">
+                  {enumValue.key}
+                </span>
+
+                {/* = */}
+                <span className="text-muted-foreground mx-1.5">=</span>
+
+                {/* Value */}
+                <span className="text-amber-600 dark:text-amber-400 truncate">
+                  &quot;{enumValue.value}&quot;
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 우측 핸들 (Source) */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="right"
+        className={handleClassName}
+      />
+
+      {/* 하단 핸들 (Source) */}
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="bottom"
+        className={handleClassName}
+      />
+    </>
+  )
+}
+
+/**
+ * 메모이제이션된 Enum 노드 컴포넌트
+ */
+export const EnumNode = memo(EnumNodeComponent)

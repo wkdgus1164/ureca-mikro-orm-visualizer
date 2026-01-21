@@ -10,12 +10,12 @@
 
 ## 진행 상황
 
-- [ ] Embeddable 지원
-- [ ] Index 및 Unique 제약조건
-- [ ] Enum 타입 지원
-- [ ] JSON Schema export
-- [ ] ERD 이미지 export (PNG, SVG)
-- [ ] 다이어그램 저장/불러오기 (JSON)
+- [x] Embeddable 지원
+- [x] Index 및 Unique 제약조건
+- [x] Enum 타입 지원
+- [x] JSON Schema export
+- [x] ERD 이미지 export (PNG, SVG)
+- [x] 다이어그램 저장/불러오기 (JSON)
 
 ---
 
@@ -221,9 +221,9 @@ const handleExportImage = async (format: "png" | "svg") => {
 4. 코드 생성 로직에 `@Embeddable` 데코레이터 추가
 
 **완료 조건:**
-- [ ] Embeddable 노드 추가 및 렌더링
-- [ ] Entity와 시각적 구분
-- [ ] `@Embedded` 데코레이터 코드 생성
+- [x] Embeddable 노드 추가 및 렌더링
+- [x] Entity와 시각적 구분
+- [x] `@Embeddable` 데코레이터 코드 생성
 
 **커밋 메시지 템플릿:**
 ```
@@ -251,9 +251,9 @@ feat(editor): Embeddable 노드 타입 구현
 3. 코드 생성 로직에 `@Index`, `@Unique` 데코레이터 추가
 
 **완료 조건:**
-- [ ] Indexes UI 구현
-- [ ] 복합 Index 지원
-- [ ] `@Index`, `@Unique` 코드 생성
+- [x] Indexes UI 구현
+- [x] 복합 Index 지원
+- [x] `@Index`, `@Unique` 코드 생성
 
 **커밋 메시지 템플릿:**
 ```
@@ -281,9 +281,9 @@ feat(editor): Index 및 Unique 제약조건 UI 구현
 3. 코드 생성 로직에 Enum export 추가
 
 **완료 조건:**
-- [ ] Enum 타입 선택 가능
-- [ ] Enum 값 목록 편집 UI
-- [ ] `@Enum` 데코레이터 및 Enum export 코드 생성
+- [x] Enum 타입 선택 가능
+- [x] Enum 값 목록 편집 UI
+- [x] `@Enum` 데코레이터 및 Enum export 코드 생성
 
 **커밋 메시지 템플릿:**
 ```
@@ -310,9 +310,9 @@ feat(editor): Enum 타입 지원 구현
 3. Export 모달에 JSON Schema 옵션 추가
 
 **완료 조건:**
-- [ ] generateJsonSchema 함수 구현
-- [ ] Export 모달에서 JSON Schema 선택 가능
-- [ ] JSON 다운로드 기능
+- [x] generateJsonSchema 함수 구현
+- [x] Export 모달에서 JSON Schema 선택 가능
+- [x] JSON 다운로드 기능
 
 **커밋 메시지 템플릿:**
 ```
@@ -340,9 +340,9 @@ feat(export): JSON Schema export 구현
 3. Export 모달에 이미지 export 옵션 추가
 
 **완료 조건:**
-- [ ] PNG, SVG export 기능
-- [ ] 해상도 선택 (1x, 2x, 4x)
-- [ ] Export 모달 UI 업데이트
+- [x] PNG, SVG export 기능
+- [x] 해상도 선택 (1x, 2x, 4x)
+- [x] Export 모달 UI 업데이트
 
 **커밋 메시지 템플릿:**
 ```
@@ -371,10 +371,10 @@ feat(export): ERD 이미지 export 구현 (PNG, SVG)
 3. Load: 파일 선택 → JSON 파싱 → 상태 업데이트
 
 **완료 조건:**
-- [ ] Save 버튼 클릭 시 JSON 다운로드
-- [ ] Load 버튼 클릭 시 파일 선택 UI
-- [ ] JSON 파싱 및 캔버스 업데이트
-- [ ] 오류 처리 (잘못된 JSON)
+- [x] Save 버튼 클릭 시 JSON 다운로드
+- [x] Load 버튼 클릭 시 파일 선택 UI
+- [x] JSON 파싱 및 캔버스 업데이트
+- [x] 오류 처리 (잘못된 JSON)
 
 **커밋 메시지 템플릿:**
 ```
