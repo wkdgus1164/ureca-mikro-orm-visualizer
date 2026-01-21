@@ -1,0 +1,156 @@
+/**
+ * Import 문 생성기
+ *
+ * Entity에 필요한 MikroORM 데코레이터 및 관련 Entity import 문 생성
+ */
+
+import type { EntityNode, EntityIndex } from "@/types/entity"
+import type { RelationshipEdge } from "@/types/relationship"
+import { sanitizeClassName } from "./utils"
+import { getRelationDecorator, isCollectionRelation } from "./relationship"
+
+/**
+ * Import 수집 결과 타입
+ */
+export interface CollectedImports {
+  /** 필요한 MikroORM 데코레이터 목록 */
+  decorators: Set<string>
+  /** 참조하는 다른 Entity 이름 목록 */
+  relatedEntities: Set<string>
+  /** Collection import 필요 여부 */
+  needsCollection: boolean
+  /** Cascade import 필요 여부 */
+  needsCascade: boolean
+}
+
+/**
+ * Collects MikroORM decorators and related import requirements for a given entity.
+ *
+ * Inspects the entity's properties, indexes, and relationships to determine which decorators
+ * are required, which other entity classes must be imported, and whether Collection or Cascade
+ * utilities are needed.
+ *
+ * @param entity - The entity node to analyze
+ * @param edges - All relationship edges in the diagram
+ * @param allNodes - All entity nodes in the diagram (used to resolve related entity names)
+ * @returns An object containing:
+ *  - `decorators`: a set of decorator names required for the entity
+ *  - `relatedEntities`: a set of sanitized class names of other entities referenced
+ *  - `needsCollection`: `true` if any relationship uses a collection type
+ *  - `needsCascade`: `true` if any relationship declares cascade
+ */
+export function collectImports(
+  entity: EntityNode,
+  edges: RelationshipEdge[],
+  allNodes: EntityNode[]
+): CollectedImports {
+  const decorators = new Set<string>(["Entity"])
+  const relatedEntities = new Set<string>()
+  let needsCollection = false
+  let needsCascade = false
+
+  // Properties
+  const hasPrimaryKey = entity.data.properties.some((p) => p.isPrimaryKey)
+  if (hasPrimaryKey) {
+    decorators.add("PrimaryKey")
+  }
+
+  // Enum이 아닌 일반 프로퍼티가 있는지 확인
+  const hasRegularProps = entity.data.properties.some(
+    (p) => !p.isPrimaryKey && p.type !== "enum"
+  )
+  if (hasRegularProps) {
+    decorators.add("Property")
+  }
+
+  // Enum 타입 프로퍼티 확인
+  const hasEnumProps = entity.data.properties.some(
+    (p) => p.type === "enum" && p.enumDef
+  )
+  if (hasEnumProps) {
+    decorators.add("Enum")
+  }
+
+  // Indexes
+  const indexes: EntityIndex[] = entity.data.indexes ?? []
+  const hasRegularIndex = indexes.some(
+    (idx) => !idx.isUnique && idx.properties.length > 0
+  )
+  const hasUniqueIndex = indexes.some(
+    (idx) => idx.isUnique && idx.properties.length > 0
+  )
+
+  if (hasRegularIndex) {
+    decorators.add("Index")
+  }
+  if (hasUniqueIndex) {
+    decorators.add("Unique")
+  }
+
+  // Relationships
+  const entityEdges = edges.filter(
+    (e) => e.source === entity.id || e.target === entity.id
+  )
+
+  entityEdges
+    .filter((edge) => edge.data && edge.source === entity.id)
+    .forEach((edge) => {
+      const data = edge.data!
+
+      decorators.add(getRelationDecorator(data.relationType))
+
+      if (isCollectionRelation(data.relationType)) {
+        needsCollection = true
+      }
+
+      if (data.cascade) {
+        needsCascade = true
+      }
+
+      // 타겟 Entity 찾기
+      const targetNode = allNodes.find((n) => n.id === edge.target)
+      if (targetNode && targetNode.data.name !== entity.data.name) {
+        relatedEntities.add(sanitizeClassName(targetNode.data.name))
+      }
+    })
+
+  return { decorators, relatedEntities, needsCollection, needsCascade }
+}
+
+/**
+ * Builds import statements for MikroORM core decorators and related entity classes.
+ *
+ * @param decorators - Names of decorators to import from `@mikro-orm/core`
+ * @param relatedEntities - Names of related entity classes to import from local files
+ * @param needsCollection - Include `Collection` in the core import when `true`
+ * @param needsCascade - Include `Cascade` in the core import when `true`
+ * @returns A string containing the combined import statements
+ */
+export function generateImports(
+  decorators: Set<string>,
+  relatedEntities: Set<string>,
+  needsCollection: boolean,
+  needsCascade: boolean
+): string {
+  const lines: string[] = []
+
+  // MikroORM core imports
+  const coreImports = [...decorators]
+  if (needsCollection) {
+    coreImports.push("Collection")
+  }
+  if (needsCascade) {
+    coreImports.push("Cascade")
+  }
+
+  lines.push(
+    `import { ${coreImports.sort().join(", ")} } from "@mikro-orm/core"`
+  )
+
+  // Related entity imports
+  const entityImports = [...relatedEntities].map(
+    (entityName) => `import { ${entityName} } from "./${entityName}"`
+  )
+
+  return [...lines, ...entityImports].join("\n")
+}

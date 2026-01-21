@@ -4,520 +4,155 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 개요
 
-**MikroORM Class Diagram Visualizer** - MikroORM 엔티티 관계를 비주얼 에디터로 설계하고, TypeScript 코드/JSON/SQL로 내보낼 수 있는 Next.js 애플리케이션.
-
-### 핵심 목표
-1. **비주얼 우선**: 드래그앤드롭으로 Class Diagram을 그림 그리듯 설계
-2. **MikroORM 전용**: MikroORM의 데코레이터, 관계 타입, 철학을 정확히 표현
-3. **다양한 출력**: TypeScript 엔티티 코드, JSON Schema, SQL DDL, ERD 이미지
-4. **확장성 대비**: MVP는 기본 기능, 아키텍처는 미래 확장 고려
+**MikroORM Class Diagram Visualizer** - MikroORM 엔티티 관계를 비주얼 에디터로 설계하고, TypeScript 코드/JSON/이미지로 내보낼 수 있는 Next.js 애플리케이션.
 
 **기술 스택:**
-- **프레임워크**: Next.js 16 (App Router) + React 19
-- **언어**: TypeScript 5 (strict mode, `any` 금지)
-- **스타일링**: Tailwind CSS v4 + shadcn/ui
-- **비주얼 에디터**: @xyflow/react (ReactFlow)
-- **테마**: Vercel Geist 폰트 + next-themes (라이트/다크 모드)
-- **패키지 매니저**: Bun (필수)
+- Next.js 16 (App Router) + React 19
+- TypeScript 5 (strict mode, `any` 금지)
+- Tailwind CSS v4 + shadcn/ui
+- @xyflow/react (ReactFlow)
+- Vitest + @testing-library (테스트)
+- Bun (패키지 매니저)
 
 ## 개발 명령어
-
-> **중요:** 반드시 `bun`을 사용할 것. `npm`/`yarn`/`pnpm` 사용 금지.
 
 ```bash
 bun dev          # 개발 서버
 bun run build    # 프로덕션 빌드
-bun start        # 프로덕션 서버
 bun run lint     # ESLint 검사
-```
-
-### 패키지 설치
-
-> **중요:** package.json 직접 수정 금지. 항상 `bun add` 사용.
-
-```bash
-bun add <package>           # 의존성 추가
-bun add -d <package>        # devDependencies 추가
-bunx shadcn@latest add <component>  # shadcn 컴포넌트 추가
+bun run test     # Vitest 테스트 실행
+bun run test:run # 테스트 1회 실행
 ```
 
 ## 디렉토리 구조
 
-**엄격한 계층 구조 준수 필수.** 각 디렉토리의 `README.md`에서 상세 규칙 확인.
-
 ```
 /
-├── app/                        # Next.js App Router
-│   ├── (routes)/              # 라우트 그룹 (URL에 포함되지 않음)
-│   │   └── editor/            # /editor - 비주얼 에디터 페이지
-│   ├── api/                   # API Routes
-│   │   ├── export/            # 내보내기 API (TypeScript, JSON, SQL, Image)
-│   │   └── import/            # 불러오기 API (DDL, JSON)
-│   ├── layout.tsx             # 루트 레이아웃
-│   ├── page.tsx               # 홈페이지
-│   └── globals.css            # 글로벌 스타일
-├── components/                 # React 컴포넌트
-│   ├── ui/                    # shadcn/ui 기본 컴포넌트 (Button, Card 등)
-│   ├── providers/             # Context Providers (Theme, Editor State 등)
-│   ├── editor/                # 에디터 전용 컴포넌트 (Phase 1에서 생성)
-│   │   ├── canvas/            # ReactFlow 캔버스 래퍼
-│   │   ├── nodes/             # 커스텀 노드 타입들 (EntityNode, etc.)
-│   │   ├── edges/             # 커스텀 엣지 타입들 (RelationshipEdge, etc.)
-│   │   ├── toolbar/           # 에디터 툴바
-│   │   └── panels/            # 사이드 패널 (Properties, Layers, etc.)
-│   └── export/                # 내보내기 UI 컴포넌트
-├── lib/                        # 비즈니스 로직 및 유틸리티
-│   ├── utils.ts               # shadcn/ui cn() 유틸
-│   ├── mikro-orm/             # MikroORM 관련 유틸 (Phase 1에서 생성)
-│   │   ├── parser.ts          # 코드 → AST 파싱
-│   │   ├── generator.ts       # AST → TypeScript 코드 생성
-│   │   └── types.ts           # MikroORM 관련 타입 정의
-│   ├── export/                # 내보내기 로직 (Phase 2-3에서 생성)
-│   │   ├── typescript.ts      # TypeScript 코드 생성
-│   │   ├── json.ts            # JSON Schema 생성
-│   │   ├── sql.ts             # SQL DDL 생성 (PostgreSQL, MySQL)
-│   │   └── image.ts           # ERD 이미지 export (PNG, SVG)
-│   └── import/                # 불러오기 로직 (Phase 3에서 생성)
-│       ├── ddl-parser.ts      # SQL DDL 파서
-│       └── json-parser.ts     # JSON Schema 파서
-├── hooks/                      # 커스텀 React 훅
-│   ├── use-editor.ts          # 에디터 전역 상태 관리
-│   ├── use-nodes.ts           # ReactFlow 노드 관리
-│   ├── use-edges.ts           # ReactFlow 엣지 관리
-│   └── use-export.ts          # 내보내기 상태 관리
-├── types/                      # TypeScript 타입 정의 (Phase 1에서 생성)
-│   ├── editor.ts              # 에디터 상태 및 UI 타입
-│   ├── entity.ts              # Entity 관련 타입
-│   ├── relationship.ts        # 관계 타입 (OneToOne, OneToMany, etc.)
-│   ├── decorator.ts           # MikroORM 데코레이터 타입
-│   └── export.ts              # Export 형식 타입
-├── ai-context/                 # AI 개발 에이전트용 문서
-│   ├── README.md              # PRD 작성 규칙
-│   ├── phase-1-mvp.md         # Phase 1 PRD
-│   ├── phase-2-advanced.md    # Phase 2 PRD
-│   ├── phase-3-database.md    # Phase 3 PRD
-│   ├── phase-4-optimization.md # Phase 4 PRD
-│   ├── adr/                   # Architecture Decision Records
-│   └── progress/              # 주간 진행 상황
-└── public/                     # 정적 파일
+├── app/                    # Next.js App Router
+│   └── (routes)/editor/    # /editor - 비주얼 에디터 페이지
+├── components/
+│   ├── ui/                 # shadcn/ui 컴포넌트
+│   ├── providers/          # Context Providers
+│   ├── editor/             # 에디터 컴포넌트
+│   │   ├── canvas/         # ReactFlow 캔버스
+│   │   ├── nodes/          # 커스텀 노드 (Entity, Embeddable, Enum)
+│   │   ├── edges/          # 커스텀 엣지 (Relationship)
+│   │   ├── toolbar/        # 에디터 툴바
+│   │   └── panels/         # 사이드 패널
+│   │       ├── property-form.tsx
+│   │       ├── inline-enum-form.tsx      # Enum 정의 편집
+│   │       └── property-type-selector.tsx # 타입 선택
+│   └── export/             # Export 컴포넌트
+│       ├── export-modal.tsx
+│       ├── typescript-export-tab.tsx
+│       ├── json-export-tab.tsx
+│       └── image-export-tab.tsx
+├── hooks/                  # 커스텀 React 훅
+│   ├── use-editor.ts       # 에디터 통합 훅 (메인)
+│   ├── use-nodes.ts        # 노드 CRUD 관리
+│   ├── use-edges.ts        # 엣지 CRUD 관리
+│   └── use-editor-ui.ts    # UI 상태 관리
+├── lib/                    # 비즈니스 로직
+│   ├── mikro-orm/          # MikroORM 코드 생성
+│   └── export/             # JSON/이미지 내보내기
+├── types/                  # TypeScript 타입 정의
+├── test/                   # 테스트 파일
+│   ├── hooks/              # 훅 테스트
+│   └── components/         # 컴포넌트 테스트
+└── ai-context/             # PRD 및 아키텍처 문서
 ```
 
-| 디렉토리 | 설명 | 상세 문서 | 생성 시점 |
-|---------|------|----------|---------|
-| `app/` | Next.js App Router, 라우트 및 레이아웃 | [app/README.md](./app/README.md) | 기존 |
-| `components/` | React 컴포넌트 (ui/, providers/, editor/) | [components/README.md](./components/README.md) | 기존 + Phase 1 |
-| `lib/` | 비즈니스 로직 및 유틸리티 | [lib/README.md](./lib/README.md) | 기존 + Phase 1-3 |
-| `hooks/` | 커스텀 React 훅 | [hooks/README.md](./hooks/README.md) | 기존 + Phase 1 |
-| `types/` | TypeScript 타입 정의 | [types/README.md](./types/README.md) | Phase 1 |
-| `ai-context/` | PRD 및 아키텍처 문서 | [ai-context/README.md](./ai-context/README.md) | 기존 |
+각 디렉토리의 상세 규칙은 해당 디렉토리의 `README.md` 참조.
 
-## 핵심 설정 파일
+## 핵심 규칙
 
-| 파일 | 용도 |
-|-----|------|
-| `components.json` | shadcn/ui 설정 (경로 별칭, 스타일) |
-| `tsconfig.json` | TypeScript 설정, `@/*` 경로 별칭 |
-| `eslint.config.mjs` | ESLint v9 flat config |
-| `postcss.config.mjs` | Tailwind v4 PostCSS 플러그인 |
+### TypeScript
+- `any` 타입 금지 → `unknown` + 타입 가드 사용
+- 모든 함수에 파라미터/반환 타입 명시
+- `strict: true` 모드 준수
 
-## 코드 패턴
-
-### Import 경로
+### Import
 ```typescript
+// 절대 경로 필수 (@/)
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { useEditor } from "@/hooks/use-editor"
+import type { EntityNode } from "@/types/entity"
+
+// ❌ 상대 경로 금지
+import { Button } from "../../components/ui/button"
 ```
 
-### 스타일링
-Tailwind CSS v4 + shadcn/ui 시맨틱 토큰:
-```tsx
-<div className="bg-background text-foreground">
-  <Card className="border-border">
-    <p className="text-muted-foreground">...</p>
-  </Card>
-</div>
-```
-
-### 다크모드
-- `next-themes` 기반 (`ThemeProvider`)
-- CSS 클래스 `.dark`로 전환
-- `dark:` Tailwind variant 사용
-
----
-
-## 개발 규칙 (Strict Enforcement)
-
-### 1. 파일 및 디렉토리 생성 규칙
-
-**금지 사항:**
-- ❌ 임의로 새 디렉토리 생성 금지
-- ❌ 위 구조에 명시되지 않은 위치에 파일 생성 금지
-- ❌ `any` 타입 사용 금지 (unknown 사용)
-- ❌ `npm`, `yarn`, `pnpm` 사용 금지 (Bun만 사용)
-
-**필수 사항:**
-- ✅ 모든 새 파일은 위 디렉토리 구조에 따라 정확한 위치에 생성
-- ✅ 새 컴포넌트는 `components/[category]/` 하위에 생성
-- ✅ 새 훅은 `hooks/` 하위에 `use-*.ts` 형식으로 생성
-- ✅ 타입 정의는 `types/` 하위에 생성
-- ✅ 비즈니스 로직은 `lib/` 하위에 생성
-
-### 2. TypeScript 규칙
+### 함수형 프로그래밍
+`for...of`, `for...in` 등 구형 반복문 사용 금지. 함수형 메서드 사용 필수.
 
 ```typescript
 // ✅ 올바른 예시
-import type { EntityNode } from "@/types/entity"
-import { generateEntityCode } from "@/lib/mikro-orm/generator"
+items.forEach((item) => process(item))
+const result = items.map((item) => transform(item))
+const filtered = items.filter((item) => item.isValid)
+const hasMatch = items.some((item) => item.id === targetId)
+const allValid = items.every((item) => item.isValid)
 
-export function exportEntity(entity: EntityNode): string {
-  return generateEntityCode(entity)
-}
+// Map 생성
+const map = new Map(items.map((item) => [item.id, item.value]))
 
 // ❌ 잘못된 예시
-import { EntityNode } from "@/types/entity" // type import 누락
-import { generateEntityCode } from "../lib/mikro-orm/generator" // 상대 경로 사용
-
-export function exportEntity(entity: any) { // any 사용
-  return generateEntityCode(entity)
-}
+for (const item of items) { process(item) }
+for (let i = 0; i < items.length; i++) { ... }
 ```
 
-**타입 안전성:**
-- 모든 함수 파라미터와 리턴 타입 명시
-- `strict: true` 모드 준수
-- `unknown` 사용 후 타입 가드로 좁히기
-- 옵셔널 프로퍼티는 `?:` 명시적 사용
+### 공통 컴포넌트 추출
+동일한 패턴이 3개 이상의 파일에서 반복되면 `shared/` 디렉토리에 추출.
 
-### 3. Import 규칙
-
-```typescript
-// 순서: external → internal → types → styles
-import { ReactFlow } from "@xyflow/react"           // 1. 외부 라이브러리
-import { Button } from "@/components/ui/button"     // 2. 내부 컴포넌트
-import { useEditor } from "@/hooks/use-editor"      // 3. 내부 훅
-import type { EntityNode } from "@/types/entity"    // 4. 타입 (type import)
-import "@xyflow/react/dist/style.css"               // 5. 스타일
-
-// ❌ 상대 경로 금지
-import { Button } from "../../components/ui/button" // 잘못됨
-import { Button } from "@/components/ui/button"     // 올바름
+```
+components/editor/nodes/
+├── entity-node.tsx
+├── embeddable-node.tsx
+├── enum-node.tsx
+└── shared/              # 공통 패턴 추출
+    ├── node-handles.tsx # 4방향 핸들
+    ├── node-card.tsx    # 카드 레이아웃
+    └── index.ts
 ```
 
-### 4. 컴포넌트 규칙
+### SVG 에셋 처리
+CSS 변수(테마)가 필요한 SVG는 React 컴포넌트로 작성. `public/`에 두지 않음.
 
 ```typescript
-// ✅ 올바른 함수형 컴포넌트
-import type { FC } from "react"
-import type { EntityNode } from "@/types/entity"
-
-interface EntityCardProps {
-  entity: EntityNode
-  onEdit?: (entity: EntityNode) => void
-}
-
-export const EntityCard: FC<EntityCardProps> = ({ entity, onEdit }) => {
+// ✅ 테마 지원이 필요한 SVG → React 컴포넌트
+// components/editor/edges/shared/edge-markers.tsx
+export function ArrowMarker() {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{entity.name}</CardTitle>
-      </CardHeader>
-    </Card>
+    <marker id="arrow">
+      <path fill="hsl(var(--foreground))" />  {/* CSS 변수 사용 */}
+    </marker>
   )
 }
 
-// ❌ Props 타입 미정의, any 사용
-export const EntityCard = ({ entity, onEdit }: any) => { // 잘못됨
-  // ...
-}
+// ❌ public/에 정적 SVG → 테마 변경 불가
 ```
 
-**컴포넌트 네이밍:**
-- PascalCase (예: `EntityCard`, `RelationshipEdge`)
-- 파일명은 kebab-case (예: `entity-card.tsx`, `relationship-edge.tsx`)
-- 한 파일에 하나의 메인 컴포넌트 (하위 컴포넌트 허용)
+### 커밋
+- 한글 커밋 메시지
+- 커밋 전 필수: `bun run lint && bun run build`
+- 타입: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
 
-### 5. 훅 규칙
-
-```typescript
-// ✅ 올바른 커스텀 훅
-import { useState, useCallback } from "react"
-import type { EntityNode } from "@/types/entity"
-
-export function useEntityManager() {
-  const [entities, setEntities] = useState<EntityNode[]>([])
-
-  const addEntity = useCallback((entity: EntityNode) => {
-    setEntities((prev) => [...prev, entity])
-  }, [])
-
-  return { entities, addEntity }
-}
-```
-
-**훅 네이밍:**
-- 반드시 `use`로 시작 (예: `useEditor`, `useExport`)
-- 파일명: `use-*.ts` 형식
-- 단일 책임 원칙 준수
-
-### 6. PRD 및 커밋 규칙
-
-**작업 흐름:**
-1. `ai-context/phase-*.md`에서 현재 Phase의 Task 확인
-2. **독립 작업 식별**: 파일/디렉토리가 겹치지 않는 Task들을 그룹핑
-3. Task 시작 시 체크박스 업데이트: `- [ ]` → `- [x]`
-4. **병렬 작업** 진행 (독립적인 Task들)
-5. Task 완료 시 **반드시 한글 커밋 메시지** 작성
-6. 다음 Task로 이동
-
-**병렬 작업 전략:**
-
-독립적인 작업(파일/디렉토리가 겹치지 않는 작업)은 **반드시 병렬로 진행**하여 개발 속도를 극대화합니다.
+## 테스트
 
 ```bash
-# ✅ 병렬 가능한 예시
-# Task 1.1: types/entity.ts 생성
-# Task 1.2: types/relationship.ts 생성
-# Task 1.3: hooks/use-editor.ts 생성
-# → 서로 다른 파일이므로 동시 작업 가능
-
-# ❌ 병렬 불가능한 예시
-# Task 2.1: components/editor/canvas.tsx 생성
-# Task 2.2: components/editor/canvas.tsx에 기능 추가
-# → 같은 파일이므로 순차 작업 필요
+bun run test          # watch 모드
+bun run test:run      # 1회 실행
+bun run test:coverage # 커버리지 포함
 ```
 
-**병렬 작업 흐름:**
-
-1. **독립 작업 그룹 식별**
-   ```
-   Phase 1 예시:
-   - 그룹 A (병렬): types/entity.ts, types/relationship.ts, types/decorator.ts
-   - 그룹 B (병렬): hooks/use-editor.ts, hooks/use-nodes.ts, hooks/use-edges.ts
-   - 그룹 C (순차): components/editor/canvas/* (같은 디렉토리 내 의존성)
-   ```
-
-2. **병렬 작업 실행**
-   - 각 독립 작업을 동시에 진행
-   - 각 작업 완료 시 즉시 커밋 (lint/build 검증 후)
-   - 다른 작업이 진행 중이어도 완료된 작업은 바로 커밋
-
-3. **커밋 순서**
-   ```bash
-   # 그룹 A 작업들을 병렬로 완료 후 각각 커밋
-   # Task 1.1 완료
-   bun run lint && bun run build
-   git add types/entity.ts
-   git commit -m "feat(types): Entity 타입 정의 추가"
-
-   # Task 1.2 완료 (Task 1.1과 독립적)
-   bun run lint && bun run build
-   git add types/relationship.ts
-   git commit -m "feat(types): Relationship 타입 정의 추가"
-
-   # Task 1.3 완료 (Task 1.1, 1.2와 독립적)
-   bun run lint && bun run build
-   git add types/decorator.ts
-   git commit -m "feat(types): Decorator 타입 정의 추가"
-   ```
-
-**의존성 판단 기준:**
-
-✅ **병렬 가능 (독립 작업):**
-- 서로 다른 파일 생성/수정
-- 서로 다른 디렉토리 작업
-- Import 관계가 없는 모듈
-
-❌ **병렬 불가 (순차 작업):**
-- 같은 파일 수정
-- A 파일이 B 파일을 import하는 경우 (B → A 순서로 작업)
-- 같은 컴포넌트의 부모-자식 관계
-
-**커밋 전 필수 검증:**
-```bash
-# 모든 커밋 직전에 반드시 실행
-bun run lint    # ESLint 검사
-bun run build   # 프로덕션 빌드 검증
-
-# 검증 통과 후에만 커밋 진행
-git add .
-git commit -m "..."
-```
-
-> **중요:** lint 또는 build 실패 시 **절대 커밋 금지**. 모든 오류를 수정한 후 커밋할 것.
-
-**커밋 메시지 형식:**
-```bash
-git commit -m "feat(editor): EntityNode 컴포넌트 구현
-
-- ReactFlow 커스텀 노드로 Entity 정보 표시
-- 프로퍼티 목록, Primary Key 표시 기능 추가
-- 더블클릭 시 편집 모드 진입
-- shadcn/ui Card 컴포넌트 활용
-
-관련 Task: Phase 1 - Task 1.3
-참고: https://reactflow.dev/examples/nodes/custom-node"
-```
-
-**커밋 타입:**
-- `feat`: 새 기능 구현
-- `fix`: 버그 수정
-- `docs`: 문서 수정 (README, PRD 등)
-- `refactor`: 코드 리팩토링 (기능 변경 없음)
-- `style`: 코드 포맷팅, 세미콜론 등
-- `test`: 테스트 추가/수정
-- `chore`: 빌드 설정, 패키지 설치 등
-
-**Scope:**
-- `editor`: 에디터 관련
-- `export`: 내보내기
-- `import`: 불러오기
-- `ui`: UI 컴포넌트
-- `types`: 타입 정의
-- `lib`: 라이브러리
-
----
-
-## Phase 기반 개발
-
-**현재 Phase**: Phase 1 (MVP)
-
-각 Phase는 `ai-context/phase-*.md`에 상세히 정의되어 있습니다. Phase별로 순차적으로 개발하며, 이전 Phase 완료 없이 다음 Phase 시작 금지.
-
-### 브랜치 전략
-
-**Phase별 브랜치 관리:**
-```bash
-# Phase 1 작업
-git checkout -b v1        # v1 브랜치 생성
-# ... Phase 1 작업 진행 ...
-git push origin v1        # Phase 1 완료 후 푸시
-
-# Phase 2 작업
-git checkout v1           # v1 브랜치로 이동
-git checkout -b v2        # v1에서 v2 브랜치 생성
-# ... Phase 2 작업 진행 ...
-git push origin v2        # Phase 2 완료 후 푸시
-
-# Phase 3, 4도 동일한 패턴
-```
-
-**브랜치 규칙:**
-- Phase N은 **반드시 `vN` 브랜치**에서 작업 (예: Phase 1 → v1, Phase 2 → v2)
-- Phase N 완료 후 **반드시 `vN` 브랜치에 최종 푸시**
-- Phase N+1은 **반드시 `vN` 브랜치에서 분기**하여 `vN+1` 브랜치 생성
-- `main` 브랜치는 안정 버전 병합용으로만 사용
-
-**작업 흐름 예시:**
-```bash
-# Phase 1 시작
-git checkout -b v1
-
-# Task 1.1 완료 → lint/build → 커밋
-bun run lint && bun run build
-git commit -m "feat(types): Entity 타입 정의 추가"
-
-# Task 1.2 완료 → lint/build → 커밋
-bun run lint && bun run build
-git commit -m "feat(editor): ReactFlow 캔버스 래퍼 구현"
-
-# ... Phase 1 모든 Task 완료 ...
-
-# Phase 1 최종 푸시
-git push origin v1
-
-# Phase 2 시작 (v1에서 분기)
-git checkout v1
-git checkout -b v2
-```
-
-### Phase 개요
-
-1. **Phase 1 (MVP)**: 기본 비주얼 에디터, Entity/Relationship 노드, TypeScript 코드 export
-2. **Phase 2 (고급 기능)**: 더 많은 MikroORM 기능, JSON Schema/ERD 이미지 export
-3. **Phase 3 (DB 연동)**: SQL DDL export, DDL/JSON import
-4. **Phase 4 (최적화)**: UI/UX 개선, 성능 최적화
-
-### Phase 전환 기준
-
-Phase 완료 조건:
-- ✅ 모든 필수 Task 완료 (체크박스 모두 체크)
-- ✅ 모든 Task에 대한 커밋 생성 (각 커밋 전 lint/build 검증 완료)
-- ✅ `vN` 브랜치에 최종 푸시 완료
-- ✅ 진행 상황 문서 업데이트 (`ai-context/progress/`)
-- ✅ 다음 Phase로 전환 승인 후 `vN+1` 브랜치 생성
-
----
-
-## 문제 해결 가이드
-
-### 1. 패키지 설치 오류
-```bash
-# ❌ 잘못된 방법
-npm install @xyflow/react
-
-# ✅ 올바른 방법
-bun add @xyflow/react
-```
-
-### 2. 타입 오류
-```typescript
-// ❌ any 사용
-const data: any = getData()
-
-// ✅ unknown + 타입 가드
-const data: unknown = getData()
-if (isEntityNode(data)) {
-  // 이제 data는 EntityNode 타입
-}
-```
-
-### 3. Import 경로 오류
-```typescript
-// ❌ 상대 경로
-import { Button } from "../../components/ui/button"
-
-// ✅ 절대 경로 (@/ 별칭)
-import { Button } from "@/components/ui/button"
-```
-
----
+테스트 파일 위치: `test/` 디렉토리
+- `test/hooks/` - 훅 테스트
+- `test/components/` - 컴포넌트 테스트
 
 ## 참고 자료
 
-- **ReactFlow 공식 문서**: https://reactflow.dev/learn
-- **MikroORM 공식 문서**: https://mikro-orm.io/docs/quick-start
-- **shadcn/ui**: https://ui.shadcn.com/
-- **Next.js 16**: https://nextjs.org/docs
-- **Tailwind CSS v4**: https://tailwindcss.com/docs
-
----
-
-## 기여 시 체크리스트
-
-Phase 시작 시:
-- [ ] 현재 Phase에 맞는 `vN` 브랜치 생성 또는 체크아웃
-- [ ] 해당 Phase PRD 확인 (`ai-context/phase-*.md`)
-- [ ] **병렬 가능한 Task 그룹 식별** (독립적인 파일/디렉토리 작업)
-
-새 기능 개발 전:
-- [ ] 디렉토리 구조 확인 (위 구조 준수)
-- [ ] 타입 정의 필요 여부 확인 (`types/`)
-- [ ] 의존성 설치 필요 시 `bun add` 사용
-- [ ] **다른 Task와의 파일 충돌 여부 확인** (병렬 가능 여부)
-
-코드 작성 후:
-- [ ] TypeScript strict 모드 통과
-- [ ] Import 경로 절대 경로 (`@/`) 사용
-- [ ] 타입 안전성 확인 (`any` 사용 금지)
-
-커밋 전 (필수):
-- [ ] `bun run lint` 실행 및 통과
-- [ ] `bun run build` 실행 및 통과
-- [ ] 커밋 메시지 작성 (한글, 상세)
-- [ ] PRD 체크박스 업데이트
-
-Phase 완료 시:
-- [ ] 모든 Task 완료 확인
-- [ ] `vN` 브랜치에 최종 푸시
-- [ ] 진행 상황 문서 업데이트 (`ai-context/progress/`)
-- [ ] 다음 Phase 시작 전 `vN`에서 `vN+1` 브랜치 생성
+- [ReactFlow](https://reactflow.dev/learn)
+- [MikroORM](https://mikro-orm.io/docs/quick-start)
+- [shadcn/ui](https://ui.shadcn.com/)
+- [Next.js](https://nextjs.org/docs)
+- [Vitest](https://vitest.dev/)
