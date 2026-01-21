@@ -122,10 +122,20 @@
   body {
     @apply bg-background text-foreground;
   }
+  button,
+  a,
+  [role="button"] {
+    cursor: pointer;
+  }
 }
 
 /* SyntaxHighlighter 토큰 배경색 제거 */
 pre[class*="language-"] span {
+  background: transparent !important;
+}
+
+/* SyntaxHighlighter code 요소 배경색 제거 */
+code[class*="language-"] {
   background: transparent !important;
 }
 
