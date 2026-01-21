@@ -17,6 +17,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { useEditorContext } from "@/components/providers/editor-provider"
 import type { EntityNode, EmbeddableNode, EnumNode } from "@/types/entity"
@@ -96,7 +97,7 @@ function CategorySection({
   onAdd,
   addLabel,
 }: CategorySectionProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen)
+  const [ isOpen, setIsOpen ] = useState(defaultOpen)
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -115,20 +116,22 @@ function CategorySection({
         {children}
         {/* Add 버튼 */}
         {onAdd && (
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={(e) => {
               e.stopPropagation()
               onAdd()
             }}
             className={cn(
-              "flex items-center gap-2 w-full px-3 py-1.5 rounded-md",
-              "text-xs text-muted-foreground",
-              "hover:bg-muted/50 hover:text-foreground transition-colors"
+              "flex items-center justify-start gap-2 w-full h-auto px-3 py-1.5",
+              "text-xs text-muted-foreground font-normal",
+              "hover:bg-muted/50 hover:text-foreground"
             )}
           >
             <Plus className="h-3.5 w-3.5" />
-            <span>{addLabel ?? `+ Add new ${title.toLowerCase()}`}</span>
-          </button>
+            {addLabel ?? `Add new ${title.toLowerCase()}`}
+          </Button>
         )}
       </CollapsibleContent>
     </Collapsible>
@@ -181,7 +184,7 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
     })
 
     return { entities, embeddables, enums }
-  }, [nodes])
+  }, [ nodes ])
 
   /**
    * 노드 선택 핸들러 (캔버스 선택 동기화 포함)
@@ -206,7 +209,7 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
         setCenter(node.position.x + 90, node.position.y + 50, { duration: 300 })
       }
     },
-    [setSelection, setNodes, nodes, setCenter]
+    [ setSelection, setNodes, nodes, setCenter ]
   )
 
   /**
@@ -216,7 +219,7 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
     (type: PendingAddType) => {
       startPendingAdd(type)
     },
-    [startPendingAdd]
+    [ startPendingAdd ]
   )
 
   /**
@@ -228,17 +231,10 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
   return (
     <aside
       className={cn(
-        "flex-shrink-0 border-r bg-background h-full flex flex-col",
+        "flex-shrink-0 border-r bg-background h-full flex flex-col pt-[60px]",
         className
       )}
     >
-      {/* 헤더 */}
-      <div className="p-3 border-b">
-        <h2 className="text-sm font-semibold text-muted-foreground">
-          Objects
-        </h2>
-      </div>
-
       {/* 노드 목록 */}
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-1">
@@ -248,7 +244,7 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
             icon={<Box className="h-4 w-4 text-blue-500" />}
             count={groupedNodes.entities.length}
             onAdd={() => handleStartAdd("entity")}
-            addLabel="+ Add new entity"
+            addLabel="Add new entity"
           >
             {groupedNodes.entities.length === 0 ? (
               <p className="text-xs text-muted-foreground px-3 py-2">
@@ -267,13 +263,15 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
             )}
           </CategorySection>
 
+          <Separator className="my-2" />
+
           {/* Embeddable 섹션 */}
           <CategorySection
             title="Embeddables"
             icon={<Box className="h-4 w-4 text-purple-500" />}
             count={groupedNodes.embeddables.length}
             onAdd={() => handleStartAdd("embeddable")}
-            addLabel="+ Add new embeddable"
+            addLabel="Add new embeddable"
           >
             {groupedNodes.embeddables.length === 0 ? (
               <p className="text-xs text-muted-foreground px-3 py-2">
@@ -292,13 +290,15 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
             )}
           </CategorySection>
 
+          <Separator className="my-2" />
+
           {/* Enum 섹션 */}
           <CategorySection
             title="Enums"
             icon={<List className="h-4 w-4 text-amber-500" />}
             count={groupedNodes.enums.length}
             onAdd={() => handleStartAdd("enum")}
-            addLabel="+ Add new enum"
+            addLabel="Add new enum"
           >
             {groupedNodes.enums.length === 0 ? (
               <p className="text-xs text-muted-foreground px-3 py-2">
