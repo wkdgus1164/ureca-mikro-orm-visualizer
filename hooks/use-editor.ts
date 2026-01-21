@@ -88,8 +88,10 @@ export interface UseEditorReturn {
   deleteRelationship: (id: string) => void
   /** 선택 상태 설정 */
   setSelection: (selection: Selection) => void
-  /** 패널 열림/닫힘 토글 */
-  togglePanel: () => void
+  /** 우측 패널 열림/닫힘 토글 */
+  toggleRightPanel: () => void
+  /** 우측 패널 닫기 */
+  closeRightPanel: () => void
   /** 연결 모드 토글 */
   toggleConnecting: () => void
   /** Export 모달 열림/닫힘 토글 */
@@ -335,15 +337,26 @@ export function useEditor(): UseEditorReturn {
     setUIState((prev) => ({
       ...prev,
       selection,
-      isPanelOpen: selection.id !== null,
+      isRightPanelOpen: selection.id !== null,
     }))
   }, [])
 
   /**
-   * 패널 토글
+   * 우측 패널 토글
    */
-  const togglePanel = useCallback(() => {
-    setUIState((prev) => ({ ...prev, isPanelOpen: !prev.isPanelOpen }))
+  const toggleRightPanel = useCallback(() => {
+    setUIState((prev) => ({ ...prev, isRightPanelOpen: !prev.isRightPanelOpen }))
+  }, [])
+
+  /**
+   * 우측 패널 닫기
+   */
+  const closeRightPanel = useCallback(() => {
+    setUIState((prev) => ({
+      ...prev,
+      isRightPanelOpen: false,
+      selection: { type: null, id: null },
+    }))
   }, [])
 
   /**
@@ -416,7 +429,7 @@ export function useEditor(): UseEditorReturn {
       setUIState((prev) => ({
         ...prev,
         selection: { type: null, id: null },
-        isPanelOpen: false,
+        isRightPanelOpen: false,
       }))
     },
     [setNodes, setEdges]
@@ -432,7 +445,7 @@ export function useEditor(): UseEditorReturn {
     setUIState((prev) => ({
       ...prev,
       selection: { type: null, id: null },
-      isPanelOpen: false,
+      isRightPanelOpen: false,
     }))
   }, [setNodes, setEdges])
 
@@ -455,7 +468,8 @@ export function useEditor(): UseEditorReturn {
     updateRelationship,
     deleteRelationship,
     setSelection,
-    togglePanel,
+    toggleRightPanel,
+    closeRightPanel,
     toggleConnecting,
     toggleExportModal,
     getSelectedNode,

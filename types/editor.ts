@@ -40,8 +40,8 @@ export interface Selection {
 export interface EditorUIState {
   /** 현재 선택된 요소 */
   selection: Selection
-  /** Property 패널 열림 여부 */
-  isPanelOpen: boolean
+  /** 우측 Property 패널 열림 여부 */
+  isRightPanelOpen: boolean
   /** Relationship 연결 모드 여부 */
   isConnecting: boolean
   /** Export 모달 열림 여부 */
@@ -125,7 +125,7 @@ export const INITIAL_UI_STATE: EditorUIState = {
     type: null,
     id: null,
   },
-  isPanelOpen: false,
+  isRightPanelOpen: false,
   isConnecting: false,
   isExportModalOpen: false,
 }

@@ -2,14 +2,15 @@
  * /editor 라우트 페이지
  *
  * MikroORM Entity 비주얼 에디터 메인 페이지
+ * 피그마 스타일의 3-패널 레이아웃:
+ * - 좌측: 노드 목록
+ * - 중앙: ReactFlow 캔버스
+ * - 우측: 프로퍼티 편집 패널
  */
 
 import { EditorProvider } from "@/components/providers/editor-provider"
-import { EditorCanvas } from "@/components/editor/canvas/editor-canvas"
 import { EditorToolbar } from "@/components/editor/toolbar/editor-toolbar"
-import { EntityEditPanel } from "@/components/editor/panels/entity-edit-panel"
-import { EnumEditPanel } from "@/components/editor/panels/enum-edit-panel"
-import { RelationshipEditPanel } from "@/components/editor/panels/relationship-edit-panel"
+import { EditorLayout } from "@/components/editor/editor-layout"
 import { ExportModalWrapper } from "@/components/export/export-modal-wrapper"
 
 export const metadata = {
@@ -20,23 +21,12 @@ export const metadata = {
 export default function EditorPage() {
   return (
     <EditorProvider>
-      <main className="h-screen w-full overflow-hidden">
+      <main className="h-screen w-full overflow-hidden flex flex-col">
         {/* 툴바 */}
         <EditorToolbar />
 
-        {/* 캔버스 (툴바 높이만큼 pt 추가) */}
-        <div className="h-full pt-14">
-          <EditorCanvas />
-        </div>
-
-        {/* Entity 편집 패널 (우측 슬라이드) */}
-        <EntityEditPanel />
-
-        {/* Enum 편집 패널 (우측 슬라이드) */}
-        <EnumEditPanel />
-
-        {/* Relationship 편집 패널 (우측 슬라이드) */}
-        <RelationshipEditPanel />
+        {/* 3-패널 레이아웃 (좌측 목록 + 중앙 캔버스 + 우측 프로퍼티) */}
+        <EditorLayout />
 
         {/* Export 모달 */}
         <ExportModalWrapper />

@@ -1,172 +1,133 @@
 "use client"
 
 /**
- * Entity 편집 패널 컴포넌트
+ * Entity 편집 컨텐츠 컴포넌트
  *
- * Entity 노드 선택 시 우측에서 슬라이드되며,
- * Entity 이름과 프로퍼티를 편집할 수 있는 패널
+ * PropertySidebar 내부에서 Entity 편집 UI를 제공
+ * 실시간 반영: 변경 즉시 updateEntity 호출
  */
 
-import { useState, useCallback } from "react"
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet"
+import { useMemo } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { Plus, Database } from "lucide-react"
-import { toast } from "sonner"
 import { useEditorContext } from "@/components/providers/editor-provider"
 import { PropertyForm } from "@/components/editor/panels/property-form"
 import { IndexForm } from "@/components/editor/panels/index-form"
-import type { EntityData, EntityProperty, EntityIndex, EnumNode } from "@/types/entity"
+import type { EntityProperty, EntityIndex, EntityNode } from "@/types/entity"
 import { createDefaultProperty } from "@/types/entity"
 
 /**
- * Entity 편집 폼 Props
+ * Entity 편집 내부 컴포넌트 Props
  */
-interface EntityEditFormProps {
-  initialData: EntityData
-  onSave: (data: EntityData) => void
-  /** 사용 가능한 Enum 노드 목록 */
-  availableEnums: EnumNode[]
+interface EntityEditInnerProps {
+  selectedNode: EntityNode
 }
 
 /**
- * Entity 편집 폼 컴포넌트
+ * Entity 편집 내부 컴포넌트
  *
- * key prop으로 노드 ID를 전달받아 노드 변경 시 상태가 리셋됨
+ * 선택된 노드가 있을 때만 렌더링되는 내부 컴포넌트
  */
-function EntityEditForm({ initialData, onSave, availableEnums }: EntityEditFormProps) {
-  // 로컬 편집 상태 (초기값으로 initialData 사용)
-  const [localData, setLocalData] = useState<EntityData>(() => ({
-    ...initialData,
-    properties: (initialData.properties ?? []).map((p) => ({ ...p })),
-    indexes: (initialData.indexes ?? []).map((i) => ({ ...i })),
-  }))
+function EntityEditInner({ selectedNode }: EntityEditInnerProps) {
+  const { updateEntity, getAllEnums } = useEditorContext()
+
+  const availableEnums = getAllEnums()
+
+  const data = selectedNode.data
+  const properties = useMemo(() => data.properties ?? [], [data.properties])
+  const indexes = useMemo(() => data.indexes ?? [], [data.indexes])
 
   /**
-   * Entity 이름 변경 핸들러
+   * Entity 이름 변경 핸들러 (실시간 반영)
    */
-  const handleNameChange = useCallback((name: string) => {
-    setLocalData((prev) => ({ ...prev, name }))
-  }, [])
+  const handleNameChange = (name: string) => {
+    updateEntity(selectedNode.id, { name })
+  }
 
   /**
-   * 프로퍼티 업데이트 핸들러
+   * 프로퍼티 업데이트 핸들러 (실시간 반영)
    */
-  const handlePropertyUpdate = useCallback(
-    (index: number, property: EntityProperty) => {
-      setLocalData((prev) => {
-        const properties = [...prev.properties]
-        properties[index] = property
-        return { ...prev, properties }
-      })
-    },
-    []
-  )
+  const handlePropertyUpdate = (index: number, property: EntityProperty) => {
+    const newProperties = [...properties]
+    newProperties[index] = property
+    updateEntity(selectedNode.id, { properties: newProperties })
+  }
 
   /**
-   * 프로퍼티 삭제 핸들러
+   * 프로퍼티 삭제 핸들러 (실시간 반영)
    */
-  const handlePropertyDelete = useCallback((index: number) => {
-    setLocalData((prev) => {
-      const properties = prev.properties.filter((_, i) => i !== index)
-      return { ...prev, properties }
-    })
-  }, [])
+  const handlePropertyDelete = (index: number) => {
+    const newProperties = properties.filter((_, i) => i !== index)
+    updateEntity(selectedNode.id, { properties: newProperties })
+  }
 
   /**
-   * 프로퍼티 추가 핸들러
+   * 프로퍼티 추가 핸들러 (실시간 반영)
    */
-  const handleAddProperty = useCallback(() => {
-    setLocalData((prev) => {
-      const newProperty = createDefaultProperty(crypto.randomUUID())
-      return { ...prev, properties: [...prev.properties, newProperty] }
-    })
-  }, [])
+  const handleAddProperty = () => {
+    const newProperty = createDefaultProperty(crypto.randomUUID())
+    updateEntity(selectedNode.id, { properties: [...properties, newProperty] })
+  }
 
   /**
-   * Index 업데이트 핸들러
+   * Index 업데이트 핸들러 (실시간 반영)
    */
-  const handleIndexUpdate = useCallback(
-    (idx: number, index: EntityIndex) => {
-      setLocalData((prev) => {
-        const indexes = [...(prev.indexes ?? [])]
-        indexes[idx] = index
-        return { ...prev, indexes }
-      })
-    },
-    []
-  )
+  const handleIndexUpdate = (idx: number, index: EntityIndex) => {
+    const newIndexes = [...indexes]
+    newIndexes[idx] = index
+    updateEntity(selectedNode.id, { indexes: newIndexes })
+  }
 
   /**
-   * Index 삭제 핸들러
+   * Index 삭제 핸들러 (실시간 반영)
    */
-  const handleIndexDelete = useCallback((idx: number) => {
-    setLocalData((prev) => {
-      const indexes = (prev.indexes ?? []).filter((_, i) => i !== idx)
-      return { ...prev, indexes }
-    })
-  }, [])
+  const handleIndexDelete = (idx: number) => {
+    const newIndexes = indexes.filter((_, i) => i !== idx)
+    updateEntity(selectedNode.id, { indexes: newIndexes })
+  }
 
   /**
-   * Index 추가 핸들러
+   * Index 추가 핸들러 (실시간 반영)
    */
-  const handleAddIndex = useCallback(() => {
-    setLocalData((prev) => {
-      const newIndex: EntityIndex = {
-        id: crypto.randomUUID(),
-        properties: [],
-        isUnique: false,
-      }
-      return { ...prev, indexes: [...(prev.indexes ?? []), newIndex] }
-    })
-  }, [])
-
-  /**
-   * 변경사항 저장 핸들러
-   */
-  const handleSave = useCallback(() => {
-    onSave(localData)
-    toast.success("Changes saved!")
-  }, [localData, onSave])
+  const handleAddIndex = () => {
+    const newIndex: EntityIndex = {
+      id: crypto.randomUUID(),
+      properties: [],
+      isUnique: false,
+    }
+    updateEntity(selectedNode.id, { indexes: [...indexes, newIndex] })
+  }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)]">
-      <div className="px-6 space-y-4">
-        {/* Entity 이름 */}
-        <div className="space-y-1.5">
-          <Label htmlFor="entity-name">Entity Name</Label>
-          <p className="text-xs text-muted-foreground">
-            The TypeScript class name for this entity
-          </p>
-          <Input
-            id="entity-name"
-            value={localData.name}
-            onChange={(e) => handleNameChange(e.target.value)}
-            placeholder="e.g., User, Post, Comment"
-            className="w-full"
-          />
-        </div>
+    <div className="space-y-4">
+      {/* Entity 이름 */}
+      <div className="space-y-1.5">
+        <Label htmlFor="entity-name">Entity Name</Label>
+        <p className="text-xs text-muted-foreground">
+          The TypeScript class name for this entity
+        </p>
+        <Input
+          id="entity-name"
+          value={data.name}
+          onChange={(e) => handleNameChange(e.target.value)}
+          placeholder="e.g., User, Post, Comment"
+          className="w-full"
+        />
       </div>
 
-      <Separator className="my-4" />
+      <Separator />
 
       {/* 프로퍼티 목록 */}
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <div className="flex items-center justify-between px-6 mb-2">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
           <Label className="text-base font-semibold">
             Properties
-            {localData.properties.length > 0 && (
+            {properties.length > 0 && (
               <span className="ml-2 text-xs text-muted-foreground font-normal">
-                ({localData.properties.length})
+                ({properties.length})
               </span>
             )}
           </Label>
@@ -181,149 +142,91 @@ function EntityEditForm({ initialData, onSave, availableEnums }: EntityEditFormP
           </Button>
         </div>
 
-        <ScrollArea className="flex-1 px-4">
-          <div className="space-y-1 pb-4">
-            {localData.properties.map((property, index) => (
-              <PropertyForm
-                key={property.id}
-                property={property}
-                onChange={(p) => handlePropertyUpdate(index, p)}
-                onDelete={() => handlePropertyDelete(index)}
-                availableEnums={availableEnums}
-              />
-            ))}
-            {localData.properties.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                No properties yet. Click &quot;Add&quot; to create one.
-              </div>
-            )}
-          </div>
-
-          {/* Indexes 섹션 */}
-          <Separator className="my-4" />
-
-          <div className="pb-4">
-            <div className="flex items-center justify-between mb-2">
-              <Label className="text-base font-semibold flex items-center gap-2">
-                <Database className="h-4 w-4" />
-                Indexes
-                {(localData.indexes?.length ?? 0) > 0 && (
-                  <span className="ml-1 text-xs text-muted-foreground font-normal">
-                    ({localData.indexes?.length})
-                  </span>
-                )}
-              </Label>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleAddIndex}
-                className="gap-1"
-              >
-                <Plus className="h-3 w-3" />
-                Add
-              </Button>
+        <div className="space-y-1">
+          {properties.map((property, index) => (
+            <PropertyForm
+              key={property.id}
+              property={property}
+              onChange={(p) => handlePropertyUpdate(index, p)}
+              onDelete={() => handlePropertyDelete(index)}
+              availableEnums={availableEnums}
+            />
+          ))}
+          {properties.length === 0 && (
+            <div className="text-center py-6 text-muted-foreground text-sm">
+              No properties yet. Click &quot;Add&quot; to create one.
             </div>
-
-            <div className="space-y-1">
-              {(localData.indexes ?? []).map((index, idx) => (
-                <IndexForm
-                  key={index.id}
-                  index={index}
-                  availableProperties={localData.properties}
-                  onChange={(i) => handleIndexUpdate(idx, i)}
-                  onDelete={() => handleIndexDelete(idx)}
-                />
-              ))}
-              {(localData.indexes?.length ?? 0) === 0 && (
-                <div className="text-center py-6 text-muted-foreground text-sm">
-                  No indexes yet. Click &quot;Add&quot; to create composite indexes or unique constraints.
-                </div>
-              )}
-            </div>
-          </div>
-        </ScrollArea>
+          )}
+        </div>
       </div>
 
-      {/* 저장 버튼 */}
-      <div className="p-6 pt-4 border-t">
-        <Button onClick={handleSave} className="w-full">
-          Save Changes
-        </Button>
+      <Separator />
+
+      {/* Indexes 섹션 */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-base font-semibold flex items-center gap-2">
+            <Database className="h-4 w-4" />
+            Indexes
+            {indexes.length > 0 && (
+              <span className="ml-1 text-xs text-muted-foreground font-normal">
+                ({indexes.length})
+              </span>
+            )}
+          </Label>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleAddIndex}
+            className="gap-1"
+          >
+            <Plus className="h-3 w-3" />
+            Add
+          </Button>
+        </div>
+
+        <div className="space-y-1">
+          {indexes.map((index, idx) => (
+            <IndexForm
+              key={index.id}
+              index={index}
+              availableProperties={properties}
+              onChange={(i) => handleIndexUpdate(idx, i)}
+              onDelete={() => handleIndexDelete(idx)}
+            />
+          ))}
+          {indexes.length === 0 && (
+            <div className="text-center py-6 text-muted-foreground text-sm">
+              No indexes yet. Click &quot;Add&quot; to create composite indexes or unique constraints.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
 /**
- * Entity 편집 패널 컴포넌트
+ * Entity 편집 컨텐츠 컴포넌트
+ *
+ * PropertySidebar 내부에 렌더링되며, 변경 시 즉시 반영
  *
  * @example
  * ```tsx
- * <EditorProvider>
- *   <EditorCanvas />
- *   <EntityEditPanel />
- * </EditorProvider>
+ * <PropertySidebar>
+ *   <EntityEditContent />
+ * </PropertySidebar>
  * ```
  */
-export function EntityEditPanel() {
-  const { uiState, getSelectedNode, updateEntity, togglePanel, getAllEnums } =
-    useEditorContext()
+export function EntityEditContent() {
+  const { getSelectedNode } = useEditorContext()
 
-  // 사용 가능한 Enum 노드 목록
-  const availableEnums = getAllEnums()
-
-  // 선택된 노드 가져오기
   const selectedNode = getSelectedNode()
 
-  /**
-   * 패널 열림/닫힘 핸들러
-   */
-  const handleOpenChange = useCallback(
-    (open: boolean) => {
-      if (!open) {
-        togglePanel()
-      }
-    },
-    [togglePanel]
-  )
+  // 선택된 노드가 없으면 렌더링하지 않음
+  if (!selectedNode) {
+    return null
+  }
 
-  /**
-   * Entity 저장 핸들러
-   */
-  const handleSave = useCallback(
-    (data: EntityData) => {
-      if (selectedNode) {
-        updateEntity(selectedNode.id, data)
-      }
-    },
-    [selectedNode, updateEntity]
-  )
-
-  // Entity 노드가 선택되었을 때만 패널 표시
-  const isOpen =
-    uiState.isPanelOpen &&
-    uiState.selection.type === "node" &&
-    selectedNode !== null
-
-  return (
-    <Sheet open={isOpen} onOpenChange={handleOpenChange}>
-      <SheetContent side="right" className="w-[400px] sm:w-[450px] p-0">
-        <SheetHeader className="p-6 pb-4">
-          <SheetTitle>Edit Entity</SheetTitle>
-          <SheetDescription>
-            Modify the entity properties and settings
-          </SheetDescription>
-        </SheetHeader>
-
-        {selectedNode && (
-          <EntityEditForm
-            key={selectedNode.id}
-            initialData={selectedNode.data}
-            onSave={handleSave}
-            availableEnums={availableEnums}
-          />
-        )}
-      </SheetContent>
-    </Sheet>
-  )
+  return <EntityEditInner selectedNode={selectedNode} />
 }
