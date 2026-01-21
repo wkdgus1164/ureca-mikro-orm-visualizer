@@ -39,6 +39,13 @@ function indent(level: number, size: number = 2): string {
   return " ".repeat(level * size)
 }
 
+/**
+ * 클래스명 정규화 (공백 → 언더바)
+ */
+function sanitizeClassName(name: string): string {
+  return name.replace(/\s+/g, "_")
+}
+
 // =============================================================================
 // Enum 코드 생성 (Phase 2)
 // =============================================================================
@@ -204,16 +211,18 @@ function isCollectionRelation(relationType: RelationType): boolean {
 
 /**
  * Relationship 데코레이터 옵션 생성
+ * 옵션이 있으면 멀티라인 포맷으로 반환
  */
-function generateRelationshipOptions(data: RelationshipData): string {
+function generateRelationshipOptions(data: RelationshipData, indentSize: number): string {
   const options: string[] = []
+
+  // 옵션 순서: cascade → nullable → orphanRemoval → eager
+  if (data.cascade) {
+    options.push("cascade: [Cascade.ALL]")
+  }
 
   if (data.isNullable) {
     options.push("nullable: true")
-  }
-
-  if (data.cascade) {
-    options.push("cascade: [Cascade.ALL]")
   }
 
   if (data.orphanRemoval) {
@@ -225,7 +234,16 @@ function generateRelationshipOptions(data: RelationshipData): string {
     options.push("eager: true")
   }
 
-  return options.length > 0 ? `, { ${options.join(", ")} }` : ""
+  if (options.length === 0) {
+    return ""
+  }
+
+  // 멀티라인 포맷
+  const ind = indent(2, indentSize) // 옵션 들여쓰기 (2레벨)
+  const closeInd = indent(1, indentSize) // 닫는 괄호 들여쓰기 (1레벨)
+  const formattedOptions = options.map(opt => `${ind}${opt}`).join(",\n")
+
+  return `, {\n${formattedOptions}\n${closeInd}}`
 }
 
 /**
@@ -247,8 +265,8 @@ function generateRelationship(
   const lines: string[] = []
   const ind = indent(1, indentSize)
   const decorator = getRelationDecorator(data.relationType)
-  const targetName = targetEntity.data.name
-  const options = generateRelationshipOptions(data)
+  const targetName = sanitizeClassName(targetEntity.data.name)
+  const options = generateRelationshipOptions(data, indentSize)
 
   // mappedBy 옵션 (양방향 관계인 경우)
   const mappedBy = data.targetProperty
@@ -347,7 +365,7 @@ function collectImports(
       // 타겟 Entity 찾기
       const targetNode = allNodes.find((n) => n.id === edge.target)
       if (targetNode && targetNode.data.name !== entity.data.name) {
-        relatedEntities.add(targetNode.data.name)
+        relatedEntities.add(sanitizeClassName(targetNode.data.name))
       }
     }
   }
@@ -489,7 +507,7 @@ export function generateEntityCode(
   }
 
   // 클래스 선언
-  lines.push(`export class ${entity.data.name} {`)
+  lines.push(`export class ${sanitizeClassName(entity.data.name)} {`)
 
   // Properties
   const propertyCode = entity.data.properties
@@ -541,7 +559,7 @@ export function generateAllEntitiesCode(
 
   for (const node of nodes) {
     const code = generateEntityCode(node, edges, nodes, options)
-    result.set(node.data.name, code)
+    result.set(sanitizeClassName(node.data.name), code)
   }
 
   return result
@@ -619,7 +637,7 @@ export function generateEmbeddableCode(
   lines.push("@Embeddable()")
 
   // 클래스 선언
-  lines.push(`export class ${embeddable.data.name} {`)
+  lines.push(`export class ${sanitizeClassName(embeddable.data.name)} {`)
 
   // Properties (PrimaryKey 제외 - Embeddable에는 PK가 없음)
   const propertyCode = embeddable.data.properties
@@ -681,13 +699,13 @@ export function generateAllDiagramCode(
   // Entity 코드 생성
   for (const entity of entityNodes) {
     const code = generateEntityCode(entity, edges, entityNodes, options)
-    result.set(entity.data.name, code)
+    result.set(sanitizeClassName(entity.data.name), code)
   }
 
   // Embeddable 코드 생성
   for (const embeddable of embeddableNodes) {
     const code = generateEmbeddableCode(embeddable, options)
-    result.set(embeddable.data.name, code)
+    result.set(sanitizeClassName(embeddable.data.name), code)
   }
 
   return result
