@@ -4,7 +4,7 @@ MikroORM TypeScript 코드 생성 모듈.
 
 ## 구조
 
-```
+```text
 lib/mikro-orm/
 ├── generator.ts              # Public API - 메인 진입점
 ├── types.ts                  # MikroORM 관련 타입 정의

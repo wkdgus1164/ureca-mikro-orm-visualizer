@@ -26,7 +26,7 @@ bun run test:run # 테스트 1회 실행
 
 ## 디렉토리 구조
 
-```
+```text
 /
 ├── app/                    # Next.js App Router
 │   └── (routes)/editor/    # /editor - 비주얼 에디터 페이지
@@ -104,7 +104,7 @@ for (let i = 0; i < items.length; i++) { ... }
 ### 공통 컴포넌트 추출
 동일한 패턴이 3개 이상의 파일에서 반복되면 `shared/` 디렉토리에 추출.
 
-```
+```text
 components/editor/nodes/
 ├── entity-node.tsx
 ├── embeddable-node.tsx

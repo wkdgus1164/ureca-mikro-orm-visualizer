@@ -4,7 +4,7 @@
 
 ## 구조
 
-```
+```text
 components/
 ├── ui/                              # shadcn/ui 컴포넌트
 │   ├── button.tsx
@@ -59,7 +59,7 @@ components/
 
 ## 아키텍처
 
-```
+```text
 ┌────────────────────────────────────────────────────────────────┐
 │                      EditorProvider                            │
 │  (useEditor 훅 기반 전역 상태: nodes, edges, uiState)          │
