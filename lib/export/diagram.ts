@@ -168,17 +168,19 @@ export function parseDiagramFile(jsonString: string): LoadDiagramResult {
     }
 
     // 노드 유효성 검증
-    for (const node of file.nodes) {
-      if (!isValidNode(node)) {
-        return { success: false, error: "Invalid node structure detected" }
-      }
+    const hasInvalidNode = (file.nodes as unknown[]).some(
+      (node) => !isValidNode(node)
+    )
+    if (hasInvalidNode) {
+      return { success: false, error: "Invalid node structure detected" }
     }
 
     // 엣지 유효성 검증
-    for (const edge of file.edges) {
-      if (!isValidEdge(edge)) {
-        return { success: false, error: "Invalid edge structure detected" }
-      }
+    const hasInvalidEdge = (file.edges as unknown[]).some(
+      (edge) => !isValidEdge(edge)
+    )
+    if (hasInvalidEdge) {
+      return { success: false, error: "Invalid edge structure detected" }
     }
 
     return {

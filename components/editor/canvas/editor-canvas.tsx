@@ -25,6 +25,7 @@ import { EntityNode } from "@/components/editor/nodes/entity-node"
 import { EmbeddableNode } from "@/components/editor/nodes/embeddable-node"
 import { EnumNode } from "@/components/editor/nodes/enum-node"
 import { RelationshipEdge } from "@/components/editor/edges/relationship-edge"
+import { GlobalEdgeMarkers } from "@/components/editor/edges/shared/edge-markers"
 import { GhostNode } from "@/components/editor/nodes/ghost-node"
 import { ZoomSlider } from "@/components/editor/toolbar/zoom-slider"
 
@@ -171,6 +172,9 @@ export function EditorCanvas({ className }: EditorCanvasProps) {
       onMouseLeave={onMouseLeave}
       style={{ cursor: isPendingAdd ? "crosshair" : undefined }}
     >
+      {/* 전역 SVG 마커 정의 - 중복 마커 ID 방지를 위해 한 번만 렌더링 */}
+      <GlobalEdgeMarkers />
+
       <ReactFlow
         nodes={nodes}
         edges={edges}
