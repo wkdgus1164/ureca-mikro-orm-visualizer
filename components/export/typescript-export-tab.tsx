@@ -3,7 +3,8 @@
 /**
  * TypeScript Export 탭 컴포넌트
  *
- * TypeScript 코드를 파일 트리와 함께 미리보고 복사/다운로드할 수 있는 탭
+ * TypeScript 코드를 카테고리별 파일 트리와 함께 미리보고 복사/다운로드할 수 있는 탭
+ * 카테고리: entities, embeddables, enums, interfaces
  */
 
 import { useState, useCallback, useMemo } from "react"
@@ -15,93 +16,232 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { vscDarkPlus, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism"
 import { toast } from "sonner"
 import { useTheme } from "next-themes"
+import JSZip from "jszip"
+import type { CategorizedGeneratedCode } from "@/lib/mikro-orm/generator"
+
+/**
+ * 파일 정보 (경로 + 코드)
+ */
+interface FileInfo {
+  /** 카테고리 (폴더명) */
+  category: keyof CategorizedGeneratedCode
+  /** 파일명 (확장자 제외) */
+  name: string
+  /** 생성된 코드 */
+  code: string
+}
+
+/**
+ * 카테고리별 표시 정보
+ */
+const CATEGORY_INFO: Record<keyof CategorizedGeneratedCode, { label: string; icon: string }> = {
+  entities: { label: "entities", icon: "🗂️" },
+  embeddables: { label: "embeddables", icon: "📦" },
+  enums: { label: "enums", icon: "🔢" },
+  interfaces: { label: "interfaces", icon: "📄" },
+}
 
 interface TypeScriptExportTabProps {
-  /** 생성된 TypeScript 코드 (Entity 이름 → 코드) */
-  generatedCode: Map<string, string>
+  /** 카테고리별로 분류된 생성 코드 */
+  generatedCode: CategorizedGeneratedCode
 }
 
 /**
  * TypeScript Export 탭 컴포넌트
  *
- * 파일 트리에서 Entity를 선택하고 코드를 미리보기, 복사, 다운로드할 수 있습니다.
+ * 카테고리별 파일 트리에서 파일을 선택하고 코드를 미리보기, 복사, 다운로드할 수 있습니다.
  */
 export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps) {
   const { resolvedTheme } = useTheme()
   const syntaxTheme = resolvedTheme === "dark" ? vscDarkPlus : oneLight
 
-  // 선택된 Entity
-  const [selectedEntity, setSelectedEntity] = useState<string | null>(null)
+  // 선택된 파일 (category/name 형태)
+  const [selectedFile, setSelectedFile] = useState<string | null>(null)
   // 복사 완료 상태
   const [copied, setCopied] = useState(false)
+  // 다운로드 진행 상태
+  const [isDownloading, setIsDownloading] = useState(false)
 
   /**
-   * Entity 이름 목록
+   * 모든 파일 목록 (카테고리별로 그룹화)
    */
-  const entityNames = useMemo(
-    () => Array.from(generatedCode.keys()),
-    [generatedCode]
-  )
-
-  /**
-   * 현재 선택된 Entity (없으면 첫 번째)
-   */
-  const currentEntity = useMemo(() => {
-    if (selectedEntity && entityNames.includes(selectedEntity)) {
-      return selectedEntity
+  const filesByCategory = useMemo(() => {
+    const result: Record<keyof CategorizedGeneratedCode, FileInfo[]> = {
+      entities: [],
+      embeddables: [],
+      enums: [],
+      interfaces: [],
     }
-    return entityNames[0] ?? null
-  }, [selectedEntity, entityNames])
+
+    const categories: (keyof CategorizedGeneratedCode)[] = [
+      "entities",
+      "embeddables",
+      "enums",
+      "interfaces",
+    ]
+
+    categories.forEach((category) => {
+      generatedCode[category].forEach((code, name) => {
+        result[category].push({ category, name, code })
+      })
+    })
+
+    return result
+  }, [generatedCode])
+
+  /**
+   * 전체 파일 개수
+   */
+  const totalFileCount = useMemo(() => {
+    return (
+      filesByCategory.entities.length +
+      filesByCategory.embeddables.length +
+      filesByCategory.enums.length +
+      filesByCategory.interfaces.length
+    )
+  }, [filesByCategory])
+
+  /**
+   * 현재 선택된 파일 정보
+   */
+  const currentFile = useMemo((): FileInfo | null => {
+    if (!selectedFile) {
+      // 기본값: 첫 번째 파일 선택
+      const categories: (keyof CategorizedGeneratedCode)[] = [
+        "entities",
+        "embeddables",
+        "enums",
+        "interfaces",
+      ]
+      const firstCategory = categories.find((cat) => filesByCategory[cat].length > 0)
+      if (firstCategory && filesByCategory[firstCategory].length > 0) {
+        return filesByCategory[firstCategory][0]
+      }
+      return null
+    }
+
+    const [category, name] = selectedFile.split("/") as [keyof CategorizedGeneratedCode, string]
+    const file = filesByCategory[category]?.find((f) => f.name === name)
+    return file ?? null
+  }, [selectedFile, filesByCategory])
+
+  /**
+   * 파일 선택 핸들러
+   */
+  const handleSelectFile = useCallback((category: keyof CategorizedGeneratedCode, name: string) => {
+    setSelectedFile(`${category}/${name}`)
+  }, [])
 
   /**
    * 클립보드 복사 핸들러
    */
-  const handleCopy = useCallback(
-    async (entityName: string) => {
-      const code = generatedCode.get(entityName)
-      if (!code) return
+  const handleCopy = useCallback(async () => {
+    if (!currentFile) return
 
-      try {
-        await navigator.clipboard.writeText(code)
-        setCopied(true)
-        toast.success(`${entityName}.ts copied to clipboard!`)
-        setTimeout(() => setCopied(false), 2000)
-      } catch {
-        toast.error("Failed to copy to clipboard")
-      }
-    },
-    [generatedCode]
-  )
+    try {
+      await navigator.clipboard.writeText(currentFile.code)
+      setCopied(true)
+      toast.success(`${currentFile.name}.ts copied to clipboard!`)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      toast.error("Failed to copy to clipboard")
+    }
+  }, [currentFile])
 
   /**
-   * 파일 다운로드 핸들러
+   * 단일 파일 다운로드 핸들러
    */
-  const handleDownload = useCallback(
-    (entityName: string) => {
-      const code = generatedCode.get(entityName)
-      if (!code) return
+  const handleDownload = useCallback(() => {
+    if (!currentFile) return
 
-      const blob = new Blob([code], { type: "text/typescript" })
-      const url = URL.createObjectURL(blob)
+    const blob = new Blob([currentFile.code], { type: "text/typescript" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `${currentFile.name}.ts`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+
+    toast.success(`${currentFile.name}.ts downloaded!`)
+  }, [currentFile])
+
+  /**
+   * 모든 파일 ZIP 압축 다운로드 핸들러
+   */
+  const handleDownloadAll = useCallback(async () => {
+    setIsDownloading(true)
+
+    try {
+      const zip = new JSZip()
+
+      // 카테고리별 폴더에 파일 추가
+      const categories: (keyof CategorizedGeneratedCode)[] = [
+        "entities",
+        "embeddables",
+        "enums",
+        "interfaces",
+      ]
+
+      categories.forEach((category) => {
+        const files = filesByCategory[category]
+        if (files.length > 0) {
+          const folder = zip.folder(category)
+          files.forEach((file) => {
+            folder?.file(`${file.name}.ts`, file.code)
+          })
+        }
+      })
+
+      // ZIP 파일 생성 및 다운로드
+      const content = await zip.generateAsync({ type: "blob" })
+      const url = URL.createObjectURL(content)
       const a = document.createElement("a")
       a.href = url
-      a.download = `${entityName}.ts`
+      a.download = "mikro-orm-entities.zip"
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
 
-      toast.success(`${entityName}.ts downloaded!`)
-    },
-    [generatedCode]
-  )
+      toast.success(`All files downloaded as ZIP!`)
+    } catch {
+      toast.error("Failed to create ZIP file")
+    } finally {
+      setIsDownloading(false)
+    }
+  }, [filesByCategory])
 
   /**
-   * 모든 파일 다운로드 핸들러
+   * 파일이 있는 카테고리만 표시하기 위한 필터
    */
-  const handleDownloadAll = useCallback(() => {
-    entityNames.forEach(handleDownload)
-  }, [entityNames, handleDownload])
+  const nonEmptyCategories = useMemo(() => {
+    const categories: (keyof CategorizedGeneratedCode)[] = [
+      "entities",
+      "embeddables",
+      "enums",
+      "interfaces",
+    ]
+    return categories.filter((cat) => filesByCategory[cat].length > 0)
+  }, [filesByCategory])
+
+  /**
+   * 초기 확장할 폴더 목록
+   */
+  const initialExpandedItems = useMemo(() => {
+    return nonEmptyCategories
+  }, [nonEmptyCategories])
+
+  /**
+   * 현재 선택된 파일 ID
+   */
+  const selectedFileId = useMemo(() => {
+    if (currentFile) {
+      return `${currentFile.category}/${currentFile.name}`
+    }
+    return undefined
+  }, [currentFile])
 
   return (
     <div className="flex flex-col h-full">
@@ -109,24 +249,26 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
         {/* 파일 탐색기 (왼쪽) */}
         <div className="w-56 shrink-0 border-r bg-muted/30 py-2 overflow-hidden rounded-l-lg">
           <Tree
-            initialSelectedId={currentEntity ?? undefined}
-            initialExpandedItems={["entities"]}
+            initialSelectedId={selectedFileId}
+            initialExpandedItems={initialExpandedItems}
             indicator={false}
             className="h-full"
           >
-            <Folder element="entities" value="entities">
-              {entityNames.map((name) => (
-                <File
-                  key={name}
-                  value={name}
-                  fileIcon={<FileText className="size-4 text-blue-500" />}
-                  onClick={() => setSelectedEntity(name)}
-                  isSelect={currentEntity === name}
-                >
-                  <span className="text-xs">{name}.ts</span>
-                </File>
-              ))}
-            </Folder>
+            {nonEmptyCategories.map((category) => (
+              <Folder key={category} element={CATEGORY_INFO[category].label} value={category}>
+                {filesByCategory[category].map((file) => (
+                  <File
+                    key={`${category}/${file.name}`}
+                    value={`${category}/${file.name}`}
+                    fileIcon={<FileText className="size-4 text-blue-500" />}
+                    onClick={() => handleSelectFile(category, file.name)}
+                    isSelect={selectedFileId === `${category}/${file.name}`}
+                  >
+                    <span className="text-xs">{file.name}.ts</span>
+                  </File>
+                ))}
+              </Folder>
+            ))}
           </Tree>
         </div>
 
@@ -137,9 +279,9 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
             variant="ghost"
             size="icon"
             className="absolute top-2 right-2 z-10 h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
-            onClick={() => currentEntity && handleCopy(currentEntity)}
-            disabled={!currentEntity}
-            aria-label={copied ? "Copied" : `Copy ${currentEntity ?? "code"} to clipboard`}
+            onClick={handleCopy}
+            disabled={!currentFile}
+            aria-label={copied ? "Copied" : `Copy ${currentFile?.name ?? "code"} to clipboard`}
           >
             {copied ? (
               <Check className="h-4 w-4 text-green-500" />
@@ -165,7 +307,7 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
                 wrapLines={false}
                 wrapLongLines={false}
               >
-                {currentEntity ? (generatedCode.get(currentEntity) ?? "") : ""}
+                {currentFile?.code ?? ""}
               </SyntaxHighlighter>
             </div>
           </ScrollArea>
@@ -174,18 +316,19 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
 
       {/* 하단 액션 버튼 */}
       <div className="flex items-center justify-between py-3 border-t bg-muted/50 -mx-6 px-6 mt-auto">
-        <Button variant="outline" size="sm" onClick={handleDownloadAll}>
-          <Download className="h-4 w-4 mr-2" />
-          Download All ({entityNames.length})
-        </Button>
-
         <Button
+          variant="outline"
           size="sm"
-          onClick={() => currentEntity && handleDownload(currentEntity)}
-          disabled={!currentEntity}
+          onClick={handleDownloadAll}
+          disabled={totalFileCount === 0 || isDownloading}
         >
           <Download className="h-4 w-4 mr-2" />
-          Download {currentEntity ? `${currentEntity}.ts` : ""}
+          {isDownloading ? "Creating ZIP..." : `Download All (${totalFileCount})`}
+        </Button>
+
+        <Button size="sm" onClick={handleDownload} disabled={!currentFile}>
+          <Download className="h-4 w-4 mr-2" />
+          Download {currentFile ? `${currentFile.name}.ts` : ""}
         </Button>
       </div>
     </div>

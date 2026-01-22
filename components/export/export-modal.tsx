@@ -21,7 +21,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FileCode, ImageIcon } from "lucide-react"
 import { useEditorContext } from "@/components/providers/editor-provider"
-import { generateAllDiagramCode } from "@/lib/mikro-orm/generator"
+import { generateAllDiagramCodeCategorized } from "@/lib/mikro-orm/generator"
+import type { CategorizedGeneratedCode } from "@/lib/mikro-orm/generator"
 import { TypeScriptExportTab } from "@/components/export/typescript-export-tab"
 import { ImageExportTab } from "@/components/export/image-export-tab"
 
@@ -55,13 +56,21 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const [exportFormat, setExportFormat] = useState<ExportFormat>("typescript")
 
   /**
-   * 모든 다이어그램 노드 (Entity + Embeddable) TypeScript 코드 생성
+   * 모든 다이어그램 노드 (Entity + Embeddable + Enum + Interface) TypeScript 코드 생성
+   * 카테고리별로 분류하여 반환
    */
-  const generatedTsCode = useMemo(() => {
-    if (!isOpen || nodes.length === 0) return new Map<string, string>()
+  const generatedTsCode = useMemo((): CategorizedGeneratedCode => {
+    if (!isOpen || nodes.length === 0) {
+      return {
+        entities: new Map<string, string>(),
+        embeddables: new Map<string, string>(),
+        enums: new Map<string, string>(),
+        interfaces: new Map<string, string>(),
+      }
+    }
     // RelationshipEdge만 필터링 (EnumMappingEdge 제외)
     const relationshipEdges = edges.filter((e) => e.type === "relationship")
-    return generateAllDiagramCode(nodes, relationshipEdges)
+    return generateAllDiagramCodeCategorized(nodes, relationshipEdges)
   }, [isOpen, nodes, edges])
 
   // Entity가 없는 경우
