@@ -14,13 +14,56 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 })
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ureca-mikro-orm-visualizer.vercel.app"
+
 export const metadata: Metadata = {
-  title: "MikroORM Visualizer",
-  description: "Visualize and explore MikroORM entity relationships",
+  title: {
+    default: "MikroORM Visualizer",
+    template: "%s | MikroORM Visualizer",
+  },
+  description:
+    "MikroORM 엔티티 관계를 비주얼 에디터로 설계하고, TypeScript 코드와 이미지로 내보낼 수 있는 도구입니다.",
+  keywords: [
+    "MikroORM",
+    "Entity",
+    "ORM",
+    "TypeScript",
+    "Database",
+    "ERD",
+    "Diagram",
+    "Visualizer",
+    "Node.js",
+  ],
+  authors: [{ name: "Ureca Team" }],
+  creator: "Ureca Team",
   icons: {
     icon: "/logo.svg",
     shortcut: "/logo.svg",
+    apple: "/logo.svg",
   },
+  // Open Graph (카카오톡, 페이스북 등)
+  openGraph: {
+    type: "website",
+    locale: "ko_KR",
+    url: SITE_URL,
+    siteName: "MikroORM Visualizer",
+    title: "MikroORM Visualizer - 엔티티 관계 시각화 도구",
+    description:
+      "MikroORM 엔티티 관계를 비주얼 에디터로 설계하고, TypeScript 코드와 이미지로 내보낼 수 있는 도구입니다.",
+  },
+  // Twitter Card
+  twitter: {
+    card: "summary_large_image",
+    title: "MikroORM Visualizer - 엔티티 관계 시각화 도구",
+    description:
+      "MikroORM 엔티티 관계를 비주얼 에디터로 설계하고, TypeScript 코드와 이미지로 내보낼 수 있는 도구입니다.",
+  },
+  // 기타 메타 정보
+  robots: {
+    index: true,
+    follow: true,
+  },
+  metadataBase: new URL(SITE_URL),
 }
 
 /**
