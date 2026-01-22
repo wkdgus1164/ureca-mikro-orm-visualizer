@@ -47,8 +47,8 @@ export interface UseEdgesReturn {
   updateRelationship: (id: string, data: Partial<RelationshipData>) => void
   /** Relationship 엣지 삭제 */
   deleteRelationship: (id: string) => void
-  /** EnumMapping 엣지 추가 */
-  addEnumMapping: (entityId: string, enumId: string, sourceHandle?: string, targetHandle?: string) => void
+  /** EnumMapping 엣지 추가 (생성된 엣지 ID 반환) */
+  addEnumMapping: (entityId: string, enumId: string, sourceHandle?: string, targetHandle?: string) => string
   /** EnumMapping 엣지 업데이트 */
   updateEnumMapping: (id: string, data: Partial<EnumMappingData>) => void
   /** 특정 노드와 연결된 모든 엣지 삭제 */
@@ -147,11 +147,13 @@ export function useEdges(): UseEdgesReturn {
 
   /**
    * EnumMapping 엣지 추가
+   * @returns 생성된 엣지 ID
    */
   const addEnumMapping = useCallback(
-    (entityId: string, enumId: string, sourceHandle?: string, targetHandle?: string) => {
+    (entityId: string, enumId: string, sourceHandle?: string, targetHandle?: string): string => {
+      const edgeId = generateId()
       const newEdge: FlowEdge = {
-        id: generateId(),
+        id: edgeId,
         type: "enum-mapping",
         source: entityId,
         target: enumId,
@@ -162,6 +164,7 @@ export function useEdges(): UseEdgesReturn {
         },
       }
       setEdges((eds) => addEdge(newEdge, eds))
+      return edgeId
     },
     [setEdges]
   )

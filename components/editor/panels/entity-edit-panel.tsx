@@ -114,24 +114,12 @@ function EntityEditInner({ selectedNode }: EntityEditInnerProps) {
           previousType: oldProperty.type,
         })
       } else {
-        // 기존 엣지가 없으면 새로 생성
-        addEnumMapping(selectedNode.id, newEnumNode.id)
-        // 생성 직후 propertyId 업데이트 (다음 틱에서 실행)
-        setTimeout(() => {
-          const newEdge = edges.find(
-            (e) =>
-              e.type === "enum-mapping" &&
-              e.source === selectedNode.id &&
-              e.target === newEnumNode.id &&
-              !e.data.propertyId
-          )
-          if (newEdge) {
-            updateEnumMapping(newEdge.id, {
-              propertyId: property.id,
-              previousType: oldProperty.type,
-            })
-          }
-        }, 0)
+        // 기존 엣지가 없으면 새로 생성하고 바로 propertyId 업데이트
+        const newEdgeId = addEnumMapping(selectedNode.id, newEnumNode.id)
+        updateEnumMapping(newEdgeId, {
+          propertyId: property.id,
+          previousType: oldProperty.type,
+        })
       }
     }
   }

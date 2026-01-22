@@ -87,8 +87,8 @@ export interface UseEditorReturn {
   updateRelationship: (id: string, data: Partial<RelationshipData>) => void
   /** Relationship 엣지 삭제 */
   deleteRelationship: (id: string) => void
-  /** EnumMapping 엣지 추가 */
-  addEnumMapping: (entityId: string, enumId: string, sourceHandle?: string, targetHandle?: string) => void
+  /** EnumMapping 엣지 추가 (생성된 엣지 ID 반환) */
+  addEnumMapping: (entityId: string, enumId: string, sourceHandle?: string, targetHandle?: string) => string
   /** EnumMapping 엣지 업데이트 */
   updateEnumMapping: (id: string, data: Partial<EnumMappingData>) => void
   /** 선택된 EnumMapping 엣지 가져오기 */
