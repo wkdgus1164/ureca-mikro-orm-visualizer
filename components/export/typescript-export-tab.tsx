@@ -154,7 +154,7 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
             value={currentEntity ? (generatedCode.get(currentEntity) ?? "") : ""}
             options={{
               readOnly: true,
-              minimap: { enabled: false },
+              minimap: { enabled: true, scale: 0.8 },
               scrollBeyondLastLine: false,
               fontSize: 13,
               lineNumbers: "on",
