@@ -4,15 +4,14 @@
  * TypeScript Export 탭 컴포넌트
  *
  * TypeScript 코드를 파일 트리와 함께 미리보고 복사/다운로드할 수 있는 탭
+ * Monaco Editor (VSCode 코어)를 사용하여 코드 하이라이팅 제공
  */
 
 import { useState, useCallback, useMemo } from "react"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tree, Folder, File } from "@/components/ui/file-tree"
 import { Copy, Download, Check, FileText } from "lucide-react"
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
-import { vscDarkPlus, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism"
+import Editor from "@monaco-editor/react"
 import { toast } from "sonner"
 import { useTheme } from "next-themes"
 
@@ -28,7 +27,8 @@ interface TypeScriptExportTabProps {
  */
 export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps) {
   const { resolvedTheme } = useTheme()
-  const syntaxTheme = resolvedTheme === "dark" ? vscDarkPlus : oneLight
+  // Monaco Editor 테마: 전역 테마에 따라 동적 전환
+  const monacoTheme = resolvedTheme === "dark" ? "vs-dark" : "light"
 
   // 선택된 Entity
   const [selectedEntity, setSelectedEntity] = useState<string | null>(null)
@@ -130,13 +130,13 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
           </Tree>
         </div>
 
-        {/* 코드 미리보기 (오른쪽) */}
+        {/* 코드 미리보기 (오른쪽) - Monaco Editor */}
         <div className="flex-1 min-w-0 overflow-hidden relative rounded-r-lg">
           {/* 복사 버튼 (우측 상단) */}
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-2 right-2 z-10 h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
+            className="absolute top-2 right-6 z-10 h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
             onClick={() => currentEntity && handleCopy(currentEntity)}
             disabled={!currentEntity}
             aria-label={copied ? "Copied" : `Copy ${currentEntity ?? "code"} to clipboard`}
@@ -147,28 +147,35 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
               <Copy className="h-4 w-4" />
             )}
           </Button>
-          <ScrollArea className="h-full w-full bg-muted">
-            <div className="overflow-x-auto">
-              <SyntaxHighlighter
-                language="typescript"
-                style={syntaxTheme}
-                customStyle={{
-                  margin: 0,
-                  borderRadius: 0,
-                  minHeight: "100%",
-                  fontSize: "13px",
-                  lineHeight: "1.5",
-                  whiteSpace: "pre",
-                  background: "transparent",
-                }}
-                showLineNumbers
-                wrapLines={false}
-                wrapLongLines={false}
-              >
-                {currentEntity ? (generatedCode.get(currentEntity) ?? "") : ""}
-              </SyntaxHighlighter>
-            </div>
-          </ScrollArea>
+          <Editor
+            height="100%"
+            language="typescript"
+            theme={monacoTheme}
+            value={currentEntity ? (generatedCode.get(currentEntity) ?? "") : ""}
+            options={{
+              readOnly: true,
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              fontSize: 13,
+              lineNumbers: "on",
+              renderLineHighlight: "none",
+              selectionHighlight: false,
+              occurrencesHighlight: "off",
+              folding: true,
+              contextmenu: true,
+              scrollbar: {
+                vertical: "auto",
+                horizontal: "auto",
+                verticalScrollbarSize: 10,
+                horizontalScrollbarSize: 10,
+              },
+              overviewRulerBorder: false,
+              hideCursorInOverviewRuler: true,
+              overviewRulerLanes: 0,
+              padding: { top: 12, bottom: 12 },
+              domReadOnly: true,
+            }}
+          />
         </div>
       </div>
 
