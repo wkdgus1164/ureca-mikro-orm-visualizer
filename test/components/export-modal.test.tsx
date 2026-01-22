@@ -24,10 +24,16 @@ vi.mock("@/components/providers/editor-provider", () => {
 vi.mock("@/lib/mikro-orm/generator", () => {
   const mockFn = vi.fn()
   return {
-    generateAllDiagramCode: mockFn,
+    generateAllDiagramCodeCategorized: mockFn,
     __getMock: () => mockFn,
   }
 })
+
+vi.mock("@monaco-editor/react", () => ({
+  default: ({ value }: { value: string }) => (
+    <pre data-testid="monaco-editor">{value}</pre>
+  ),
+}))
 
 vi.mock("@/lib/export/image", () => {
   const mockFn = vi.fn()
@@ -62,7 +68,7 @@ describe("ExportModal", () => {
 
   // Get mock references
   const mockUseEditorContext = (editorProvider as unknown as { __getMock: () => ReturnType<typeof vi.fn> }).__getMock()
-  const mockGenerateAllDiagramCode = (generator as unknown as { __getMock: () => ReturnType<typeof vi.fn> }).__getMock()
+  const mockGenerateAllDiagramCodeCategorized = (generator as unknown as { __getMock: () => ReturnType<typeof vi.fn> }).__getMock()
 
   const mockNodes = [
     {
@@ -105,11 +111,14 @@ describe("ExportModal", () => {
       edges: mockEdges,
     })
 
-    mockGenerateAllDiagramCode.mockReturnValue(
-      new Map([
+    mockGenerateAllDiagramCodeCategorized.mockReturnValue({
+      entities: new Map([
         ["User", `import { Entity, PrimaryKey } from "@mikro-orm/core";\n\n@Entity()\nexport class User {\n  @PrimaryKey()\n  id!: number;\n}`],
-      ])
-    )
+      ]),
+      embeddables: new Map(),
+      enums: new Map(),
+      interfaces: new Map(),
+    })
   })
 
   // ============================================================================
@@ -160,8 +169,8 @@ describe("ExportModal", () => {
     it("코드 미리보기를 표시한다", () => {
       render(<ExportModal isOpen={true} onClose={mockOnClose} />)
 
-      // generateAllDiagramCode가 호출되었는지 확인
-      expect(mockGenerateAllDiagramCode).toHaveBeenCalled()
+      // generateAllDiagramCodeCategorized가 호출되었는지 확인
+      expect(mockGenerateAllDiagramCodeCategorized).toHaveBeenCalled()
     })
 
     it("Download All 버튼을 표시한다", () => {

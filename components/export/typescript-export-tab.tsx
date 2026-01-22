@@ -7,15 +7,12 @@
  * 카테고리: entities, embeddables, enums, interfaces
  */
 
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback, useMemo, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tree, Folder, File } from "@/components/ui/file-tree"
 import { Copy, Download, Check, FileText } from "lucide-react"
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
-import { vscDarkPlus, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism"
+import Editor, { type Monaco } from "@monaco-editor/react"
 import { toast } from "sonner"
-import { useTheme } from "next-themes"
 import JSZip from "jszip"
 import type { CategorizedGeneratedCode } from "@/lib/mikro-orm/generator"
 
@@ -52,15 +49,49 @@ interface TypeScriptExportTabProps {
  * 카테고리별 파일 트리에서 파일을 선택하고 코드를 미리보기, 복사, 다운로드할 수 있습니다.
  */
 export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps) {
-  const { resolvedTheme } = useTheme()
-  const syntaxTheme = resolvedTheme === "dark" ? vscDarkPlus : oneLight
+  // Monaco 인스턴스 참조
+  const monacoRef = useRef<Monaco | null>(null)
+
+  // HTML 클래스 변경 감지하여 Monaco 테마 업데이트
+  useEffect(() => {
+    const updateTheme = () => {
+      if (monacoRef.current) {
+        const isDark = document.documentElement.classList.contains("dark")
+        monacoRef.current.editor.setTheme(isDark ? "vs-dark" : "light")
+      }
+    }
+
+    // 초기 테마 설정
+    updateTheme()
+
+    // HTML 클래스 변경 감지
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === "class") {
+          updateTheme()
+        }
+      })
+    })
+
+    observer.observe(document.documentElement, { attributes: true })
+
+    return () => observer.disconnect()
+  }, [])
+
+  // Monaco Editor 마운트 핸들러
+  const handleEditorMount = useCallback((_editor: unknown, monaco: Monaco) => {
+    monacoRef.current = monaco
+    // 마운트 시 현재 테마 적용
+    const isDark = document.documentElement.classList.contains("dark")
+    monaco.editor.setTheme(isDark ? "vs-dark" : "light")
+  }, [])
 
   // 선택된 파일 (category/name 형태)
-  const [selectedFile, setSelectedFile] = useState<string | null>(null)
+  const [ selectedFile, setSelectedFile ] = useState<string | null>(null)
   // 복사 완료 상태
-  const [copied, setCopied] = useState(false)
+  const [ copied, setCopied ] = useState(false)
   // 다운로드 진행 상태
-  const [isDownloading, setIsDownloading] = useState(false)
+  const [ isDownloading, setIsDownloading ] = useState(false)
 
   /**
    * 모든 파일 목록 (카테고리별로 그룹화)
@@ -81,13 +112,13 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
     ]
 
     categories.forEach((category) => {
-      generatedCode[category].forEach((code, name) => {
-        result[category].push({ category, name, code })
+      generatedCode[ category ].forEach((code, name) => {
+        result[ category ].push({ category, name, code })
       })
     })
 
     return result
-  }, [generatedCode])
+  }, [ generatedCode ])
 
   /**
    * 전체 파일 개수
@@ -99,7 +130,7 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
       filesByCategory.enums.length +
       filesByCategory.interfaces.length
     )
-  }, [filesByCategory])
+  }, [ filesByCategory ])
 
   /**
    * 현재 선택된 파일 정보
@@ -113,17 +144,17 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
         "enums",
         "interfaces",
       ]
-      const firstCategory = categories.find((cat) => filesByCategory[cat].length > 0)
-      if (firstCategory && filesByCategory[firstCategory].length > 0) {
-        return filesByCategory[firstCategory][0]
+      const firstCategory = categories.find((cat) => filesByCategory[ cat ].length > 0)
+      if (firstCategory && filesByCategory[ firstCategory ].length > 0) {
+        return filesByCategory[ firstCategory ][ 0 ]
       }
       return null
     }
 
-    const [category, name] = selectedFile.split("/") as [keyof CategorizedGeneratedCode, string]
-    const file = filesByCategory[category]?.find((f) => f.name === name)
+    const [ category, name ] = selectedFile.split("/") as [ keyof CategorizedGeneratedCode, string ]
+    const file = filesByCategory[ category ]?.find((f) => f.name === name)
     return file ?? null
-  }, [selectedFile, filesByCategory])
+  }, [ selectedFile, filesByCategory ])
 
   /**
    * 파일 선택 핸들러
@@ -146,7 +177,7 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
     } catch {
       toast.error("Failed to copy to clipboard")
     }
-  }, [currentFile])
+  }, [ currentFile ])
 
   /**
    * 단일 파일 다운로드 핸들러
@@ -154,7 +185,7 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
   const handleDownload = useCallback(() => {
     if (!currentFile) return
 
-    const blob = new Blob([currentFile.code], { type: "text/typescript" })
+    const blob = new Blob([ currentFile.code ], { type: "text/typescript" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
@@ -165,7 +196,7 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
     URL.revokeObjectURL(url)
 
     toast.success(`${currentFile.name}.ts downloaded!`)
-  }, [currentFile])
+  }, [ currentFile ])
 
   /**
    * 모든 파일 ZIP 압축 다운로드 핸들러
@@ -185,7 +216,7 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
       ]
 
       categories.forEach((category) => {
-        const files = filesByCategory[category]
+        const files = filesByCategory[ category ]
         if (files.length > 0) {
           const folder = zip.folder(category)
           files.forEach((file) => {
@@ -211,7 +242,7 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
     } finally {
       setIsDownloading(false)
     }
-  }, [filesByCategory])
+  }, [ filesByCategory ])
 
   /**
    * 파일이 있는 카테고리만 표시하기 위한 필터
@@ -223,15 +254,15 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
       "enums",
       "interfaces",
     ]
-    return categories.filter((cat) => filesByCategory[cat].length > 0)
-  }, [filesByCategory])
+    return categories.filter((cat) => filesByCategory[ cat ].length > 0)
+  }, [ filesByCategory ])
 
   /**
    * 초기 확장할 폴더 목록
    */
   const initialExpandedItems = useMemo(() => {
     return nonEmptyCategories
-  }, [nonEmptyCategories])
+  }, [ nonEmptyCategories ])
 
   /**
    * 현재 선택된 파일 ID
@@ -241,7 +272,7 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
       return `${currentFile.category}/${currentFile.name}`
     }
     return undefined
-  }, [currentFile])
+  }, [ currentFile ])
 
   return (
     <div className="flex flex-col h-full">
@@ -255,8 +286,8 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
             className="h-full"
           >
             {nonEmptyCategories.map((category) => (
-              <Folder key={category} element={CATEGORY_INFO[category].label} value={category}>
-                {filesByCategory[category].map((file) => (
+              <Folder key={category} element={CATEGORY_INFO[ category ].label} value={category}>
+                {filesByCategory[ category ].map((file) => (
                   <File
                     key={`${category}/${file.name}`}
                     value={`${category}/${file.name}`}
@@ -272,13 +303,13 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
           </Tree>
         </div>
 
-        {/* 코드 미리보기 (오른쪽) */}
+        {/* 코드 미리보기 (오른쪽) - Monaco Editor */}
         <div className="flex-1 min-w-0 overflow-hidden relative rounded-r-lg">
           {/* 복사 버튼 (우측 상단) */}
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-2 right-2 z-10 h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
+            className="absolute top-2 right-4 z-10 h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
             onClick={handleCopy}
             disabled={!currentFile}
             aria-label={copied ? "Copied" : `Copy ${currentFile?.name ?? "code"} to clipboard`}
@@ -289,28 +320,31 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
               <Copy className="h-4 w-4" />
             )}
           </Button>
-          <ScrollArea className="h-full w-full bg-muted">
-            <div className="overflow-x-auto">
-              <SyntaxHighlighter
-                language="typescript"
-                style={syntaxTheme}
-                customStyle={{
-                  margin: 0,
-                  borderRadius: 0,
-                  minHeight: "100%",
-                  fontSize: "13px",
-                  lineHeight: "1.5",
-                  whiteSpace: "pre",
-                  background: "transparent",
-                }}
-                showLineNumbers
-                wrapLines={false}
-                wrapLongLines={false}
-              >
-                {currentFile?.code ?? ""}
-              </SyntaxHighlighter>
-            </div>
-          </ScrollArea>
+          <Editor
+            height="100%"
+            language="typescript"
+            theme={typeof window !== "undefined" && document.documentElement.classList.contains("dark") ? "vs-dark" : "light"}
+            value={currentFile?.code ?? ""}
+            onMount={handleEditorMount}
+            options={{
+              readOnly: true,
+              minimap: { enabled: true },
+              scrollBeyondLastLine: false,
+              fontSize: 13,
+              lineNumbers: "on",
+              renderLineHighlight: "none",
+              folding: true,
+              wordWrap: "off",
+              automaticLayout: true,
+              scrollbar: {
+                vertical: "auto",
+                horizontal: "auto",
+                verticalScrollbarSize: 10,
+                horizontalScrollbarSize: 10,
+              },
+              padding: { top: 8, bottom: 8 },
+            }}
+          />
         </div>
       </div>
 
