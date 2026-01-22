@@ -51,6 +51,24 @@ function EnumMappingEditInner({
   const selectedPropertyId = selectedEdge.data.propertyId
 
   /**
+   * 생성될 프로퍼티 이름 (미리보기용)
+   * 중복되지 않는 이름을 자동으로 생성
+   */
+  const previewPropertyName = useMemo(() => {
+    const enumName = enumNode.data.name
+    const baseName = enumName.charAt(0).toLowerCase() + enumName.slice(1)
+
+    let propertyName = baseName
+    let suffix = 2
+    while (properties.some((p) => p.name === propertyName)) {
+      propertyName = `${baseName}${suffix}`
+      suffix++
+    }
+
+    return propertyName
+  }, [enumNode.data.name, properties])
+
+  /**
    * 프로퍼티 선택 핸들러
    */
   const handlePropertySelect = (propertyId: string) => {
@@ -93,10 +111,8 @@ function EnumMappingEditInner({
    */
   const handleCreateProperty = () => {
     const newProperty = createDefaultProperty(crypto.randomUUID())
-    // 프로퍼티명을 Enum 이름의 camelCase로 설정
-    const enumName = enumNode.data.name
-    const propertyName = enumName.charAt(0).toLowerCase() + enumName.slice(1)
-    newProperty.name = propertyName
+    // previewPropertyName을 사용하여 중복 체크된 이름 적용
+    newProperty.name = previewPropertyName
     newProperty.type = enumNode.data.name
 
     const updatedProperties = [...properties, newProperty]
@@ -157,7 +173,7 @@ function EnumMappingEditInner({
           className="w-full gap-2"
         >
           <Plus className="h-4 w-4" />
-          Create &quot;{enumNode.data.name.charAt(0).toLowerCase() + enumNode.data.name.slice(1)}&quot; property
+          Create &quot;{previewPropertyName}&quot; property
         </Button>
       </div>
     </div>
