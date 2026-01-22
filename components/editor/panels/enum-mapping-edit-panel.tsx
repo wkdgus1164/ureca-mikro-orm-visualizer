@@ -40,7 +40,8 @@ function EnumMappingEditInner({
   entityNode,
   enumNode,
 }: EnumMappingEditInnerProps) {
-  const { updateEnumMapping, updateEntity } = useEditorContext()
+  const { updateEnumMapping, updateEntity, edges, deleteRelationship } =
+    useEditorContext()
 
   const properties = useMemo(
     () => entityNode.data.properties ?? [],
@@ -60,6 +61,18 @@ function EnumMappingEditInner({
       )
       updateEntity(entityNode.id, { properties: updatedProperties })
     }
+
+    // 다른 EnumMapping 엣지가 같은 프로퍼티를 참조하고 있으면 엣지 삭제
+    edges
+      .filter(
+        (e) =>
+          e.type === "enum-mapping" &&
+          e.id !== selectedEdge.id &&
+          e.data.propertyId === propertyId
+      )
+      .forEach((e) => {
+        deleteRelationship(e.id)
+      })
 
     // 새로 선택된 프로퍼티의 타입을 Enum으로 변경
     const updatedProperties = properties.map((p) =>
