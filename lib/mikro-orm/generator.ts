@@ -48,6 +48,77 @@ export {
 }
 
 /**
+ * 카테고리별로 분류된 생성 코드 결과
+ */
+export interface CategorizedGeneratedCode {
+  entities: Map<string, string>
+  embeddables: Map<string, string>
+  enums: Map<string, string>
+  interfaces: Map<string, string>
+}
+
+/**
+ * Generate categorized TypeScript source code for all diagram nodes.
+ *
+ * This function returns generated code organized by category (entities, embeddables, enums, interfaces).
+ *
+ * @param nodes - Array of diagram nodes to process
+ * @param edges - Relationship edges used when generating entity code
+ * @param options - Generator options
+ * @returns CategorizedGeneratedCode with separate Maps for each category
+ *
+ * @example
+ * ```typescript
+ * const { entities, embeddables, enums, interfaces } = generateAllDiagramCodeCategorized(nodes, edges)
+ * entities.forEach((code, name) => console.log(`entities/${name}.ts`))
+ * ```
+ */
+export function generateAllDiagramCodeCategorized(
+  nodes: DiagramNode[],
+  edges: RelationshipEdge[],
+  options: GeneratorOptions = {}
+): CategorizedGeneratedCode {
+  const result: CategorizedGeneratedCode = {
+    entities: new Map<string, string>(),
+    embeddables: new Map<string, string>(),
+    enums: new Map<string, string>(),
+    interfaces: new Map<string, string>(),
+  }
+
+  // 노드 타입별 분류
+  const entityNodes: EntityNode[] = nodes.filter(isEntityNode)
+  const embeddableNodes: EmbeddableNode[] = nodes.filter(isEmbeddableNode)
+  const enumNodes: EnumNode[] = nodes.filter(isEnumNode)
+  const interfaceNodes: InterfaceNode[] = nodes.filter(isInterfaceNode)
+
+  // Entity 코드 생성 (EnumNode, InterfaceNode 전달하여 참조 처리)
+  entityNodes.forEach((entity) => {
+    const code = generateEntityCode(entity, edges, entityNodes, options, enumNodes, interfaceNodes)
+    result.entities.set(sanitizeClassName(entity.data.name), code)
+  })
+
+  // Embeddable 코드 생성 (EnumNode 전달하여 Enum 참조 처리)
+  embeddableNodes.forEach((embeddable) => {
+    const code = generateEmbeddableCode(embeddable, options, enumNodes)
+    result.embeddables.set(sanitizeClassName(embeddable.data.name), code)
+  })
+
+  // Enum 코드 생성
+  enumNodes.forEach((enumNode) => {
+    const code = generateEnumNodeCode(enumNode)
+    result.enums.set(sanitizeClassName(enumNode.data.name), code)
+  })
+
+  // Interface 코드 생성
+  interfaceNodes.forEach((interfaceNode) => {
+    const code = generateInterfaceCode(interfaceNode)
+    result.interfaces.set(sanitizeClassName(interfaceNode.data.name), code)
+  })
+
+  return result
+}
+
+/**
  * Generate TypeScript source code for all diagram nodes (entities, embeddables, enums, and interfaces).
  *
  * This is the main entry point for code generation from a complete diagram.
@@ -71,37 +142,14 @@ export function generateAllDiagramCode(
   edges: RelationshipEdge[],
   options: GeneratorOptions = {}
 ): Map<string, string> {
+  const categorized = generateAllDiagramCodeCategorized(nodes, edges, options)
+
+  // 모든 카테고리를 하나의 Map으로 병합
   const result = new Map<string, string>()
-
-  // 노드 타입별 분류
-  const entityNodes: EntityNode[] = nodes.filter(isEntityNode)
-  const embeddableNodes: EmbeddableNode[] = nodes.filter(isEmbeddableNode)
-  const enumNodes: EnumNode[] = nodes.filter(isEnumNode)
-  const interfaceNodes: InterfaceNode[] = nodes.filter(isInterfaceNode)
-
-  // Entity 코드 생성 (EnumNode, InterfaceNode 전달하여 참조 처리)
-  entityNodes.forEach((entity) => {
-    const code = generateEntityCode(entity, edges, entityNodes, options, enumNodes, interfaceNodes)
-    result.set(sanitizeClassName(entity.data.name), code)
-  })
-
-  // Embeddable 코드 생성 (EnumNode 전달하여 Enum 참조 처리)
-  embeddableNodes.forEach((embeddable) => {
-    const code = generateEmbeddableCode(embeddable, options, enumNodes)
-    result.set(sanitizeClassName(embeddable.data.name), code)
-  })
-
-  // Enum 코드 생성
-  enumNodes.forEach((enumNode) => {
-    const code = generateEnumNodeCode(enumNode)
-    result.set(sanitizeClassName(enumNode.data.name), code)
-  })
-
-  // Interface 코드 생성
-  interfaceNodes.forEach((interfaceNode) => {
-    const code = generateInterfaceCode(interfaceNode)
-    result.set(sanitizeClassName(interfaceNode.data.name), code)
-  })
+  categorized.entities.forEach((code, name) => result.set(name, code))
+  categorized.embeddables.forEach((code, name) => result.set(name, code))
+  categorized.enums.forEach((code, name) => result.set(name, code))
+  categorized.interfaces.forEach((code, name) => result.set(name, code))
 
   return result
 }
