@@ -220,10 +220,10 @@ export function RelationshipEditContent() {
           }
         >
           <SelectTrigger id="delete-rule">
-            <SelectValue placeholder="선택 안 함" />
+            <SelectValue placeholder="None" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">선택 안 함</SelectItem>
+            <SelectItem value="none">None</SelectItem>
             {Object.values(DeleteRule).map((rule) => (
               <SelectItem key={rule} value={rule}>
                 {DELETE_RULE_LABELS[rule]}

@@ -71,11 +71,11 @@ export const FETCH_TYPE_LABELS: Record<FetchType, string> = {
  * Delete Rule 타입별 레이블
  */
 export const DELETE_RULE_LABELS: Record<DeleteRule, string> = {
-  [DeleteRule.Cascade]: "CASCADE (자식도 삭제)",
-  [DeleteRule.SetNull]: "SET NULL (FK를 NULL로)",
-  [DeleteRule.Restrict]: "RESTRICT (삭제 차단)",
-  [DeleteRule.NoAction]: "NO ACTION (DB 기본)",
-  [DeleteRule.SetDefault]: "SET DEFAULT (기본값 설정)",
+  [DeleteRule.Cascade]: "CASCADE",
+  [DeleteRule.SetNull]: "SET NULL",
+  [DeleteRule.Restrict]: "RESTRICT",
+  [DeleteRule.NoAction]: "NO ACTION",
+  [DeleteRule.SetDefault]: "SET DEFAULT",
 }
 
 /**
