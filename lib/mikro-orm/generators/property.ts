@@ -5,7 +5,7 @@
  */
 
 import type { EntityProperty } from "@/types/entity"
-import { indent } from "./utils"
+import { indent, sanitizeClassName } from "./utils"
 
 /**
  * Builds a MikroORM property decorator options object string from property metadata.
@@ -71,11 +71,14 @@ export function generateProperty(
   // Enum 참조 타입인지 확인 (property.type이 Enum 이름인 경우)
   const isEnumRef = enumNames.has(property.type)
 
+  // 프로퍼티명 sanitize
+  const propName = sanitizeClassName(property.name)
+
   if (property.isPrimaryKey) {
     lines.push(`${ind}@PrimaryKey()`)
   } else if (property.type === "enum" && property.enumDef) {
     // 인라인 Enum 타입 처리
-    const enumName = property.enumDef.name
+    const enumName = sanitizeClassName(property.enumDef.name)
     const options = generatePropertyOptions(property)
     if (options) {
       lines.push(
@@ -86,7 +89,7 @@ export function generateProperty(
     }
   } else if (isEnumRef) {
     // Enum 참조 타입 처리 (property.type이 Enum 이름)
-    const enumName = property.type
+    const enumName = sanitizeClassName(property.type)
     const options = generatePropertyOptions(property)
     if (options) {
       lines.push(
@@ -105,9 +108,11 @@ export function generateProperty(
   // Enum인 경우 enum 이름을 타입으로 사용
   const propertyType =
     property.type === "enum" && property.enumDef
-      ? property.enumDef.name
-      : property.type
-  lines.push(`${ind}${property.name}${nullable}: ${propertyType}`)
+      ? sanitizeClassName(property.enumDef.name)
+      : isEnumRef
+        ? sanitizeClassName(property.type)
+        : property.type
+  lines.push(`${ind}${propName}${nullable}: ${propertyType}`)
 
   return lines.join("\n")
 }

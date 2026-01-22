@@ -32,7 +32,8 @@ export function generateInterfaceCode(interfaceNode: InterfaceNode): string {
   // Properties
   properties.forEach((prop) => {
     const optionalMark = prop.isNullable ? "?" : ""
-    lines.push(`  ${prop.name}${optionalMark}: ${prop.type};`)
+    const propName = sanitizeClassName(prop.name)
+    lines.push(`  ${propName}${optionalMark}: ${prop.type};`)
   })
 
   // Properties와 Methods 사이 빈 줄
@@ -44,7 +45,8 @@ export function generateInterfaceCode(interfaceNode: InterfaceNode): string {
   methods.forEach((method) => {
     const params = method.parameters || ""
     const returnType = method.returnType || "void"
-    lines.push(`  ${method.name}(${params}): ${returnType};`)
+    const methodName = sanitizeClassName(method.name)
+    lines.push(`  ${methodName}(${params}): ${returnType};`)
   })
 
   // Interface 닫기

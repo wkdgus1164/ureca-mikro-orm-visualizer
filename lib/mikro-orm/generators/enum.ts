@@ -42,6 +42,7 @@ export function collectEnumDefinitions(
  * @returns The generated TypeScript `export enum` declaration as a string
  */
 export function generateEnumCode(enumDef: EnumDefinition): string {
+  const enumName = sanitizeClassName(enumDef.name)
   const members = enumDef.values.map((enumValue) => {
     // 값이 숫자인지 문자열인지 판단
     const isNumeric =
@@ -49,10 +50,11 @@ export function generateEnumCode(enumDef: EnumDefinition): string {
     const formattedValue = isNumeric
       ? enumValue.value
       : `"${enumValue.value}"`
-    return `  ${enumValue.key} = ${formattedValue},`
+    const memberKey = sanitizeClassName(enumValue.key)
+    return `  ${memberKey} = ${formattedValue},`
   })
 
-  return [`export enum ${enumDef.name} {`, ...members, "}"].join("\n")
+  return [`export enum ${enumName} {`, ...members, "}"].join("\n")
 }
 
 /**
