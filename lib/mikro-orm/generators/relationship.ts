@@ -31,6 +31,9 @@ export function getRelationDecorator(relationType: RelationType): string | null 
     case RelationType.Implementation:
       // 상속/구현은 데코레이터가 아닌 extends/implements 키워드 사용
       return null
+    case RelationType.Dependency:
+      // Dependency는 MikroORM 데코레이터가 아님 (import만 생성)
+      return null
   }
 }
 
@@ -126,7 +129,7 @@ export function generateRelationship(
 
   const decorator = getRelationDecorator(data.relationType)
 
-  // Inheritance/Implementation은 데코레이터가 아닌 extends/implements 사용
+  // Inheritance/Implementation/Dependency는 데코레이터가 아닌 extends/implements 또는 import만 생성
   if (decorator === null) return null
 
   const lines: string[] = []

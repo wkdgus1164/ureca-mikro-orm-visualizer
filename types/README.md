@@ -30,6 +30,7 @@ types/
 - `@OneToOne`, `@OneToMany`, `@ManyToOne`, `@ManyToMany`
 - `Composition` (강한 결합 ◆), `Aggregation` (약한 결합 ◇)
 - `Inheritance` (상속 △), `Implementation` (구현 △ 점선)
+- `Dependency` - 일시적 사용 관계 (점선 화살표, MikroORM 데코레이터 없음, import만 생성)
 - 관계 옵션 (nullable, cascade, orphanRemoval, fetchType, deleteRule 등)
 - 양방향/단방향 관계 표현
 

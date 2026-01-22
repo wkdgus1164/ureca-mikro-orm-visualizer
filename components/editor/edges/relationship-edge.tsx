@@ -40,7 +40,8 @@ const EDGE_STYLE_BASE = {
  * 관계 타입에 따른 엣지 스타일 반환
  */
 function getEdgeStyle(relationType: RelationType): React.CSSProperties {
-  if (relationType === RelationType.Implementation) {
+  // Implementation, Dependency는 점선으로 표시
+  if (relationType === RelationType.Implementation || relationType === RelationType.Dependency) {
     return {
       ...EDGE_STYLE_BASE,
       strokeDasharray: "6 4",
@@ -56,6 +57,7 @@ function getMarkerEnd(relationType: RelationType): string {
   switch (relationType) {
     case RelationType.OneToOne:
     case RelationType.ManyToOne:
+    case RelationType.Dependency: // Dependency는 일반 화살표
       return `url(#${MARKER_IDS.arrow})`
     case RelationType.OneToMany:
     case RelationType.ManyToMany:
@@ -83,6 +85,7 @@ function getMarkerStart(relationType: RelationType): string | undefined {
     case RelationType.Aggregation:
     case RelationType.Inheritance:
     case RelationType.Implementation:
+    case RelationType.Dependency: // Dependency는 단방향 (시작점 마커 없음)
       return undefined
   }
 }

@@ -115,7 +115,8 @@ export function generateProperty(property: EntityProperty, indentSize: number): 
 Relationship 관련 코드 생성.
 
 ```typescript
-// RelationType → 데코레이터 이름 (Inheritance/Implementation은 null 반환)
+// RelationType → 데코레이터 이름
+// Inheritance/Implementation/Dependency는 null 반환 (MikroORM 데코레이터가 아님)
 export function getRelationDecorator(relationType: RelationType): string | null
 
 // Collection 관계 여부 확인
@@ -125,6 +126,7 @@ export function isCollectionRelation(relationType: RelationType): boolean
 export function generateRelationshipOptions(data: RelationshipData, indentSize: number): string
 
 // 완전한 Relationship 코드 (데코레이터 + 선언)
+// Dependency 관계는 null 반환 (코드 생성하지 않음, import만 처리)
 export function generateRelationship(
   edge: RelationshipEdge,
   sourceEntity: EntityNode,
@@ -133,11 +135,17 @@ export function generateRelationship(
 ): string | null
 ```
 
+**Dependency 관계 처리:**
+- `Dependency`는 UML의 의존 관계로, 한 클래스가 다른 클래스를 일시적으로 사용하는 약한 관계
+- MikroORM 데코레이터가 아니므로 `@OneToMany` 등의 코드는 생성하지 않음
+- 대신 import 문만 생성하여 타입 참조 가능하게 함
+
 #### imports.ts
 Import 문 생성.
 
 ```typescript
 // Entity에 필요한 import 정보 수집
+// Dependency 관계: 데코레이터는 추가하지 않고 relatedEntities에만 추가
 export function collectImports(
   entity: EntityNode,
   edges: RelationshipEdge[],
@@ -152,6 +160,11 @@ export function generateImports(
   needsCascade: boolean
 ): string
 ```
+
+**Dependency 관계 import 처리:**
+- Dependency 관계의 타겟 Entity는 `relatedEntities`에 포함되어 import 문 생성
+- MikroORM 데코레이터(`@OneToMany` 등)는 추가하지 않음
+- 생성 예시: `import { PaymentGateway } from "./PaymentGateway"`
 
 #### entity.ts
 Entity 클래스 코드 생성.
@@ -347,5 +360,27 @@ export enum UserRole {
 export interface ITimestampable {
   createdAt: Date
   updatedAt: Date
+}
+```
+
+### Dependency 관계
+
+Dependency 관계가 있는 Entity의 경우, 타겟 Entity에 대한 import만 생성됩니다:
+
+```typescript
+import { Entity, PrimaryKey, Property } from "@mikro-orm/core"
+import { PaymentGateway } from "./PaymentGateway"  // Dependency import
+import { Logger } from "./Logger"                   // Dependency import
+
+@Entity()
+export class OrderService {
+  @PrimaryKey()
+  id!: number
+
+  @Property()
+  name!: string
+
+  // Dependency 관계는 프로퍼티로 생성되지 않음
+  // 메서드 파라미터나 일시적 사용을 의미
 }
 ```

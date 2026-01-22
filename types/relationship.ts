@@ -26,6 +26,8 @@ export enum RelationType {
   Inheritance = "Inheritance",
   /** Implementation - 구현 관계 (빈 삼각형 △, 점선) */
   Implementation = "Implementation",
+  /** Dependency - 의존 관계 (점선 화살표, 일시적 사용 관계) */
+  Dependency = "Dependency",
 }
 
 /**
@@ -138,6 +140,7 @@ export const RELATION_TYPE_LABELS: Record<RelationType, string> = {
   [RelationType.Aggregation]: "Aggregation (◇ 약한 결합)",
   [RelationType.Inheritance]: "Inheritance (△ 상속)",
   [RelationType.Implementation]: "Implementation (△ 구현)",
+  [RelationType.Dependency]: "Dependency (⋯→ 의존)",
 }
 
 /**
@@ -152,6 +155,7 @@ export const RELATION_TYPE_DECORATORS: Record<RelationType, string> = {
   [RelationType.Aggregation]: "@OneToMany",
   [RelationType.Inheritance]: "extends",
   [RelationType.Implementation]: "implements",
+  [RelationType.Dependency]: "", // Dependency는 MikroORM 데코레이터가 아님 (import만 생성)
 }
 
 /**
@@ -204,6 +208,8 @@ export function getInverseRelationType(type: RelationType): RelationType {
       return RelationType.Inheritance
     case RelationType.Implementation:
       return RelationType.Implementation
+    case RelationType.Dependency:
+      return RelationType.Dependency // Dependency는 단방향이므로 자기 자신 반환
   }
 }
 

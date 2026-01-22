@@ -120,19 +120,23 @@ export function collectImports(
       const decorator = getRelationDecorator(data.relationType)
 
       // Inheritance/Implementation은 데코레이터가 아닌 extends/implements 사용
-      if (decorator === null) return
+      // Dependency는 MikroORM 데코레이터가 아님 (import만 생성)
+      if (decorator === null || data.relationType === RelationType.Dependency) {
+        // Dependency/Inheritance/Implementation은 데코레이터 추가 건너뜀
+      } else {
+        decorators.add(decorator)
 
-      decorators.add(decorator)
+        if (isCollectionRelation(data.relationType)) {
+          needsCollection = true
+        }
 
-      if (isCollectionRelation(data.relationType)) {
-        needsCollection = true
-      }
-
-      if (data.cascade) {
-        needsCascade = true
+        if (data.cascade) {
+          needsCascade = true
+        }
       }
 
       // 타겟 Entity 찾기 (sanitized name으로 비교하여 self-import 방지)
+      // Dependency 관계도 import 문은 생성 (일시적 사용을 위해)
       const targetNode = allNodes.find((n) => n.id === edge.target)
       if (targetNode) {
         const targetName = sanitizeClassName(targetNode.data.name)
