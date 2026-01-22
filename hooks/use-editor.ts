@@ -15,6 +15,8 @@ import type {
   EmbeddableData,
   EnumNode,
   EnumData,
+  InterfaceNode,
+  InterfaceData,
 } from "@/types/entity"
 import type { RelationshipEdge, RelationshipData } from "@/types/relationship"
 import type { Selection, EditorUIState, PendingAddType } from "@/types/editor"
@@ -33,6 +35,7 @@ const NODE_SIZE_ESTIMATES = {
   entity: { width: 180, height: 80 },
   embeddable: { width: 180, height: 80 },
   enum: { width: 180, height: 80 },
+  interface: { width: 180, height: 80 },
 } as const
 
 /**
@@ -69,6 +72,12 @@ export interface UseEditorReturn {
   updateEnum: (id: string, data: Partial<EnumData>) => void
   /** Enum 노드 삭제 */
   deleteEnum: (id: string) => void
+  /** Interface 노드 추가 */
+  addInterface: (position?: { x: number; y: number }) => void
+  /** Interface 노드 업데이트 */
+  updateInterface: (id: string, data: Partial<InterfaceData>) => void
+  /** Interface 노드 삭제 */
+  deleteInterface: (id: string) => void
   /** Relationship 엣지 업데이트 */
   updateRelationship: (id: string, data: Partial<RelationshipData>) => void
   /** Relationship 엣지 삭제 */
@@ -87,6 +96,8 @@ export interface UseEditorReturn {
   getSelectedNode: () => EntityNode | null
   /** 선택된 Enum 노드 가져오기 */
   getSelectedEnum: () => EnumNode | null
+  /** 선택된 Interface 노드 가져오기 */
+  getSelectedInterface: () => InterfaceNode | null
   /** 선택된 엣지 가져오기 */
   getSelectedEdge: () => RelationshipEdge | null
   /** 다이어그램 불러오기 (노드/엣지 전체 교체) */
@@ -156,6 +167,17 @@ export function useEditor(): UseEditorReturn {
     [nodeOps, edgeOps]
   )
 
+  /**
+   * Interface 노드 삭제
+   */
+  const deleteInterface = useCallback(
+    (id: string) => {
+      nodeOps.deleteNode(id)
+      edgeOps.deleteEdgesByNodeId(id)
+    },
+    [nodeOps, edgeOps]
+  )
+
   // ============================================================================
   // Pending Add 완료 (Ghost → 실제 노드)
   // ============================================================================
@@ -185,6 +207,9 @@ export function useEditor(): UseEditorReturn {
           break
         case "enum":
           nodeOps.addEnum(centeredPosition)
+          break
+        case "interface":
+          nodeOps.addInterface(centeredPosition)
           break
       }
 
@@ -240,6 +265,20 @@ export function useEditor(): UseEditorReturn {
     return null
   }, [nodeOps.nodes, uiOps.uiState.selection])
 
+  /**
+   * 선택된 Interface 노드 가져오기
+   */
+  const getSelectedInterface = useCallback((): InterfaceNode | null => {
+    if (uiOps.uiState.selection.type !== "node" || !uiOps.uiState.selection.id) {
+      return null
+    }
+    const node = nodeOps.nodes.find((n) => n.id === uiOps.uiState.selection.id)
+    if (node?.type === "interface") {
+      return node as InterfaceNode
+    }
+    return null
+  }, [nodeOps.nodes, uiOps.uiState.selection])
+
   // ============================================================================
   // 다이어그램 작업
   // ============================================================================
@@ -282,6 +321,9 @@ export function useEditor(): UseEditorReturn {
     addEnum: nodeOps.addEnum,
     updateEnum: nodeOps.updateEnum,
     deleteEnum,
+    addInterface: nodeOps.addInterface,
+    updateInterface: nodeOps.updateInterface,
+    deleteInterface,
     getAllEnums: nodeOps.getAllEnums,
     setNodes: nodeOps.setNodes,
 
@@ -306,6 +348,7 @@ export function useEditor(): UseEditorReturn {
     // 선택 상태 getter
     getSelectedNode,
     getSelectedEnum,
+    getSelectedInterface,
     getSelectedEdge,
 
     // 다이어그램 작업

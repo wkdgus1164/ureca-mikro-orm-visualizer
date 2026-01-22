@@ -29,14 +29,6 @@ vi.mock("@/lib/mikro-orm/generator", () => {
   }
 })
 
-vi.mock("@/lib/export/json", () => {
-  const mockFn = vi.fn()
-  return {
-    exportDiagramAsJson: mockFn,
-    __getMock: () => mockFn,
-  }
-})
-
 vi.mock("@/lib/export/image", () => {
   const mockFn = vi.fn()
   return {
@@ -64,7 +56,6 @@ vi.mock("sonner", () => ({
 import { ExportModal } from "@/components/export/export-modal"
 import * as editorProvider from "@/components/providers/editor-provider"
 import * as generator from "@/lib/mikro-orm/generator"
-import * as jsonExport from "@/lib/export/json"
 
 describe("ExportModal", () => {
   const mockOnClose = vi.fn()
@@ -72,7 +63,6 @@ describe("ExportModal", () => {
   // Get mock references
   const mockUseEditorContext = (editorProvider as unknown as { __getMock: () => ReturnType<typeof vi.fn> }).__getMock()
   const mockGenerateAllDiagramCode = (generator as unknown as { __getMock: () => ReturnType<typeof vi.fn> }).__getMock()
-  const mockExportDiagramAsJson = (jsonExport as unknown as { __getMock: () => ReturnType<typeof vi.fn> }).__getMock()
 
   const mockNodes = [
     {
@@ -120,10 +110,6 @@ describe("ExportModal", () => {
         ["User", `import { Entity, PrimaryKey } from "@mikro-orm/core";\n\n@Entity()\nexport class User {\n  @PrimaryKey()\n  id!: number;\n}`],
       ])
     )
-
-    mockExportDiagramAsJson.mockReturnValue(
-      JSON.stringify({ entities: [], relationships: [] }, null, 2)
-    )
   })
 
   // ============================================================================
@@ -133,14 +119,13 @@ describe("ExportModal", () => {
     it("모달이 열리면 제목을 표시한다", () => {
       render(<ExportModal isOpen={true} onClose={mockOnClose} />)
 
-      expect(screen.getByText("Export Code")).toBeInTheDocument()
+      expect(screen.getByText("Export")).toBeInTheDocument()
     })
 
-    it("TypeScript, JSON, Image 탭을 표시한다", () => {
+    it("TypeScript, Image 탭을 표시한다", () => {
       render(<ExportModal isOpen={true} onClose={mockOnClose} />)
 
       expect(screen.getByRole("tab", { name: /typescript/i })).toBeInTheDocument()
-      expect(screen.getByRole("tab", { name: /json/i })).toBeInTheDocument()
       expect(screen.getByRole("tab", { name: /image/i })).toBeInTheDocument()
     })
 
@@ -189,34 +174,6 @@ describe("ExportModal", () => {
       render(<ExportModal isOpen={true} onClose={mockOnClose} />)
 
       expect(screen.getByRole("button", { name: /download user\.ts/i })).toBeInTheDocument()
-    })
-  })
-
-  // ============================================================================
-  // JSON 탭 테스트
-  // ============================================================================
-  describe("JSON 탭", () => {
-    it("JSON 탭 클릭 시 JSON Schema를 표시한다", async () => {
-      const user = userEvent.setup()
-
-      render(<ExportModal isOpen={true} onClose={mockOnClose} />)
-
-      const jsonTab = screen.getByRole("tab", { name: /json/i })
-      await user.click(jsonTab)
-
-      // JSON 코드가 표시되어야 함
-      expect(mockExportDiagramAsJson).toHaveBeenCalled()
-    })
-
-    it("JSON 다운로드 버튼을 표시한다", async () => {
-      const user = userEvent.setup()
-
-      render(<ExportModal isOpen={true} onClose={mockOnClose} />)
-
-      const jsonTab = screen.getByRole("tab", { name: /json/i })
-      await user.click(jsonTab)
-
-      expect(screen.getByRole("button", { name: /download diagram-schema\.json/i })).toBeInTheDocument()
     })
   })
 
@@ -290,18 +247,13 @@ describe("ExportModal", () => {
   // 탭 전환 테스트
   // ============================================================================
   describe("탭 전환", () => {
-    it("TypeScript -> JSON -> Image 탭 전환이 동작한다", async () => {
+    it("TypeScript -> Image 탭 전환이 동작한다", async () => {
       const user = userEvent.setup()
 
       render(<ExportModal isOpen={true} onClose={mockOnClose} />)
 
       // 초기 상태: TypeScript 탭
       expect(screen.getByText("User.ts")).toBeInTheDocument()
-
-      // JSON 탭으로 전환
-      const jsonTab = screen.getByRole("tab", { name: /json/i })
-      await user.click(jsonTab)
-      expect(screen.getByRole("button", { name: /download diagram-schema\.json/i })).toBeInTheDocument()
 
       // Image 탭으로 전환
       const imageTab = screen.getByRole("tab", { name: /image/i })

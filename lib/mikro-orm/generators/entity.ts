@@ -4,7 +4,7 @@
  * EntityNode를 완전한 MikroORM Entity 클래스 코드로 변환
  */
 
-import type { EntityNode, EnumNode } from "@/types/entity"
+import type { EntityNode, EnumNode, InterfaceNode } from "@/types/entity"
 import type { RelationshipEdge } from "@/types/relationship"
 import { RelationType } from "@/types/relationship"
 import {
@@ -30,7 +30,8 @@ function getEnumNames(enumNodes: EnumNode[]): Set<string> {
 function getClassExtensions(
   entity: EntityNode,
   edges: RelationshipEdge[],
-  allNodes: EntityNode[]
+  allEntityNodes: EntityNode[],
+  allInterfaceNodes: InterfaceNode[] = []
 ): { extendsClause: string; implementsClause: string } {
   const parentClasses: string[] = []
   const interfaces: string[] = []
@@ -38,15 +39,18 @@ function getClassExtensions(
   edges
     .filter((e) => e.source === entity.id && e.data)
     .forEach((edge) => {
-      const targetNode = allNodes.find((n) => n.id === edge.target)
-      if (!targetNode) return
-
-      const targetName = sanitizeClassName(targetNode.data.name)
-
       if (edge.data.relationType === RelationType.Inheritance) {
-        parentClasses.push(targetName)
+        // Inheritance: Entity -> Entity
+        const targetNode = allEntityNodes.find((n) => n.id === edge.target)
+        if (targetNode) {
+          parentClasses.push(sanitizeClassName(targetNode.data.name))
+        }
       } else if (edge.data.relationType === RelationType.Implementation) {
-        interfaces.push(targetName)
+        // Implementation: Entity -> Interface
+        const targetInterface = allInterfaceNodes.find((n) => n.id === edge.target)
+        if (targetInterface) {
+          interfaces.push(sanitizeClassName(targetInterface.data.name))
+        }
       }
     })
 
@@ -88,6 +92,7 @@ function generateIndexDecorators(entity: EntityNode): string[] {
  * @param allNodes - All entity nodes for resolving relationship targets
  * @param options - Generation options (e.g., indentation size)
  * @param enumNodes - All enum nodes in the diagram (for Enum reference resolution)
+ * @param interfaceNodes - All interface nodes in the diagram (for implements resolution)
  * @returns The generated TypeScript source code for the entity as a string
  */
 export function generateEntityCode(
@@ -95,7 +100,8 @@ export function generateEntityCode(
   edges: RelationshipEdge[],
   allNodes: EntityNode[],
   options: GeneratorOptions = {},
-  enumNodes: EnumNode[] = []
+  enumNodes: EnumNode[] = [],
+  interfaceNodes: InterfaceNode[] = []
 ): string {
   const opts = { ...DEFAULT_OPTIONS, ...options }
   const indentSize = opts.indentSize!
@@ -103,9 +109,9 @@ export function generateEntityCode(
   // Enum 이름 Set (참조 확인용)
   const enumNames = getEnumNames(enumNodes)
 
-  // Import 정보 수집 (Enum 참조 포함)
-  const { decorators, relatedEntities, needsCollection, needsCascade, referencedEnums } =
-    collectImports(entity, edges, allNodes, enumNames)
+  // Import 정보 수집 (Enum, Interface 참조 포함)
+  const { decorators, relatedEntities, needsCollection, needsCascade, referencedEnums, referencedInterfaces } =
+    collectImports(entity, edges, allNodes, enumNames, interfaceNodes)
 
   // Enum 정의 수집 (인라인 Enum만)
   const enumDefs = collectEnumDefinitions(entity.data.properties)
@@ -118,7 +124,8 @@ export function generateEntityCode(
     relatedEntities,
     needsCollection,
     needsCascade,
-    referencedEnums
+    referencedEnums,
+    referencedInterfaces
   )
   lines.push(imports)
   lines.push("")
@@ -142,7 +149,7 @@ export function generateEntityCode(
   }
 
   // 상속/구현 관계 확인
-  const { extendsClause, implementsClause } = getClassExtensions(entity, edges, allNodes)
+  const { extendsClause, implementsClause } = getClassExtensions(entity, edges, allNodes, interfaceNodes)
 
   // 클래스 선언
   lines.push(`export class ${sanitizeClassName(entity.data.name)}${extendsClause}${implementsClause} {`)
@@ -187,18 +194,20 @@ export function generateEntityCode(
  * @param edges - All relationship edges in the diagram
  * @param options - Generation options
  * @param enumNodes - All enum nodes in the diagram (for Enum reference resolution)
+ * @param interfaceNodes - All interface nodes in the diagram (for implements resolution)
  * @returns A Map where each key is the sanitized entity class name and each value is the generated code
  */
 export function generateAllEntitiesCode(
   nodes: EntityNode[],
   edges: RelationshipEdge[],
   options: GeneratorOptions = {},
-  enumNodes: EnumNode[] = []
+  enumNodes: EnumNode[] = [],
+  interfaceNodes: InterfaceNode[] = []
 ): Map<string, string> {
   return new Map(
     nodes.map((node) => [
       sanitizeClassName(node.data.name),
-      generateEntityCode(node, edges, nodes, options, enumNodes),
+      generateEntityCode(node, edges, nodes, options, enumNodes, interfaceNodes),
     ])
   )
 }

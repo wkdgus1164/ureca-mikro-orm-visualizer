@@ -14,6 +14,7 @@ import { NodeListPanel } from "@/components/editor/panels/node-list-panel"
 import { PropertySidebar } from "@/components/editor/panels/property-sidebar"
 import { EntityEditContent } from "@/components/editor/panels/entity-edit-panel"
 import { EnumEditContent } from "@/components/editor/panels/enum-edit-panel"
+import { InterfaceEditContent } from "@/components/editor/panels/interface-edit-panel"
 import { RelationshipEditContent } from "@/components/editor/panels/relationship-edit-panel"
 import { useEditorContext } from "@/components/providers/editor-provider"
 
@@ -33,11 +34,13 @@ export function EditorLayout() {
     closeRightPanel,
     getSelectedNode,
     getSelectedEnum,
+    getSelectedInterface,
     getSelectedEdge,
   } = useEditorContext()
 
   const selectedNode = getSelectedNode()
   const selectedEnum = getSelectedEnum()
+  const selectedInterface = getSelectedInterface()
   const selectedEdge = getSelectedEdge()
 
   // 선택된 요소에 따른 타이틀/설명 결정
@@ -50,6 +53,10 @@ export function EditorLayout() {
       title = "Edit Enum"
       description = "Define enum values for TypeScript generation"
       content = <EnumEditContent />
+    } else if (selectedInterface) {
+      title = "Edit Interface"
+      description = "Define interface properties and methods"
+      content = <InterfaceEditContent />
     } else if (selectedNode) {
       title = "Edit Entity"
       description = "Modify the entity properties and settings"

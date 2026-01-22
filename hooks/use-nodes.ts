@@ -17,12 +17,15 @@ import type {
   EmbeddableData,
   EnumNode,
   EnumData,
+  InterfaceNode,
+  InterfaceData,
   NodeKind,
 } from "@/types/entity"
 import {
   createDefaultEntity,
   createDefaultEmbeddable,
   createDefaultEnum,
+  createDefaultInterface,
 } from "@/types/entity"
 
 // =============================================================================
@@ -30,17 +33,17 @@ import {
 // =============================================================================
 
 /**
- * ReactFlow 노드 타입 (Entity, Embeddable, 또는 Enum)
+ * ReactFlow 노드 타입 (Entity, Embeddable, Enum, 또는 Interface)
  */
-export type FlowNode = (EntityNode | EmbeddableNode | EnumNode) & {
+export type FlowNode = (EntityNode | EmbeddableNode | EnumNode | InterfaceNode) & {
   selected?: boolean
   dragging?: boolean
 }
 
 /**
- * 노드 데이터 타입 (EntityData | EmbeddableData | EnumData)
+ * 노드 데이터 타입 (EntityData | EmbeddableData | EnumData | InterfaceData)
  */
-type NodeData = EntityData | EmbeddableData | EnumData
+type NodeData = EntityData | EmbeddableData | EnumData | InterfaceData
 
 /**
  * 노드 팩토리 함수 타입
@@ -70,6 +73,7 @@ const NODE_CONFIGS: {
   entity: NodeConfig<EntityNode>
   embeddable: NodeConfig<EmbeddableNode>
   enum: NodeConfig<EnumNode>
+  interface: NodeConfig<InterfaceNode>
 } = {
   entity: {
     type: "entity",
@@ -85,6 +89,11 @@ const NODE_CONFIGS: {
     type: "enum",
     baseName: "NewEnum",
     factory: createDefaultEnum,
+  },
+  interface: {
+    type: "interface",
+    baseName: "NewInterface",
+    factory: createDefaultInterface,
   },
 }
 
@@ -152,6 +161,10 @@ export interface UseNodesReturn {
   addEnum: (position?: { x: number; y: number }) => void
   /** Enum 노드 업데이트 */
   updateEnum: (id: string, data: Partial<EnumData>) => void
+  /** Interface 노드 추가 */
+  addInterface: (position?: { x: number; y: number }) => void
+  /** Interface 노드 업데이트 */
+  updateInterface: (id: string, data: Partial<InterfaceData>) => void
   /** 노드 삭제 (타입 무관) */
   deleteNode: (id: string) => void
   /** 모든 Enum 노드 가져오기 */
@@ -265,6 +278,17 @@ export function useNodes(): UseNodesReturn {
     [updateNode]
   )
 
+  const addInterface = useCallback(
+    (position?: { x: number; y: number }) =>
+      addNode(NODE_CONFIGS.interface, position),
+    [addNode]
+  )
+
+  const updateInterface = useCallback(
+    (id: string, data: Partial<InterfaceData>) => updateNode(id, data),
+    [updateNode]
+  )
+
   // ===========================================================================
   // 기타 함수
   // ===========================================================================
@@ -300,6 +324,8 @@ export function useNodes(): UseNodesReturn {
     updateEmbeddable,
     addEnum,
     updateEnum,
+    addInterface,
+    updateInterface,
     deleteNode,
     getAllEnums,
   }

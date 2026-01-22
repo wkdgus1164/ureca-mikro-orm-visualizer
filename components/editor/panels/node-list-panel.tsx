@@ -9,14 +9,14 @@
 
 import { useMemo, useCallback } from "react"
 import { useReactFlow } from "@xyflow/react"
-import { Box, List } from "lucide-react"
+import { Box, List, FileCode } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { useEditorContext } from "@/components/providers/editor-provider"
 import { NodeListItem } from "@/components/editor/panels/shared/node-list-item"
 import { CategorySection } from "@/components/editor/panels/shared/category-section"
-import type { EntityNode, EmbeddableNode, EnumNode } from "@/types/entity"
+import type { EntityNode, EmbeddableNode, EnumNode, InterfaceNode } from "@/types/entity"
 import type { PendingAddType } from "@/types/editor"
 
 interface NodeListPanelProps {
@@ -39,6 +39,7 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
     deleteEntity,
     deleteEmbeddable,
     deleteEnum,
+    deleteInterface,
     startPendingAdd,
   } = useEditorContext()
 
@@ -49,6 +50,7 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
     const entities: EntityNode[] = []
     const embeddables: EmbeddableNode[] = []
     const enums: EnumNode[] = []
+    const interfaces: InterfaceNode[] = []
 
     nodes.forEach((node) => {
       switch (node.type) {
@@ -61,10 +63,13 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
         case "enum":
           enums.push(node as EnumNode)
           break
+        case "interface":
+          interfaces.push(node as InterfaceNode)
+          break
       }
     })
 
-    return { entities, embeddables, enums }
+    return { entities, embeddables, enums, interfaces }
   }, [nodes])
 
   /**
@@ -193,6 +198,33 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
                   isSelected={isSelected(enumNode.id)}
                   onSelect={() => handleSelectNode(enumNode.id)}
                   onDelete={() => deleteEnum(enumNode.id)}
+                />
+              ))
+            )}
+          </CategorySection>
+
+          <Separator className="my-2" />
+
+          {/* Interface 섹션 */}
+          <CategorySection
+            title="Interfaces"
+            icon={<FileCode className="h-4 w-4 text-emerald-500" />}
+            count={groupedNodes.interfaces.length}
+            onAdd={() => handleStartAdd("interface")}
+            addLabel="Add new interface"
+          >
+            {groupedNodes.interfaces.length === 0 ? (
+              <p className="text-xs text-muted-foreground px-3 py-2">
+                No interfaces yet
+              </p>
+            ) : (
+              groupedNodes.interfaces.map((interfaceNode) => (
+                <NodeListItem
+                  key={interfaceNode.id}
+                  name={interfaceNode.data.name}
+                  isSelected={isSelected(interfaceNode.id)}
+                  onSelect={() => handleSelectNode(interfaceNode.id)}
+                  onDelete={() => deleteInterface(interfaceNode.id)}
                 />
               ))
             )}

@@ -4,8 +4,9 @@
  * Entity에 필요한 MikroORM 데코레이터 및 관련 Entity import 문 생성
  */
 
-import type { EntityNode, EntityIndex } from "@/types/entity"
+import type { EntityNode, EntityIndex, InterfaceNode } from "@/types/entity"
 import type { RelationshipEdge } from "@/types/relationship"
+import { RelationType } from "@/types/relationship"
 import { sanitizeClassName } from "./utils"
 import { getRelationDecorator, isCollectionRelation } from "./relationship"
 
@@ -23,6 +24,8 @@ export interface CollectedImports {
   needsCascade: boolean
   /** 참조하는 Enum 이름 목록 */
   referencedEnums: Set<string>
+  /** 참조하는 Interface 이름 목록 */
+  referencedInterfaces: Set<string>
 }
 
 /**
@@ -36,22 +39,26 @@ export interface CollectedImports {
  * @param edges - All relationship edges in the diagram
  * @param allNodes - All entity nodes in the diagram (used to resolve related entity names)
  * @param enumNames - Set of all Enum names in the diagram (for Enum reference detection)
+ * @param interfaceNodes - All interface nodes in the diagram (for implements reference detection)
  * @returns An object containing:
  *  - `decorators`: a set of decorator names required for the entity
  *  - `relatedEntities`: a set of sanitized class names of other entities referenced
  *  - `needsCollection`: `true` if any relationship uses a collection type
  *  - `needsCascade`: `true` if any relationship declares cascade
  *  - `referencedEnums`: a set of Enum names that need to be imported
+ *  - `referencedInterfaces`: a set of Interface names that need to be imported
  */
 export function collectImports(
   entity: EntityNode,
   edges: RelationshipEdge[],
   allNodes: EntityNode[],
-  enumNames: Set<string> = new Set()
+  enumNames: Set<string> = new Set(),
+  interfaceNodes: InterfaceNode[] = []
 ): CollectedImports {
   const decorators = new Set<string>(["Entity"])
   const relatedEntities = new Set<string>()
   const referencedEnums = new Set<string>()
+  const referencedInterfaces = new Set<string>()
   let needsCollection = false
   let needsCascade = false
 
@@ -136,7 +143,21 @@ export function collectImports(
       }
     })
 
-  return { decorators, relatedEntities, needsCollection, needsCascade, referencedEnums }
+  // Implementation 관계에서 Interface 참조 수집
+  edges
+    .filter(
+      (edge) =>
+        edge.source === entity.id &&
+        edge.data?.relationType === RelationType.Implementation
+    )
+    .forEach((edge) => {
+      const targetInterface = interfaceNodes.find((n) => n.id === edge.target)
+      if (targetInterface) {
+        referencedInterfaces.add(sanitizeClassName(targetInterface.data.name))
+      }
+    })
+
+  return { decorators, relatedEntities, needsCollection, needsCascade, referencedEnums, referencedInterfaces }
 }
 
 /**
@@ -147,6 +168,7 @@ export function collectImports(
  * @param needsCollection - Include `Collection` in the core import when `true`
  * @param needsCascade - Include `Cascade` in the core import when `true`
  * @param referencedEnums - Names of Enum types to import from local files
+ * @param referencedInterfaces - Names of Interface types to import from local files
  * @returns A string containing the combined import statements
  */
 export function generateImports(
@@ -154,7 +176,8 @@ export function generateImports(
   relatedEntities: Set<string>,
   needsCollection: boolean,
   needsCascade: boolean,
-  referencedEnums: Set<string> = new Set()
+  referencedEnums: Set<string> = new Set(),
+  referencedInterfaces: Set<string> = new Set()
 ): string {
   const lines: string[] = []
 
@@ -170,6 +193,12 @@ export function generateImports(
   lines.push(
     `import { ${coreImports.sort().join(", ")} } from "@mikro-orm/core"`
   )
+
+  // Referenced Interface imports (정렬하여 결정적인 순서 보장)
+  const interfaceImports = [...referencedInterfaces].sort().map(
+    (interfaceName) => `import type { ${interfaceName} } from "./${interfaceName}"`
+  )
+  lines.push(...interfaceImports)
 
   // Referenced Enum imports (정렬하여 결정적인 순서 보장)
   const enumImports = [...referencedEnums].sort().map(

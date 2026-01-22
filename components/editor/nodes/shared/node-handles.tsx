@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils"
 /**
  * 핸들 색상 테마
  */
-export type HandleTheme = "blue" | "violet" | "amber"
+export type HandleTheme = "blue" | "violet" | "amber" | "emerald"
 
 /**
  * 테마별 핸들 클래스 맵핑
@@ -25,6 +25,8 @@ const HANDLE_THEME_CLASSES: Record<HandleTheme, string> = {
     "!w-2.5 !h-2.5 !bg-violet-500 !border-2 !border-background hover:!bg-violet-400 transition-colors",
   amber:
     "!w-2.5 !h-2.5 !bg-amber-500 !border-2 !border-background hover:!bg-amber-400 transition-colors",
+  emerald:
+    "!w-2.5 !h-2.5 !bg-emerald-500 !border-2 !border-background hover:!bg-emerald-400 transition-colors",
 }
 
 interface NodeHandlesProps {

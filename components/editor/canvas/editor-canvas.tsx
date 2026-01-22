@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils"
 import { EntityNode } from "@/components/editor/nodes/entity-node"
 import { EmbeddableNode } from "@/components/editor/nodes/embeddable-node"
 import { EnumNode } from "@/components/editor/nodes/enum-node"
+import { InterfaceNode } from "@/components/editor/nodes/interface-node"
 import { RelationshipEdge } from "@/components/editor/edges/relationship-edge"
 import { GlobalEdgeMarkers } from "@/components/editor/edges/shared/edge-markers"
 import { GhostNode } from "@/components/editor/nodes/ghost-node"
@@ -36,6 +37,7 @@ const nodeTypes = {
   entity: EntityNode,
   embeddable: EmbeddableNode,
   enum: EnumNode,
+  interface: InterfaceNode,
 }
 
 /**

@@ -39,3 +39,6 @@ export { generateEntityCode, generateAllEntitiesCode } from "./entity"
 
 // Embeddable 생성기
 export { generateEmbeddableCode, generateAllEmbeddablesCode } from "./embeddable"
+
+// Interface 생성기
+export { generateInterfaceCode, generateAllInterfacesCode } from "./interface"

@@ -13,7 +13,7 @@ import type { ReactNode } from "react"
 /**
  * 노드 카드 색상 테마
  */
-export type NodeCardTheme = "entity" | "embeddable" | "enum"
+export type NodeCardTheme = "entity" | "embeddable" | "enum" | "interface"
 
 /**
  * 테마별 스타일 설정
@@ -63,6 +63,15 @@ const THEME_STYLES: Record<NodeCardTheme, ThemeStyles> = {
     headerBorder: "border-b border-border",
     borderStyle: "border-2",
   },
+  interface: {
+    border: "border-emerald-500",
+    selectedBorder: "border-emerald-600",
+    selectedRing: "ring-2 ring-emerald-500/30",
+    hoverBorder: "hover:border-emerald-400",
+    headerBg: "bg-muted/50",
+    headerBorder: "border-b border-border",
+    borderStyle: "border-2 border-dashed",
+  },
 }
 
 /**
@@ -77,6 +86,7 @@ const SIZE_CONFIGS: Record<NodeCardTheme, CardSizeConfig> = {
   entity: { minWidth: "min-w-[180px]", maxWidth: "max-w-[280px]" },
   embeddable: { minWidth: "min-w-[180px]", maxWidth: "max-w-[280px]" },
   enum: { minWidth: "min-w-[160px]", maxWidth: "max-w-[240px]" },
+  interface: { minWidth: "min-w-[180px]", maxWidth: "max-w-[280px]" },
 }
 
 // =============================================================================
@@ -182,12 +192,14 @@ export function NodeCardHeader({
     entity: "text-blue-600 dark:text-blue-400",
     embeddable: "text-violet-600 dark:text-violet-400",
     enum: "text-amber-600 dark:text-amber-400",
+    interface: "text-emerald-600 dark:text-emerald-400",
   }[theme]
 
   const badgeColorClass = {
     entity: "text-blue-500 dark:text-blue-400",
     embeddable: "text-violet-500 dark:text-violet-400",
     enum: "text-amber-500 dark:text-amber-400",
+    interface: "text-emerald-500 dark:text-emerald-400",
   }[theme]
 
   return (
