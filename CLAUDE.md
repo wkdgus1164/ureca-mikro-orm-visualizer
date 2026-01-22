@@ -11,6 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - TypeScript 5 (strict mode, `any` 금지)
 - Tailwind CSS v4 + shadcn/ui
 - @xyflow/react (ReactFlow)
+- @monaco-editor/react (코드 미리보기)
 - Vitest + @testing-library (테스트)
 - Bun (패키지 매니저)
 
@@ -129,6 +130,37 @@ export function ArrowMarker() {
 }
 
 // ❌ public/에 정적 SVG → 테마 변경 불가
+```
+
+### Monaco Editor 테마 연동
+Dialog/Modal 내부에서 `next-themes`의 `useTheme` 훅이 테마 변경 시 리렌더링을 트리거하지 않을 수 있음.
+**MutationObserver**로 HTML 클래스 변경을 직접 감지하여 해결.
+
+```typescript
+// ✅ MutationObserver로 테마 변경 감지
+useEffect(() => {
+  const updateTheme = () => {
+    if (monacoRef.current) {
+      const isDark = document.documentElement.classList.contains("dark")
+      monacoRef.current.editor.setTheme(isDark ? "vs-dark" : "light")
+    }
+  }
+
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.attributeName === "class") {
+        updateTheme()
+      }
+    })
+  })
+
+  observer.observe(document.documentElement, { attributes: true })
+  return () => observer.disconnect()
+}, [])
+
+// ❌ useTheme만 사용 → Dialog 내부에서 테마 변경 감지 안됨
+const { resolvedTheme } = useTheme()
+const theme = resolvedTheme === "dark" ? "vs-dark" : "light"
 ```
 
 ### 커밋
