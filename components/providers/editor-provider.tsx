@@ -65,6 +65,8 @@ function EditorContextProvider({ children }: EditorProviderProps) {
   const isInitialLoadRef = useRef(true)
   // debounce 타이머 ref
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null)
+  // 다음 저장 스킵 플래그 (clearDiagram 시 빈 상태 저장 방지)
+  const skipNextSaveRef = useRef(false)
 
   /**
    * 마운트 시 localStorage에서 복원
@@ -90,6 +92,9 @@ function EditorContextProvider({ children }: EditorProviderProps) {
     // 초기 로드 중에는 저장하지 않음
     if (isInitialLoadRef.current) return
 
+    // clearDiagram 직후 빈 상태 저장 방지
+    if (skipNextSaveRef.current) return
+
     // 기존 타이머 취소
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current)
@@ -111,8 +116,22 @@ function EditorContextProvider({ children }: EditorProviderProps) {
    * clearDiagram 확장: localStorage도 함께 초기화
    */
   const clearDiagramWithStorage = useCallback(() => {
+    // 대기 중인 자동 저장 취소
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = null
+    }
+
+    // 다음 저장 스킵 (빈 상태 저장 방지)
+    skipNextSaveRef.current = true
+
     clearDiagram()
     clearDiagramStorage()
+
+    // 다음 틱에서 스킵 플래그 해제
+    setTimeout(() => {
+      skipNextSaveRef.current = false
+    }, 0)
   }, [clearDiagram])
 
   // 확장된 editorState 반환
