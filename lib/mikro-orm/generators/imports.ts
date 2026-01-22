@@ -6,6 +6,7 @@
 
 import type { EntityNode, EntityIndex } from "@/types/entity"
 import type { RelationshipEdge } from "@/types/relationship"
+import { RelationType } from "@/types/relationship"
 import { sanitizeClassName } from "./utils"
 import { getRelationDecorator, isCollectionRelation } from "./relationship"
 
@@ -111,17 +112,22 @@ export function collectImports(
     .forEach((edge) => {
       const data = edge.data!
 
-      decorators.add(getRelationDecorator(data.relationType))
+      // Dependency는 MikroORM 데코레이터가 아니므로 데코레이터 추가 건너뜀
+      // 대신 import 문만 생성 (relatedEntities에 추가)
+      if (data.relationType !== RelationType.Dependency) {
+        decorators.add(getRelationDecorator(data.relationType))
 
-      if (isCollectionRelation(data.relationType)) {
-        needsCollection = true
-      }
+        if (isCollectionRelation(data.relationType)) {
+          needsCollection = true
+        }
 
-      if (data.cascade) {
-        needsCascade = true
+        if (data.cascade) {
+          needsCascade = true
+        }
       }
 
       // 타겟 Entity 찾기 (sanitized name으로 비교하여 self-import 방지)
+      // Dependency 관계도 import 문은 생성 (일시적 사용을 위해)
       const targetNode = allNodes.find((n) => n.id === edge.target)
       if (targetNode) {
         const targetName = sanitizeClassName(targetNode.data.name)
