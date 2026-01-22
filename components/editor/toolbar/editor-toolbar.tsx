@@ -18,6 +18,7 @@ import {
   Download,
   Save,
   FolderOpen,
+  RotateCcw,
 } from "lucide-react"
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler"
 import { useEditorContext } from "@/components/providers/editor-provider"
@@ -57,6 +58,7 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
     edges,
     toggleExportModal,
     loadDiagram,
+    clearDiagram,
   } = useEditorContext()
   const { zoomIn, zoomOut, fitView } = useReactFlow()
 
@@ -111,6 +113,22 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
     },
     [loadDiagram, fitView]
   )
+
+  /**
+   * 다이어그램 초기화 핸들러
+   */
+  const handleReset = useCallback(() => {
+    if (nodes.length === 0) {
+      toast.info("Diagram is already empty")
+      return
+    }
+
+    // 확인 후 초기화
+    if (window.confirm("Are you sure you want to reset the diagram? This will delete all nodes and edges.")) {
+      clearDiagram()
+      toast.success("Diagram reset successfully")
+    }
+  }, [nodes.length, clearDiagram])
 
   /**
    * Export 모달 열기
@@ -197,6 +215,18 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
           onChange={handleFileChange}
           className="hidden"
         />
+
+        {/* Reset */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleReset}
+          title="Reset Diagram"
+          className="gap-2"
+        >
+          <RotateCcw className="h-4 w-4" />
+          <span className="hidden sm:inline">Reset</span>
+        </Button>
 
         {/* Load */}
         <Button
