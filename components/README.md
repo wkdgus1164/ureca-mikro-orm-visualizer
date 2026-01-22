@@ -22,6 +22,7 @@ components/
 │   │   ├── entity-node.tsx          # Entity 노드
 │   │   ├── embeddable-node.tsx      # Embeddable 노드
 │   │   ├── enum-node.tsx            # Enum 노드
+│   │   ├── interface-node.tsx       # Interface 노드
 │   │   ├── ghost-node.tsx           # Ghost 노드 (추가 대기)
 │   │   └── shared/                  # 노드 공통 컴포넌트
 │   │       ├── node-handles.tsx     # 4방향 핸들
@@ -29,6 +30,7 @@ components/
 │   │       └── index.ts
 │   ├── edges/                       # 커스텀 엣지 컴포넌트
 │   │   ├── relationship-edge.tsx    # Relationship 엣지
+│   │   ├── enum-mapping-edge.tsx    # Enum Mapping 엣지
 │   │   └── shared/                  # 엣지 공통 컴포넌트
 │   │       ├── edge-markers.tsx     # SVG 마커 정의
 │   │       └── index.ts
@@ -40,9 +42,10 @@ components/
 │       ├── property-sidebar.tsx     # 우측 속성 패널
 │       ├── entity-edit-panel.tsx    # Entity 편집 패널
 │       ├── enum-edit-panel.tsx      # Enum 편집 패널
+│       ├── interface-edit-panel.tsx # Interface 편집 패널
 │       ├── relationship-edit-panel.tsx  # Relationship 편집 패널
+│       ├── enum-mapping-edit-panel.tsx  # Enum Mapping 편집 패널
 │       ├── property-form.tsx        # Property 편집 폼
-│       ├── inline-enum-form.tsx     # 인라인 Enum 편집
 │       ├── property-type-selector.tsx   # 타입 선택기
 │       ├── index-form.tsx           # Index 편집 폼
 │       └── shared/                  # 패널 공통 컴포넌트
@@ -53,7 +56,6 @@ components/
     ├── export-modal.tsx             # Export 모달 (메인)
     ├── export-modal-wrapper.tsx     # Export 모달 래퍼
     ├── typescript-export-tab.tsx    # TypeScript 코드 탭
-    ├── json-export-tab.tsx          # JSON Schema 탭
     └── image-export-tab.tsx         # 이미지 탭
 ```
 
@@ -100,6 +102,7 @@ ReactFlow 커스텀 노드 컴포넌트.
 | `entity-node.tsx` | Entity 노드 (파란색 테마) |
 | `embeddable-node.tsx` | Embeddable 노드 (보라색 테마, 점선) |
 | `enum-node.tsx` | Enum 노드 (amber 테마) |
+| `interface-node.tsx` | Interface 노드 (cyan 테마, 점선) |
 | `ghost-node.tsx` | 추가 대기 중 Ghost 노드 |
 
 #### editor/nodes/shared/
@@ -141,6 +144,7 @@ ReactFlow 커스텀 엣지 컴포넌트.
 | 파일 | 역할 |
 |-----|------|
 | `relationship-edge.tsx` | Relationship 엣지 (마커 + 라벨) |
+| `enum-mapping-edge.tsx` | Enum Mapping 엣지 (점선, amber 색상) |
 
 #### editor/edges/shared/
 
@@ -215,13 +219,14 @@ function getDirectionFromPosition(position: string) {
 
 | 파일 | 역할 |
 |-----|------|
-| `node-list-panel.tsx` | 좌측 노드 목록 (Entity/Embeddable/Enum 그룹) |
+| `node-list-panel.tsx` | 좌측 노드 목록 (Entity/Embeddable/Enum/Interface 그룹) |
 | `property-sidebar.tsx` | 우측 속성 패널 컨테이너 |
 | `entity-edit-panel.tsx` | Entity 편집 UI |
 | `enum-edit-panel.tsx` | Enum 편집 UI |
+| `interface-edit-panel.tsx` | Interface 편집 UI |
 | `relationship-edit-panel.tsx` | Relationship 편집 UI |
+| `enum-mapping-edit-panel.tsx` | Entity ↔ Enum 매핑 편집 UI |
 | `property-form.tsx` | Property 편집 폼 |
-| `inline-enum-form.tsx` | Enum 값 편집 UI |
 | `property-type-selector.tsx` | 타입 선택 드롭다운 |
 | `index-form.tsx` | Index 편집 폼 |
 
@@ -267,7 +272,6 @@ import { CategorySection } from "@/components/editor/panels/shared/category-sect
 | `export-modal.tsx` | 메인 Export 모달 |
 | `export-modal-wrapper.tsx` | Export 모달 래퍼 (전역 상태 연결) |
 | `typescript-export-tab.tsx` | TypeScript 코드 탭 |
-| `json-export-tab.tsx` | JSON Schema 탭 |
 | `image-export-tab.tsx` | 이미지 탭 |
 
 ## 컴포넌트 작성 규칙

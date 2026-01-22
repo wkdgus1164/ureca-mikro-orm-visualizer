@@ -38,16 +38,19 @@ const {
   nodes, addEntity, updateEntity, deleteEntity,
   addEmbeddable, updateEmbeddable, deleteEmbeddable,
   addEnum, updateEnum, deleteEnum, getAllEnums,
+  addInterface, updateInterface, deleteInterface,
 
   // 엣지 관련
   edges, onConnect, updateRelationship, deleteRelationship,
+  updateEnumMapping,
 
   // UI 상태
   uiState, setSelection, toggleRightPanel, closeRightPanel,
   toggleConnecting, toggleExportModal,
 
   // Getter
-  getSelectedNode, getSelectedEnum, getSelectedEdge,
+  getSelectedNode, getSelectedEnum, getSelectedInterface,
+  getSelectedEdge, getSelectedEnumMapping,
 
   // 다이어그램 작업
   loadDiagram, clearDiagram,
@@ -86,6 +89,7 @@ const NODE_CONFIGS = {
   entity: { type: "entity", baseName: "NewEntity", factory: createDefaultEntity },
   embeddable: { type: "embeddable", baseName: "NewEmbeddable", factory: createDefaultEmbeddable },
   enum: { type: "enum", baseName: "NewEnum", factory: createDefaultEnum },
+  interface: { type: "interface", baseName: "NewInterface", factory: createDefaultInterface },
 }
 
 // 제네릭 노드 추가 함수
@@ -98,6 +102,7 @@ const updateNode = <T extends NodeData>(id: string, data: Partial<T>) => { ... }
 const addEntity = (position?) => addNode(NODE_CONFIGS.entity, position)
 const addEmbeddable = (position?) => addNode(NODE_CONFIGS.embeddable, position)
 const addEnum = (position?) => addNode(NODE_CONFIGS.enum, position)
+const addInterface = (position?) => addNode(NODE_CONFIGS.interface, position)
 ```
 
 **책임:**
@@ -108,21 +113,23 @@ const addEnum = (position?) => addNode(NODE_CONFIGS.enum, position)
 
 ### use-edges.ts (엣지 관리)
 
-Relationship 엣지의 CRUD 작업을 담당.
+Relationship 및 EnumMapping 엣지의 CRUD 작업을 담당.
 
 ```typescript
 import { useEdges } from "@/hooks/use-edges"
 
 const {
   edges, setEdges, onEdgesChange,
-  onConnect, updateRelationship,
-  deleteRelationship, deleteEdgesByNodeId,
+  onConnect, addRelationship, updateRelationship,
+  deleteRelationship, addEnumMapping, updateEnumMapping,
+  deleteEdgesByNodeId,
 } = useEdges()
 ```
 
 **책임:**
 - 새 연결 생성 (onConnect)
 - Relationship 데이터 업데이트
+- EnumMapping 데이터 업데이트 (Entity ↔ Enum 연결)
 - 엣지 삭제
 - 노드 삭제 시 관련 엣지 일괄 삭제
 
@@ -175,7 +182,7 @@ interface EditorUIState {
 ### FlowNode
 
 ```typescript
-export type FlowNode = (EntityNode | EmbeddableNode | EnumNode) & {
+export type FlowNode = (EntityNode | EmbeddableNode | EnumNode | InterfaceNode) & {
   selected?: boolean
   dragging?: boolean
 }
@@ -184,7 +191,7 @@ export type FlowNode = (EntityNode | EmbeddableNode | EnumNode) & {
 ### FlowEdge
 
 ```typescript
-export type FlowEdge = RelationshipEdge & {
+export type FlowEdge = (RelationshipEdge | EnumMappingEdge) & {
   selected?: boolean
 }
 ```

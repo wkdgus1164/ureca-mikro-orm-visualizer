@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 개요
 
-**MikroORM Class Diagram Visualizer** - MikroORM 엔티티 관계를 비주얼 에디터로 설계하고, TypeScript 코드/JSON/이미지로 내보낼 수 있는 Next.js 애플리케이션.
+**MikroORM Class Diagram Visualizer** - MikroORM 엔티티 관계를 비주얼 에디터로 설계하고, TypeScript 코드/이미지로 내보낼 수 있는 Next.js 애플리케이션.
 
 **기술 스택:**
 - Next.js 16 (App Router) + React 19
@@ -35,17 +35,15 @@ bun run test:run # 테스트 1회 실행
 │   ├── providers/          # Context Providers
 │   ├── editor/             # 에디터 컴포넌트
 │   │   ├── canvas/         # ReactFlow 캔버스
-│   │   ├── nodes/          # 커스텀 노드 (Entity, Embeddable, Enum)
-│   │   ├── edges/          # 커스텀 엣지 (Relationship)
+│   │   ├── nodes/          # 커스텀 노드 (Entity, Embeddable, Enum, Interface)
+│   │   ├── edges/          # 커스텀 엣지 (Relationship, EnumMapping)
 │   │   ├── toolbar/        # 에디터 툴바
 │   │   └── panels/         # 사이드 패널
 │   │       ├── property-form.tsx
-│   │       ├── inline-enum-form.tsx      # Enum 정의 편집
 │   │       └── property-type-selector.tsx # 타입 선택
 │   └── export/             # Export 컴포넌트
 │       ├── export-modal.tsx
 │       ├── typescript-export-tab.tsx
-│       ├── json-export-tab.tsx
 │       └── image-export-tab.tsx
 ├── hooks/                  # 커스텀 React 훅
 │   ├── use-editor.ts       # 에디터 통합 훅 (메인)
@@ -54,7 +52,7 @@ bun run test:run # 테스트 1회 실행
 │   └── use-editor-ui.ts    # UI 상태 관리
 ├── lib/                    # 비즈니스 로직
 │   ├── mikro-orm/          # MikroORM 코드 생성
-│   └── export/             # JSON/이미지 내보내기
+│   └── export/             # 이미지 내보내기
 ├── types/                  # TypeScript 타입 정의
 ├── test/                   # 테스트 파일
 │   ├── hooks/              # 훅 테스트
@@ -109,6 +107,7 @@ components/editor/nodes/
 ├── entity-node.tsx
 ├── embeddable-node.tsx
 ├── enum-node.tsx
+├── interface-node.tsx
 └── shared/              # 공통 패턴 추출
     ├── node-handles.tsx # 4방향 핸들
     ├── node-card.tsx    # 카드 레이아웃

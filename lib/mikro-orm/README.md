@@ -16,7 +16,8 @@ lib/mikro-orm/
     ├── relationship.ts       # Relationship 코드 생성
     ├── imports.ts            # Import 문 생성
     ├── entity.ts             # Entity 클래스 생성
-    └── embeddable.ts         # Embeddable 클래스 생성
+    ├── embeddable.ts         # Embeddable 클래스 생성
+    └── interface.ts          # Interface 코드 생성
 ```
 
 ## 파일 설명
@@ -42,6 +43,7 @@ for (const [name, code] of codeMap) {
 - `generateEntityCode(entity, edges, allNodes)` - 단일 Entity 코드 생성
 - `generateEmbeddableCode(embeddable)` - 단일 Embeddable 코드 생성
 - `generateEnumNodeCode(enumNode)` - 단일 Enum 코드 생성
+- `generateInterfaceCode(interfaceNode)` - 단일 Interface 코드 생성
 
 ### generators/ 디렉토리
 
@@ -164,6 +166,23 @@ export function generateAllEmbeddablesCode(
 ): Map<string, string>
 ```
 
+#### interface.ts
+Interface 코드 생성.
+
+```typescript
+// 단일 Interface 코드 생성
+export function generateInterfaceCode(
+  interfaceNode: InterfaceNode,
+  options?: GeneratorOptions
+): string
+
+// 모든 Interface 코드 생성
+export function generateAllInterfacesCode(
+  nodes: InterfaceNode[],
+  options?: GeneratorOptions
+): Map<string, string>
+```
+
 ## 사용 예시
 
 ### 기본 사용
@@ -265,5 +284,14 @@ export enum UserRole {
   Admin = "admin",
   User = "user",
   Guest = "guest",
+}
+```
+
+### Interface
+
+```typescript
+export interface ITimestampable {
+  createdAt: Date
+  updatedAt: Date
 }
 ```
