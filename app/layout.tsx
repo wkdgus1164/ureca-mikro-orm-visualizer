@@ -14,7 +14,39 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 })
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ureca-mikro-orm-visualizer.vercel.app"
+/**
+ * Normalizes and validates the site URL from environment variable.
+ * Ensures the URL has a proper scheme (https://) and is valid.
+ * Falls back to a known safe default if normalization fails.
+ */
+function normalizeSiteUrl(): string {
+  const DEFAULT_URL = "https://ureca-mikro-orm-visualizer.vercel.app"
+  const envUrl = process.env.NEXT_PUBLIC_SITE_URL
+
+  if (!envUrl) {
+    return DEFAULT_URL
+  }
+
+  try {
+    // Check if the URL already has a scheme
+    if (envUrl.startsWith("http://") || envUrl.startsWith("https://")) {
+      // Validate the URL by constructing it
+      new URL(envUrl)
+      return envUrl
+    }
+
+    // Add https:// scheme if missing
+    const normalizedUrl = `https://${envUrl}`
+    // Validate the normalized URL
+    new URL(normalizedUrl)
+    return normalizedUrl
+  } catch {
+    // If normalization or validation fails, fall back to default
+    return DEFAULT_URL
+  }
+}
+
+const SITE_URL = normalizeSiteUrl()
 
 export const metadata: Metadata = {
   title: {
