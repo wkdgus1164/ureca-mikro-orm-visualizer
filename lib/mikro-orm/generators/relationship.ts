@@ -25,6 +25,8 @@ export function getRelationDecorator(relationType: RelationType): string {
       return "ManyToOne"
     case RelationType.ManyToMany:
       return "ManyToMany"
+    case RelationType.Dependency:
+      return "" // Dependency는 MikroORM 데코레이터가 아님
   }
 }
 
@@ -109,6 +111,9 @@ export function generateRelationship(
 
   // 현재 Entity가 source인 경우만 처리 (중복 방지)
   if (sourceEntity.id !== edge.source) return null
+
+  // Dependency는 MikroORM 데코레이터가 아니므로 코드 생성 건너뜀
+  if (data.relationType === RelationType.Dependency) return null
 
   const lines: string[] = []
   const ind = indent(1, indentSize)

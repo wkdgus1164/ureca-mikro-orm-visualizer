@@ -112,6 +112,8 @@ function relationTypeToString(relationType: RelationType): string {
       return "ManyToOne"
     case RelationType.ManyToMany:
       return "ManyToMany"
+    case RelationType.Dependency:
+      return "Dependency"
   }
 }
 

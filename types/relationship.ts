@@ -18,6 +18,8 @@ export enum RelationType {
   ManyToOne = "ManyToOne",
   /** N:M 관계 - 양방향 까마귀발 */
   ManyToMany = "ManyToMany",
+  /** 의존 관계 - 점선 화살표로 표시 (일시적 사용 관계) */
+  Dependency = "Dependency",
 }
 
 /**
@@ -94,6 +96,7 @@ export const RELATION_TYPE_LABELS: Record<RelationType, string> = {
   [RelationType.OneToMany]: "One to Many (1:N)",
   [RelationType.ManyToOne]: "Many to One (N:1)",
   [RelationType.ManyToMany]: "Many to Many (N:M)",
+  [RelationType.Dependency]: "Dependency (⋯→ 의존)",
 }
 
 /**
@@ -104,6 +107,7 @@ export const RELATION_TYPE_DECORATORS: Record<RelationType, string> = {
   [RelationType.OneToMany]: "@OneToMany",
   [RelationType.ManyToOne]: "@ManyToOne",
   [RelationType.ManyToMany]: "@ManyToMany",
+  [RelationType.Dependency]: "", // Dependency는 MikroORM 데코레이터가 아님 (import만 생성)
 }
 
 /**
@@ -148,5 +152,7 @@ export function getInverseRelationType(type: RelationType): RelationType {
       return RelationType.OneToMany
     case RelationType.ManyToMany:
       return RelationType.ManyToMany
+    case RelationType.Dependency:
+      return RelationType.Dependency // Dependency는 단방향이므로 자기 자신 반환
   }
 }

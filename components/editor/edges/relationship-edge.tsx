@@ -32,13 +32,23 @@ type RelationshipEdgeProps = EdgeProps<RelationshipEdgeType>
 /**
  * 엣지 스타일 계산
  *
- * 선택 상태에 따라 strokeWidth와 색상 결정
+ * 선택 상태와 관계 타입에 따라 strokeWidth, 색상, 점선 여부 결정
  */
-function getEdgeStyle(selected: boolean) {
-  return {
+function getEdgeStyle(selected: boolean, relationType: RelationType) {
+  const baseStyle = {
     strokeWidth: selected ? 3 : 2,
     stroke: selected ? "hsl(var(--primary))" : "hsl(var(--foreground))",
   }
+
+  // Dependency는 점선으로 표시
+  if (relationType === RelationType.Dependency) {
+    return {
+      ...baseStyle,
+      strokeDasharray: "5,5",
+    }
+  }
+
+  return baseStyle
 }
 
 /**
@@ -48,6 +58,7 @@ function getMarkerEnd(relationType: RelationType): string {
   switch (relationType) {
     case RelationType.OneToOne:
     case RelationType.ManyToOne:
+    case RelationType.Dependency: // Dependency는 일반 화살표
       return `url(#${MARKER_IDS.arrow})`
     case RelationType.OneToMany:
     case RelationType.ManyToMany:
@@ -64,7 +75,9 @@ function getMarkerStart(relationType: RelationType): string | undefined {
       return `url(#${MARKER_IDS.arrow})`
     case RelationType.ManyToMany:
       return `url(#${MARKER_IDS.crowFoot})`
-    default:
+    case RelationType.Dependency: // Dependency는 단방향 (시작점 마커 없음)
+    case RelationType.OneToMany:
+    case RelationType.ManyToOne:
       return undefined
   }
 }
@@ -99,7 +112,7 @@ function RelationshipEdgeComponent({
 
   const relationType = data?.relationType ?? RelationType.OneToMany
   const sourceProperty = data?.sourceProperty ?? "relation"
-  const style = getEdgeStyle(selected ?? false)
+  const style = getEdgeStyle(selected ?? false, relationType)
 
   return (
     <>
