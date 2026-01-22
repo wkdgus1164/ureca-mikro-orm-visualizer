@@ -16,11 +16,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { Badge } from "@/components/ui/badge"
 import { Trash2, Key, Asterisk, ChevronRight, GripVertical, List } from "lucide-react"
 import type { EntityProperty, EnumNode } from "@/types/entity"
 import { cn } from "@/lib/utils"
-import { InlineEnumForm } from "@/components/editor/panels/inline-enum-form"
 import { PropertyTypeSelector } from "@/components/editor/panels/property-type-selector"
 
 interface PropertyFormProps {
@@ -63,7 +61,6 @@ export function PropertyForm({
   // Enum 참조 여부 확인
   const enumRefNode = availableEnums.find((e) => e.data.name === property.type)
   const isEnumRef = enumRefNode !== undefined
-  const isEnumType = property.type === "enum"
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -97,8 +94,8 @@ export function PropertyForm({
               <Key className="h-3.5 w-3.5 text-yellow-500" />
             </span>
           )}
-          {(isEnumType || isEnumRef) && (
-            <span title={isEnumRef ? `Enum: ${property.type}` : "Inline Enum"}>
+          {isEnumRef && (
+            <span title={`Enum: ${property.type}`}>
               <List className="h-3.5 w-3.5 text-amber-500" />
             </span>
           )}
@@ -124,13 +121,6 @@ export function PropertyForm({
           availableEnums={availableEnums}
         />
 
-        {/* Enum 배지 표시 */}
-        {isEnumType && property.enumDef && property.enumDef.values.length > 0 && (
-          <Badge variant="secondary" className="text-xs px-1.5 py-0 flex-shrink-0">
-            {property.enumDef.values.length} values
-          </Badge>
-        )}
-
         {/* 삭제 버튼 */}
         {showDelete && (
           <Button
@@ -147,14 +137,6 @@ export function PropertyForm({
       {/* 확장된 상세 설정 영역 */}
       <CollapsibleContent>
         <div className="ml-12 mr-2 pb-3 pt-1 space-y-3 border-l-2 border-muted pl-4">
-          {/* Enum 정의 편집 (인라인 Enum인 경우만) */}
-          {isEnumType && property.enumDef && (
-            <InlineEnumForm
-              enumDef={property.enumDef}
-              onChange={(enumDef) => onChange({ ...property, enumDef })}
-            />
-          )}
-
           {/* 체크박스 옵션 그룹 */}
           <div className="flex flex-wrap gap-x-4 gap-y-2">
             <div className="flex items-center gap-1.5">

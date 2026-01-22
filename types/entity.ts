@@ -183,7 +183,6 @@ export const PROPERTY_TYPES = [
   "bigint",
   "Buffer",
   "uuid",
-  "enum",
 ] as const
 
 /**

@@ -43,34 +43,24 @@ export function PropertyTypeSelector({
   // Enum 참조 여부 확인
   const enumRefNode = availableEnums.find((e) => e.data.name === property.type)
   const isEnumRef = enumRefNode !== undefined
-  const isEnumType = property.type === "enum"
 
   /**
    * 타입 변경 핸들러
    */
   const handleTypeChange = useCallback(
     (value: string) => {
-      if (value === "enum") {
-        // 인라인 Enum 선택 시 기본 enumDef 생성
-        onChange({
-          ...property,
-          type: value,
-          enumDef: property.enumDef ?? { name: "NewEnum", values: [] },
-        })
-      } else if (value.startsWith("enumRef:")) {
+      if (value.startsWith("enumRef:")) {
         // Enum 참조 선택 시 Enum 이름을 타입으로 설정
         const enumName = value.replace("enumRef:", "")
         onChange({
           ...property,
           type: enumName,
-          enumDef: undefined, // 참조 시 인라인 정의 제거
         })
       } else {
         // 기본 타입 선택
         onChange({
           ...property,
           type: value,
-          enumDef: undefined,
         })
       }
     },
@@ -84,11 +74,7 @@ export function PropertyTypeSelector({
     >
       <SelectTrigger className="h-7 w-32 text-xs border-transparent bg-transparent hover:border-input focus:border-input flex-shrink-0">
         <SelectValue placeholder="Type">
-          {isEnumRef
-            ? `${property.type}`
-            : isEnumType && property.enumDef?.name
-              ? property.enumDef.name
-              : property.type}
+          {property.type}
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
