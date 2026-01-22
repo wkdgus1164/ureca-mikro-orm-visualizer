@@ -87,6 +87,8 @@ export interface UseEditorReturn {
   updateRelationship: (id: string, data: Partial<RelationshipData>) => void
   /** Relationship 엣지 삭제 */
   deleteRelationship: (id: string) => void
+  /** EnumMapping 엣지 추가 */
+  addEnumMapping: (entityId: string, enumId: string, sourceHandle?: string, targetHandle?: string) => void
   /** EnumMapping 엣지 업데이트 */
   updateEnumMapping: (id: string, data: Partial<EnumMappingData>) => void
   /** 선택된 EnumMapping 엣지 가져오기 */
@@ -150,6 +152,54 @@ export function useEditor(): UseEditorReturn {
     (id: string) => {
       nodeOps.deleteNode(id)
       edgeOps.deleteEdgesByNodeId(id)
+    },
+    [nodeOps, edgeOps]
+  )
+
+  // ============================================================================
+  // 엣지 삭제 (EnumMapping 시 타입 복원)
+  // ============================================================================
+
+  /**
+   * Relationship 또는 EnumMapping 엣지 삭제
+   * EnumMapping 엣지 삭제 시 프로퍼티 타입을 원본으로 복원
+   */
+  const deleteRelationship = useCallback(
+    (id: string) => {
+      const edge = edgeOps.edges.find((e) => e.id === id)
+
+      // EnumMapping 엣지이고 propertyId가 있으면 타입 복원
+      if (edge?.type === "enum-mapping" && edge.data.propertyId) {
+        const entityNode = nodeOps.nodes.find(
+          (n) => n.id === edge.source && n.type === "entity"
+        ) as EntityNode | undefined
+
+        if (entityNode) {
+          const targetProperty = (entityNode.data.properties ?? []).find(
+            (p) => p.id === edge.data.propertyId
+          )
+
+          // 프로퍼티가 아직 Enum 타입인 경우에만 복원
+          // (이미 다른 타입으로 변경된 경우 복원하지 않음)
+          const enumNode = nodeOps.nodes.find(
+            (n) => n.id === edge.target && n.type === "enum"
+          )
+          const isStillEnumType =
+            enumNode && targetProperty?.type === (enumNode.data as { name: string }).name
+
+          if (isStillEnumType) {
+            const previousType = edge.data.previousType ?? "string"
+            const updatedProperties = (entityNode.data.properties ?? []).map((p) =>
+              p.id === edge.data.propertyId ? { ...p, type: previousType } : p
+            )
+
+            nodeOps.updateEntity(entityNode.id, { properties: updatedProperties })
+          }
+        }
+      }
+
+      // 엣지 삭제
+      edgeOps.deleteRelationship(id)
     },
     [nodeOps, edgeOps]
   )
@@ -226,6 +276,61 @@ export function useEditor(): UseEditorReturn {
       uiOps.cancelPendingAdd()
     },
     [nodeOps, uiOps]
+  )
+
+  // ============================================================================
+  // 엣지 변경 핸들러 (삭제 시 타입 복원)
+  // ============================================================================
+
+  /**
+   * 엣지 변경 핸들러 래핑
+   * EnumMapping 엣지 삭제 시 프로퍼티 타입을 원본으로 복원
+   */
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange<FlowEdge>[]) => {
+      // 삭제되는 EnumMapping 엣지 찾기
+      changes.forEach((change) => {
+        if (change.type === "remove") {
+          const edge = edgeOps.edges.find((e) => e.id === change.id)
+
+          // EnumMapping 엣지이고 propertyId가 있으면 타입 복원
+          if (edge?.type === "enum-mapping" && edge.data.propertyId) {
+            const entityNode = nodeOps.nodes.find(
+              (n) => n.id === edge.source && n.type === "entity"
+            ) as EntityNode | undefined
+
+            if (entityNode) {
+              const targetProperty = (entityNode.data.properties ?? []).find(
+                (p) => p.id === edge.data.propertyId
+              )
+
+              // 프로퍼티가 아직 Enum 타입인 경우에만 복원
+              // (이미 다른 타입으로 변경된 경우 복원하지 않음)
+              const enumNode = nodeOps.nodes.find(
+                (n) => n.id === edge.target && n.type === "enum"
+              )
+              const isStillEnumType =
+                enumNode &&
+                targetProperty?.type === (enumNode.data as { name: string }).name
+
+              if (isStillEnumType) {
+                const previousType = edge.data.previousType ?? "string"
+                const updatedProperties = (entityNode.data.properties ?? []).map(
+                  (p) =>
+                    p.id === edge.data.propertyId ? { ...p, type: previousType } : p
+                )
+
+                nodeOps.updateEntity(entityNode.id, { properties: updatedProperties })
+              }
+            }
+          }
+        }
+      })
+
+      // 원본 핸들러 호출
+      edgeOps.onEdgesChange(changes)
+    },
+    [nodeOps, edgeOps]
   )
 
   // ============================================================================
@@ -399,10 +504,11 @@ export function useEditor(): UseEditorReturn {
 
     // 엣지 관련
     edges: edgeOps.edges,
-    onEdgesChange: edgeOps.onEdgesChange,
+    onEdgesChange,
     onConnect,
     updateRelationship: edgeOps.updateRelationship,
-    deleteRelationship: edgeOps.deleteRelationship,
+    deleteRelationship,
+    addEnumMapping: edgeOps.addEnumMapping,
     updateEnumMapping: edgeOps.updateEnumMapping,
 
     // UI 관련

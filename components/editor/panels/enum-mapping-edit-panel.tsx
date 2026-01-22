@@ -75,12 +75,17 @@ function EnumMappingEditInner({
     // 단일 updatedProperties 배열에서 모든 변경사항 계산
     let updatedProperties = [...properties]
 
-    // 이전에 선택된 프로퍼티가 있으면 타입 복원 (string으로)
+    // 이전에 선택된 프로퍼티가 있으면 원본 타입으로 복원
     if (selectedPropertyId) {
+      const previousType = selectedEdge.data.previousType ?? "string"
       updatedProperties = updatedProperties.map((p) =>
-        p.id === selectedPropertyId ? { ...p, type: "string" } : p
+        p.id === selectedPropertyId ? { ...p, type: previousType } : p
       )
     }
+
+    // 새로 선택된 프로퍼티의 원본 타입 저장
+    const targetProperty = properties.find((p) => p.id === propertyId)
+    const originalType = targetProperty?.type ?? "string"
 
     // 새로 선택된 프로퍼티의 타입을 Enum으로 변경
     updatedProperties = updatedProperties.map((p) =>
@@ -90,8 +95,11 @@ function EnumMappingEditInner({
     // 한 번만 updateEntity 호출
     updateEntity(entityNode.id, { properties: updatedProperties })
 
-    // Enum 매핑 업데이트
-    updateEnumMapping(selectedEdge.id, { propertyId })
+    // Enum 매핑 업데이트 (원본 타입 저장)
+    updateEnumMapping(selectedEdge.id, {
+      propertyId,
+      previousType: originalType,
+    })
 
     // 다른 EnumMapping 엣지가 같은 프로퍼티를 참조하고 있으면 엣지 삭제
     edges

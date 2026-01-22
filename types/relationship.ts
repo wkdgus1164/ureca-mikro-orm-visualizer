@@ -219,6 +219,8 @@ export function getInverseRelationType(type: RelationType): RelationType {
 export interface EnumMappingData {
   /** 매핑된 프로퍼티 ID (Entity의 property.id) */
   propertyId: string | null
+  /** 매핑 전 프로퍼티의 원본 타입 (매핑 해제 시 복원용) */
+  previousType?: string
   /** ReactFlow 타입 호환을 위한 index signature */
   [key: string]: unknown
 }

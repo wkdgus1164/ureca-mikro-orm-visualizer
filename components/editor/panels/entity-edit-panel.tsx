@@ -35,7 +35,14 @@ interface EntityEditInnerProps {
  * @param selectedNode - The entity node being edited; its data provides the current name, properties, and indexes shown in the UI.
  */
 function EntityEditInner({ selectedNode }: EntityEditInnerProps) {
-  const { updateEntity, getAllEnums } = useEditorContext()
+  const {
+    updateEntity,
+    getAllEnums,
+    edges,
+    addEnumMapping,
+    updateEnumMapping,
+    deleteRelationship,
+  } = useEditorContext()
 
   const availableEnums = getAllEnums()
 
@@ -61,9 +68,72 @@ function EntityEditInner({ selectedNode }: EntityEditInnerProps) {
    * 프로퍼티 업데이트 핸들러 (실시간 반영)
    */
   const handlePropertyUpdate = (index: number, property: EntityProperty) => {
+    const oldProperty = properties[index]
     const newProperties = [...properties]
     newProperties[index] = property
     updateEntity(selectedNode.id, { properties: newProperties })
+
+    // Enum 타입으로 변경되었는지 확인
+    const newEnumNode = availableEnums.find((e) => e.data.name === property.type)
+    const oldEnumNode = availableEnums.find((e) => e.data.name === oldProperty.type)
+
+    // 타입이 변경되지 않았으면 아무것도 하지 않음
+    if (property.type === oldProperty.type) {
+      return
+    }
+
+    // 1. 이전 Enum과의 연결 해제 (Enum → 다른 Enum 또는 Enum → 기본 타입)
+    if (oldEnumNode) {
+      const oldEnumEdge = edges.find(
+        (e) =>
+          e.type === "enum-mapping" &&
+          e.source === selectedNode.id &&
+          e.target === oldEnumNode.id
+      )
+
+      if (oldEnumEdge) {
+        // 이전 Enum 엣지 삭제
+        deleteRelationship(oldEnumEdge.id)
+      }
+    }
+
+    // 2. 새 Enum 타입으로 변경된 경우 → EnumMapping 엣지 자동 생성
+    if (newEnumNode) {
+      // 해당 Entity와 새 Enum 사이에 EnumMapping 엣지가 있는지 확인
+      const existingEdge = edges.find(
+        (e) =>
+          e.type === "enum-mapping" &&
+          e.source === selectedNode.id &&
+          e.target === newEnumNode.id
+      )
+
+      if (existingEdge) {
+        // 기존 엣지가 있으면 propertyId 업데이트
+        updateEnumMapping(existingEdge.id, {
+          propertyId: property.id,
+          previousType: oldProperty.type,
+        })
+      } else {
+        // 기존 엣지가 없으면 새로 생성
+        addEnumMapping(selectedNode.id, newEnumNode.id)
+        // 생성 직후 propertyId 업데이트 (다음 틱에서 실행)
+        setTimeout(() => {
+          const newEdge = edges.find(
+            (e) =>
+              e.type === "enum-mapping" &&
+              e.source === selectedNode.id &&
+              e.target === newEnumNode.id &&
+              !e.data.propertyId
+          )
+          if (newEdge) {
+            updateEnumMapping(newEdge.id, {
+              propertyId: property.id,
+              previousType: oldProperty.type,
+            })
+          }
+        }, 0)
+      }
+    }
   }
 
   /**
