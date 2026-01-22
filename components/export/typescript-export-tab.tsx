@@ -164,6 +164,39 @@ export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps)
   }, [])
 
   /**
+   * 선택된 파일이 삭제되어 currentFile이 null이 될 때 자동으로 첫 번째 파일 선택
+   * filesByCategory 변경 시에만 실행되며, selectedFile 변경 시에는 실행되지 않음 (무한 루프 방지)
+   */
+  useEffect(() => {
+    // 현재 선택이 유효하지 않은지 확인
+    let needsAutoSelect = false
+
+    if (selectedFile) {
+      // 선택된 파일이 여전히 존재하는지 확인
+      const [ category, name ] = selectedFile.split("/") as [ keyof CategorizedGeneratedCode, string ]
+      const fileExists = filesByCategory[ category ]?.some((f) => f.name === name)
+      needsAutoSelect = !fileExists
+    }
+
+    // currentFile이 null이지만 파일이 존재하면 첫 번째 파일 자동 선택
+    if (needsAutoSelect) {
+      const categories: (keyof CategorizedGeneratedCode)[] = [
+        "entities",
+        "embeddables",
+        "enums",
+        "interfaces",
+      ]
+      const firstCategory = categories.find((cat) => filesByCategory[ cat ].length > 0)
+      if (firstCategory && filesByCategory[ firstCategory ].length > 0) {
+        handleSelectFile(firstCategory, filesByCategory[ firstCategory ][ 0 ].name)
+      }
+    }
+    // selectedFile과 handleSelectFile은 의도적으로 의존성 배열에서 제외
+    // (filesByCategory 변경 시에만 실행, 무한 루프 방지)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ filesByCategory ])
+
+  /**
    * 클립보드 복사 핸들러
    */
   const handleCopy = useCallback(async () => {
