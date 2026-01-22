@@ -28,6 +28,7 @@ types/
 
 ### `relationship.ts`
 - `@OneToOne`, `@OneToMany`, `@ManyToOne`, `@ManyToMany`
+- `Dependency` - 일시적 사용 관계 (점선 화살표, MikroORM 데코레이터 없음, import만 생성)
 - 관계 옵션 (nullable, cascade, orphanRemoval 등)
 - 양방향/단방향 관계 표현
 
