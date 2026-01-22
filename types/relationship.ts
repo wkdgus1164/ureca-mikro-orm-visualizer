@@ -206,3 +206,60 @@ export function getInverseRelationType(type: RelationType): RelationType {
       return RelationType.Implementation
   }
 }
+
+// =============================================================================
+// Enum Mapping Edge (Entity ↔ Enum 연결)
+// =============================================================================
+
+/**
+ * Enum Mapping 엣지의 데이터 구조
+ *
+ * Entity의 프로퍼티를 Enum 타입으로 매핑할 때 사용
+ */
+export interface EnumMappingData {
+  /** 매핑된 프로퍼티 ID (Entity의 property.id) */
+  propertyId: string | null
+  /** ReactFlow 타입 호환을 위한 index signature */
+  [key: string]: unknown
+}
+
+/**
+ * ReactFlow Enum Mapping 엣지 타입
+ *
+ * Entity와 Enum 간의 타입 매핑을 나타내는 엣지
+ */
+export interface EnumMappingEdge {
+  /** 엣지 고유 ID (uuid) */
+  id: string
+  /** 엣지 타입 - 항상 "enum-mapping" */
+  type: "enum-mapping"
+  /** Entity 노드 ID */
+  source: string
+  /** Enum 노드 ID */
+  target: string
+  /** Source 핸들 ID (선택적) */
+  sourceHandle?: string
+  /** Target 핸들 ID (선택적) */
+  targetHandle?: string
+  /** Enum Mapping 데이터 */
+  data: EnumMappingData
+}
+
+/**
+ * Create an EnumMappingEdge with default data.
+ */
+export function createDefaultEnumMapping(
+  id: string,
+  entityId: string,
+  enumId: string
+): EnumMappingEdge {
+  return {
+    id,
+    type: "enum-mapping",
+    source: entityId,
+    target: enumId,
+    data: {
+      propertyId: null,
+    },
+  }
+}

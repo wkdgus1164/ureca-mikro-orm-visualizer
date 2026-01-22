@@ -59,7 +59,9 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
    */
   const generatedTsCode = useMemo(() => {
     if (!isOpen || nodes.length === 0) return new Map<string, string>()
-    return generateAllDiagramCode(nodes, edges)
+    // RelationshipEdge만 필터링 (EnumMappingEdge 제외)
+    const relationshipEdges = edges.filter((e) => e.type === "relationship")
+    return generateAllDiagramCode(nodes, relationshipEdges)
   }, [isOpen, nodes, edges])
 
   // Entity가 없는 경우

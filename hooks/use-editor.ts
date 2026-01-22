@@ -18,7 +18,12 @@ import type {
   InterfaceNode,
   InterfaceData,
 } from "@/types/entity"
-import type { RelationshipEdge, RelationshipData } from "@/types/relationship"
+import type {
+  RelationshipEdge,
+  RelationshipData,
+  EnumMappingEdge,
+  EnumMappingData,
+} from "@/types/relationship"
 import type { Selection, EditorUIState, PendingAddType } from "@/types/editor"
 import { useNodes, type FlowNode } from "@/hooks/use-nodes"
 import { useEdges, type FlowEdge } from "@/hooks/use-edges"
@@ -82,6 +87,10 @@ export interface UseEditorReturn {
   updateRelationship: (id: string, data: Partial<RelationshipData>) => void
   /** Relationship 엣지 삭제 */
   deleteRelationship: (id: string) => void
+  /** EnumMapping 엣지 업데이트 */
+  updateEnumMapping: (id: string, data: Partial<EnumMappingData>) => void
+  /** 선택된 EnumMapping 엣지 가져오기 */
+  getSelectedEnumMapping: () => EnumMappingEdge | null
   /** 선택 상태 설정 */
   setSelection: (selection: Selection) => void
   /** 우측 패널 열림/닫힘 토글 */
@@ -238,17 +247,17 @@ export function useEditor(): UseEditorReturn {
   }, [nodeOps.nodes, uiOps.uiState.selection])
 
   /**
-   * 선택된 엣지 가져오기
+   * 선택된 Relationship 엣지 가져오기 (EnumMapping 제외)
    */
   const getSelectedEdge = useCallback((): RelationshipEdge | null => {
     if (uiOps.uiState.selection.type !== "edge" || !uiOps.uiState.selection.id) {
       return null
     }
-    return (
-      (edgeOps.edges.find(
-        (edge) => edge.id === uiOps.uiState.selection.id
-      ) as RelationshipEdge) ?? null
-    )
+    const edge = edgeOps.edges.find((e) => e.id === uiOps.uiState.selection.id)
+    if (edge?.type === "relationship") {
+      return edge as RelationshipEdge
+    }
+    return null
   }, [edgeOps.edges, uiOps.uiState.selection])
 
   /**
@@ -278,6 +287,67 @@ export function useEditor(): UseEditorReturn {
     }
     return null
   }, [nodeOps.nodes, uiOps.uiState.selection])
+
+  /**
+   * 선택된 EnumMapping 엣지 가져오기
+   */
+  const getSelectedEnumMapping = useCallback((): EnumMappingEdge | null => {
+    if (uiOps.uiState.selection.type !== "edge" || !uiOps.uiState.selection.id) {
+      return null
+    }
+    const edge = edgeOps.edges.find((e) => e.id === uiOps.uiState.selection.id)
+    if (edge?.type === "enum-mapping") {
+      return edge as EnumMappingEdge
+    }
+    return null
+  }, [edgeOps.edges, uiOps.uiState.selection])
+
+  // ============================================================================
+  // 연결 핸들러 (Entity ↔ Enum 감지)
+  // ============================================================================
+
+  /**
+   * 커스텀 연결 핸들러
+   * Entity ↔ Enum 연결 시 EnumMapping 엣지 생성
+   * 그 외에는 일반 Relationship 엣지 생성
+   */
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      if (!connection.source || !connection.target) return
+
+      const sourceNode = nodeOps.nodes.find((n) => n.id === connection.source)
+      const targetNode = nodeOps.nodes.find((n) => n.id === connection.target)
+
+      if (!sourceNode || !targetNode) return
+
+      // Entity ↔ Enum 연결 감지
+      const isEntityToEnum =
+        (sourceNode.type === "entity" && targetNode.type === "enum") ||
+        (sourceNode.type === "enum" && targetNode.type === "entity")
+
+      if (isEntityToEnum) {
+        // Entity를 source로, Enum을 target으로 정규화
+        const entityId = sourceNode.type === "entity" ? sourceNode.id : targetNode.id
+        const enumId = sourceNode.type === "enum" ? sourceNode.id : targetNode.id
+
+        edgeOps.addEnumMapping(
+          entityId,
+          enumId,
+          connection.sourceHandle ?? undefined,
+          connection.targetHandle ?? undefined
+        )
+      } else {
+        // 일반 Relationship 엣지 생성
+        edgeOps.addRelationship(
+          connection.source,
+          connection.target,
+          connection.sourceHandle ?? undefined,
+          connection.targetHandle ?? undefined
+        )
+      }
+    },
+    [nodeOps.nodes, edgeOps]
+  )
 
   // ============================================================================
   // 다이어그램 작업
@@ -330,9 +400,10 @@ export function useEditor(): UseEditorReturn {
     // 엣지 관련
     edges: edgeOps.edges,
     onEdgesChange: edgeOps.onEdgesChange,
-    onConnect: edgeOps.onConnect,
+    onConnect,
     updateRelationship: edgeOps.updateRelationship,
     deleteRelationship: edgeOps.deleteRelationship,
+    updateEnumMapping: edgeOps.updateEnumMapping,
 
     // UI 관련
     uiState: uiOps.uiState,
@@ -350,6 +421,7 @@ export function useEditor(): UseEditorReturn {
     getSelectedEnum,
     getSelectedInterface,
     getSelectedEdge,
+    getSelectedEnumMapping,
 
     // 다이어그램 작업
     loadDiagram,
