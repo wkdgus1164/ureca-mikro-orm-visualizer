@@ -27,19 +27,43 @@ lib/mikro-orm/
 외부에서 사용할 메인 진입점. `generators/` 모듈의 기능을 통합하여 제공.
 
 ```typescript
-import { generateAllDiagramCode } from "@/lib/mikro-orm/generator"
+import {
+  generateAllDiagramCode,
+  generateAllDiagramCodeCategorized,
+  type CategorizedGeneratedCode
+} from "@/lib/mikro-orm/generator"
 
-// 다이어그램 전체를 TypeScript 코드로 변환
+// 다이어그램 전체를 TypeScript 코드로 변환 (단일 Map)
 const codeMap = generateAllDiagramCode(nodes, edges)
 
 for (const [name, code] of codeMap) {
   console.log(`// ${name}.ts`)
   console.log(code)
 }
+
+// 카테고리별로 분류된 코드 생성 (폴더 구조 지원)
+const categorized = generateAllDiagramCodeCategorized(nodes, edges)
+// categorized.entities   - Entity 파일들
+// categorized.embeddables - Embeddable 파일들
+// categorized.enums      - Enum 파일들
+// categorized.interfaces - Interface 파일들
+```
+
+**주요 타입:**
+- `CategorizedGeneratedCode` - 카테고리별로 분류된 생성 코드 결과
+
+```typescript
+interface CategorizedGeneratedCode {
+  entities: Map<string, string>
+  embeddables: Map<string, string>
+  enums: Map<string, string>
+  interfaces: Map<string, string>
+}
 ```
 
 **주요 함수:**
-- `generateAllDiagramCode(nodes, edges)` - 다이어그램 전체 코드 생성
+- `generateAllDiagramCode(nodes, edges)` - 다이어그램 전체 코드 생성 (단일 Map)
+- `generateAllDiagramCodeCategorized(nodes, edges)` - 카테고리별 분류된 코드 생성
 - `generateEntityCode(entity, edges, allNodes)` - 단일 Entity 코드 생성
 - `generateEmbeddableCode(embeddable)` - 단일 Embeddable 코드 생성
 - `generateEnumNodeCode(enumNode)` - 단일 Enum 코드 생성
@@ -197,6 +221,36 @@ function exportToTypeScript(nodes: DiagramNode[], edges: RelationshipEdge[]) {
   codeMap.forEach((code, name) => {
     downloadFile(`${name}.ts`, code)
   })
+}
+```
+
+### 카테고리별 폴더 구조로 내보내기
+
+```typescript
+import { generateAllDiagramCodeCategorized } from "@/lib/mikro-orm/generator"
+import JSZip from "jszip"
+
+async function exportAsZip(nodes: DiagramNode[], edges: RelationshipEdge[]) {
+  const { entities, embeddables, enums, interfaces } = generateAllDiagramCodeCategorized(nodes, edges)
+  const zip = new JSZip()
+
+  // 카테고리별 폴더에 파일 추가
+  entities.forEach((code, name) => {
+    zip.folder("entities")?.file(`${name}.ts`, code)
+  })
+  embeddables.forEach((code, name) => {
+    zip.folder("embeddables")?.file(`${name}.ts`, code)
+  })
+  enums.forEach((code, name) => {
+    zip.folder("enums")?.file(`${name}.ts`, code)
+  })
+  interfaces.forEach((code, name) => {
+    zip.folder("interfaces")?.file(`${name}.ts`, code)
+  })
+
+  // ZIP 파일 생성
+  const content = await zip.generateAsync({ type: "blob" })
+  downloadBlob(content, "mikro-orm-entities.zip")
 }
 ```
 
