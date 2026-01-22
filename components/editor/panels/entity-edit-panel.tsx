@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
+import { Switch } from "@/components/ui/switch"
 import { Plus, Database } from "lucide-react"
 import { useEditorContext } from "@/components/providers/editor-provider"
 import { PropertyForm } from "@/components/editor/panels/property-form"
@@ -34,7 +35,14 @@ interface EntityEditInnerProps {
  * @param selectedNode - The entity node being edited; its data provides the current name, properties, and indexes shown in the UI.
  */
 function EntityEditInner({ selectedNode }: EntityEditInnerProps) {
-  const { updateEntity, getAllEnums } = useEditorContext()
+  const {
+    updateEntity,
+    getAllEnums,
+    edges,
+    addEnumMapping,
+    updateEnumMapping,
+    deleteRelationship,
+  } = useEditorContext()
 
   const availableEnums = getAllEnums()
 
@@ -50,12 +58,70 @@ function EntityEditInner({ selectedNode }: EntityEditInnerProps) {
   }
 
   /**
+   * Aggregate Root 변경 핸들러 (실시간 반영)
+   */
+  const handleAggregateRootChange = (isAggregateRoot: boolean) => {
+    updateEntity(selectedNode.id, { isAggregateRoot })
+  }
+
+  /**
    * 프로퍼티 업데이트 핸들러 (실시간 반영)
    */
   const handlePropertyUpdate = (index: number, property: EntityProperty) => {
+    const oldProperty = properties[index]
     const newProperties = [...properties]
     newProperties[index] = property
     updateEntity(selectedNode.id, { properties: newProperties })
+
+    // Enum 타입으로 변경되었는지 확인
+    const newEnumNode = availableEnums.find((e) => e.data.name === property.type)
+    const oldEnumNode = availableEnums.find((e) => e.data.name === oldProperty.type)
+
+    // 타입이 변경되지 않았으면 아무것도 하지 않음
+    if (property.type === oldProperty.type) {
+      return
+    }
+
+    // 1. 이전 Enum과의 연결 해제 (Enum → 다른 Enum 또는 Enum → 기본 타입)
+    if (oldEnumNode) {
+      const oldEnumEdge = edges.find(
+        (e) =>
+          e.type === "enum-mapping" &&
+          e.source === selectedNode.id &&
+          e.target === oldEnumNode.id
+      )
+
+      if (oldEnumEdge) {
+        // 이전 Enum 엣지 삭제
+        deleteRelationship(oldEnumEdge.id)
+      }
+    }
+
+    // 2. 새 Enum 타입으로 변경된 경우 → EnumMapping 엣지 자동 생성
+    if (newEnumNode) {
+      // 해당 Entity와 새 Enum 사이에 EnumMapping 엣지가 있는지 확인
+      const existingEdge = edges.find(
+        (e) =>
+          e.type === "enum-mapping" &&
+          e.source === selectedNode.id &&
+          e.target === newEnumNode.id
+      )
+
+      if (existingEdge) {
+        // 기존 엣지가 있으면 propertyId 업데이트
+        updateEnumMapping(existingEdge.id, {
+          propertyId: property.id,
+          previousType: oldProperty.type,
+        })
+      } else {
+        // 기존 엣지가 없으면 새로 생성하고 바로 propertyId 업데이트
+        const newEdgeId = addEnumMapping(selectedNode.id, newEnumNode.id)
+        updateEnumMapping(newEdgeId, {
+          propertyId: property.id,
+          previousType: oldProperty.type,
+        })
+      }
+    }
   }
 
   /**
@@ -105,6 +171,25 @@ function EntityEditInner({ selectedNode }: EntityEditInnerProps) {
 
   return (
     <div className="space-y-4">
+      {/* Aggregate Root 스위치 */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-0.5">
+          <Label htmlFor="aggregate-root" className="cursor-pointer">
+            Aggregate Root
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            DDD 패턴의 집합 루트 (Repository 기본 단위)
+          </p>
+        </div>
+        <Switch
+          id="aggregate-root"
+          checked={data.isAggregateRoot ?? false}
+          onCheckedChange={handleAggregateRootChange}
+        />
+      </div>
+
+      <Separator />
+
       {/* Entity 이름 */}
       <div className="space-y-1.5">
         <Label htmlFor="entity-name">Entity Name</Label>

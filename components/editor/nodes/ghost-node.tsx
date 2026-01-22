@@ -13,7 +13,7 @@
  */
 
 import { memo } from "react"
-import { Box, Package, List } from "lucide-react"
+import { Box, Package, List, FileCode } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { PendingAddType } from "@/types/editor"
 
@@ -50,6 +50,13 @@ const nodeTypeConfig = {
     borderColor: "border-amber-500",
     iconColor: "text-amber-500",
     bgColor: "bg-amber-50 dark:bg-amber-950/30",
+  },
+  interface: {
+    icon: FileCode,
+    label: "Interface",
+    borderColor: "border-emerald-500 border-dashed",
+    iconColor: "text-emerald-500",
+    bgColor: "bg-emerald-50 dark:bg-emerald-950/30",
   },
 }
 

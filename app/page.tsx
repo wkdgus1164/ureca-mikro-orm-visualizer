@@ -14,7 +14,7 @@ import { EditorLayout } from "@/components/editor/editor-layout"
 import { ExportModalWrapper } from "@/components/export/export-modal-wrapper"
 
 export const metadata = {
-  title: "Editor | MikroORM Visualizer",
+  title: { absolute: "MikroORM Visualizer" },
   description: "Visual editor for designing MikroORM entities",
 }
 

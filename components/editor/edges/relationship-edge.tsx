@@ -6,9 +6,8 @@
  * MikroORM 관계를 시각적으로 표현하는 커스텀 엣지
  */
 
-import { memo } from "react"
+import { memo, useMemo } from "react"
 import {
-  BaseEdge,
   EdgeLabelRenderer,
   getBezierPath,
   type Edge,
@@ -17,6 +16,7 @@ import {
 import type { RelationshipData } from "@/types/relationship"
 import { RelationType, RELATION_TYPE_LABELS } from "@/types/relationship"
 import { cn } from "@/lib/utils"
+import { MARKER_IDS } from "@/components/editor/edges/shared/edge-markers"
 
 /**
  * Relationship 엣지 타입 (ReactFlow Edge 확장)
@@ -29,55 +29,47 @@ type RelationshipEdgeType = Edge<RelationshipData, "relationship">
 type RelationshipEdgeProps = EdgeProps<RelationshipEdgeType>
 
 /**
- * 관계 타입별 마커 ID
+ * 엣지 기본 스타일
  */
-const MARKER_IDS = {
-  arrow: "arrow-marker",
-  crowFoot: "crow-foot-marker",
-  one: "one-marker",
-} as const
-
-/**
- * Compute the inline SVG style for an edge based on the relationship type and whether it is selected.
- *
- * The returned style adjusts stroke width for selection and chooses a stroke color that remains clear in both light and dark themes.
- *
- * @param relationType - The relationship type influencing marker/visual semantics (used for future extensibility)
- * @param selected - Whether the edge is selected; selected edges use a heavier stroke and primary color
- * @returns An object containing `strokeWidth` and `stroke` properties for the edge's inline style
- */
-function getEdgeStyle(relationType: RelationType, selected: boolean) {
-  const baseStyle = {
-    strokeWidth: selected ? 3 : 2,
-    stroke: selected ? "hsl(var(--primary))" : "hsl(var(--foreground))",
-  }
-
-  return baseStyle
+const EDGE_STYLE_BASE = {
+  strokeWidth: 2,
+  stroke: "#64748b",
 }
 
 /**
- * Selects the SVG marker URL to use at the end of an edge for the given relationship type.
- *
- * @returns The SVG URL reference for the end marker corresponding to `relationType` (for example `url(#arrow)` or `url(#crowFoot)`).
+ * 관계 타입에 따른 엣지 스타일 반환
+ */
+function getEdgeStyle(relationType: RelationType): React.CSSProperties {
+  if (relationType === RelationType.Implementation) {
+    return {
+      ...EDGE_STYLE_BASE,
+      strokeDasharray: "6 4",
+    }
+  }
+  return EDGE_STYLE_BASE
+}
+
+/**
+ * 관계 타입에 따른 끝점 마커 선택
  */
 function getMarkerEnd(relationType: RelationType): string {
   switch (relationType) {
     case RelationType.OneToOne:
-      return `url(#${MARKER_IDS.arrow})`
-    case RelationType.OneToMany:
-      return `url(#${MARKER_IDS.crowFoot})`
     case RelationType.ManyToOne:
       return `url(#${MARKER_IDS.arrow})`
+    case RelationType.OneToMany:
     case RelationType.ManyToMany:
+    case RelationType.Composition:
+    case RelationType.Aggregation:
       return `url(#${MARKER_IDS.crowFoot})`
+    case RelationType.Inheritance:
+    case RelationType.Implementation:
+      return `url(#${MARKER_IDS.triangle})`
   }
 }
 
 /**
- * Selects the SVG marker URL to use at the start of an edge based on the relationship type.
- *
- * @param relationType - The relationship type that determines the start marker
- * @returns The SVG marker URL (for use in `markerStart`), or `undefined` if no start marker applies
+ * 관계 타입에 따른 시작점 마커 선택
  */
 function getMarkerStart(relationType: RelationType): string | undefined {
   switch (relationType) {
@@ -85,19 +77,79 @@ function getMarkerStart(relationType: RelationType): string | undefined {
       return `url(#${MARKER_IDS.arrow})`
     case RelationType.ManyToMany:
       return `url(#${MARKER_IDS.crowFoot})`
-    default:
+    case RelationType.OneToMany:
+    case RelationType.ManyToOne:
+    case RelationType.Composition:
+    case RelationType.Aggregation:
+    case RelationType.Inheritance:
+    case RelationType.Implementation:
       return undefined
   }
 }
 
 /**
- * Render a custom React Flow edge that visualizes a MikroORM relationship.
+ * sourcePosition에 따른 방향 벡터 반환
+ */
+function getDirectionFromPosition(position: string): { ux: number; uy: number } {
+  switch (position) {
+    case "right":
+      return { ux: 1, uy: 0 }
+    case "left":
+      return { ux: -1, uy: 0 }
+    case "top":
+      return { ux: 0, uy: -1 }
+    case "bottom":
+      return { ux: 0, uy: 1 }
+    default:
+      return { ux: 1, uy: 0 }
+  }
+}
+
+/**
+ * Source 위치에 다이아몬드를 그리기 위한 좌표 계산
+ * sourcePosition 기반으로 방향 결정 (Bezier 곡선 대응)
+ */
+function getDiamondPoints(
+  sourceX: number,
+  sourceY: number,
+  sourcePosition: string,
+  size: number = 14
+): string {
+  // sourcePosition 기반 방향 벡터
+  const { ux, uy } = getDirectionFromPosition(sourcePosition)
+
+  // 수직 벡터
+  const px = -uy
+  const py = ux
+
+  const halfWidth = size / 2.5
+
+  // 다이아몬드 시작점을 선 방향으로 오프셋 (노드에 가려지지 않도록)
+  const offset = 2
+  const startX = sourceX + ux * offset
+  const startY = sourceY + uy * offset
+
+  // 다이아몬드 4개 꼭지점
+  // tip: 선 쪽 꼭지점
+  const tip = { x: startX + ux * size, y: startY + uy * size }
+  // back: 노드 쪽 꼭지점
+  const back = { x: startX, y: startY }
+  // 중간점
+  const mid = { x: startX + ux * (size / 2), y: startY + uy * (size / 2) }
+  // left, right: 좌우 꼭지점
+  const left = { x: mid.x + px * halfWidth, y: mid.y + py * halfWidth }
+  const right = { x: mid.x - px * halfWidth, y: mid.y - py * halfWidth }
+
+  return `${back.x},${back.y} ${right.x},${right.y} ${tip.x},${tip.y} ${left.x},${left.y}`
+}
+
+/**
+ * Relationship 엣지 컴포넌트
  *
- * Chooses start/end SVG markers (arrow, crow-foot, or vertical "one") based on the relation type,
- * draws a Bezier edge between source and target, and renders a centered label showing the source
- * property name and relation type label.
- *
- * @returns A React element that renders the relationship edge with markers and a label.
+ * MikroORM 관계를 Bezier 곡선과 마커로 시각화
+ * - 1:1, N:1: 화살표 마커
+ * - 1:N, N:M: 까마귀발 마커
+ * - 라벨: 프로퍼티명 + 관계 타입
  */
 function RelationshipEdgeComponent({
   id,
@@ -121,77 +173,50 @@ function RelationshipEdgeComponent({
 
   const relationType = data?.relationType ?? RelationType.OneToMany
   const sourceProperty = data?.sourceProperty ?? "relation"
-  const style = getEdgeStyle(relationType, selected ?? false)
+
+  // Composition/Aggregation 다이아몬드 좌표 계산
+  const diamondPoints = useMemo(() => {
+    if (
+      relationType === RelationType.Composition ||
+      relationType === RelationType.Aggregation
+    ) {
+      return getDiamondPoints(sourceX, sourceY, sourcePosition, 14)
+    }
+    return null
+  }, [relationType, sourceX, sourceY, sourcePosition])
+
+  const isComposition = relationType === RelationType.Composition
+  const isAggregation = relationType === RelationType.Aggregation
 
   return (
     <>
-      {/* SVG 마커 정의 */}
-      <defs>
-        {/* 화살표 마커 - 더 선명한 색상 */}
-        <marker
-          id={MARKER_IDS.arrow}
-          viewBox="0 0 10 10"
-          refX="8"
-          refY="5"
-          markerWidth="6"
-          markerHeight="6"
-          orient="auto-start-reverse"
-        >
-          <path
-            d="M 0 0 L 10 5 L 0 10 z"
-            fill="hsl(var(--foreground))"
-            className="transition-colors"
-          />
-        </marker>
-
-        {/* 까마귀발 마커 (One-to-Many 끝) - 더 선명한 색상 */}
-        <marker
-          id={MARKER_IDS.crowFoot}
-          viewBox="0 0 12 12"
-          refX="10"
-          refY="6"
-          markerWidth="8"
-          markerHeight="8"
-          orient="auto-start-reverse"
-        >
-          <path
-            d="M 0 6 L 10 0 M 0 6 L 10 6 M 0 6 L 10 12"
-            fill="none"
-            stroke="hsl(var(--foreground))"
-            strokeWidth="2"
-            className="transition-colors"
-          />
-        </marker>
-
-        {/* One 마커 (수직선) - 더 선명한 색상 */}
-        <marker
-          id={MARKER_IDS.one}
-          viewBox="0 0 10 10"
-          refX="5"
-          refY="5"
-          markerWidth="6"
-          markerHeight="6"
-          orient="auto-start-reverse"
-        >
-          <line
-            x1="5"
-            y1="0"
-            x2="5"
-            y2="10"
-            stroke="hsl(var(--foreground))"
-            strokeWidth="2"
-          />
-        </marker>
-      </defs>
-
       {/* 엣지 패스 */}
-      <BaseEdge
+      <path
         id={id}
-        path={edgePath}
-        style={style}
+        d={edgePath}
+        fill="none"
+        style={getEdgeStyle(relationType)}
         markerEnd={getMarkerEnd(relationType)}
         markerStart={getMarkerStart(relationType)}
       />
+
+      {/* Composition 다이아몬드 (채워진 ◆) */}
+      {isComposition && diamondPoints && (
+        <polygon
+          points={diamondPoints}
+          fill="#64748b"
+        />
+      )}
+
+      {/* Aggregation 다이아몬드 (빈 ◇) */}
+      {isAggregation && diamondPoints && (
+        <polygon
+          points={diamondPoints}
+          fill="white"
+          stroke="#64748b"
+          strokeWidth="1.5"
+        />
+      )}
 
       {/* 라벨 렌더링 */}
       <EdgeLabelRenderer>
@@ -206,7 +231,7 @@ function RelationshipEdgeComponent({
             "px-2 py-1 rounded-md text-xs font-medium",
             "bg-background border border-border shadow-sm",
             "transition-all",
-            selected && "border-primary bg-primary/5"
+            selected && "border-primary border-2"
           )}
         >
           <div className="flex flex-col items-center gap-0.5">

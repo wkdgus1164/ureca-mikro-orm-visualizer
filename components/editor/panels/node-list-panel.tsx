@@ -7,20 +7,16 @@
  * 노드를 카테고리별로 그룹화하여 표시
  */
 
-import { useMemo, useState, useCallback } from "react"
+import { useMemo, useCallback } from "react"
 import { useReactFlow } from "@xyflow/react"
-import { ChevronRight, Box, List, Trash2, Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Box, List, FileCode } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { useEditorContext } from "@/components/providers/editor-provider"
-import type { EntityNode, EmbeddableNode, EnumNode } from "@/types/entity"
+import { NodeListItem } from "@/components/editor/panels/shared/node-list-item"
+import { CategorySection } from "@/components/editor/panels/shared/category-section"
+import type { EntityNode, EmbeddableNode, EnumNode, InterfaceNode } from "@/types/entity"
 import type { PendingAddType } from "@/types/editor"
 
 interface NodeListPanelProps {
@@ -29,146 +25,10 @@ interface NodeListPanelProps {
 }
 
 /**
- * 노드 목록 아이템 컴포넌트
- */
-interface NodeListItemProps {
-  name: string
-  isSelected: boolean
-  onSelect: () => void
-  onDelete: () => void
-}
-
-/**
- * Render a selectable list row that displays a node name with a trailing delete button.
+ * 좌측 노드 목록 패널
  *
- * @param name - The display name for the node; shows "Untitled" when falsy.
- * @param isSelected - When true, applies selected styling to the row.
- * @param onSelect - Callback invoked when the row is clicked.
- * @param onDelete - Callback invoked when the delete button is clicked.
- * @returns A JSX element representing the node list item row.
- */
-function NodeListItem({
-  name,
-  isSelected,
-  onSelect,
-  onDelete,
-}: NodeListItemProps) {
-  return (
-    <div
-      className={cn(
-        "group flex items-center justify-between px-3 py-1.5 rounded-md cursor-pointer transition-colors",
-        isSelected
-          ? "bg-accent text-accent-foreground"
-          : "hover:bg-muted/50"
-      )}
-      onClick={onSelect}
-    >
-      <span className="text-sm truncate">{name || "Untitled"}</span>
-      <Button
-        variant="ghost"
-        size="icon"
-        className={cn(
-          "h-6 w-6 flex-shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10",
-          "opacity-0 group-hover:opacity-100 transition-opacity"
-        )}
-        onClick={(e) => {
-          e.stopPropagation()
-          onDelete()
-        }}
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-      </Button>
-    </div>
-  )
-}
-
-/**
- * 카테고리 섹션 컴포넌트
- */
-interface CategorySectionProps {
-  title: string
-  icon: React.ReactNode
-  count: number
-  defaultOpen?: boolean
-  children: React.ReactNode
-  /** Add 버튼 클릭 핸들러 */
-  onAdd?: () => void
-  /** Add 버튼 레이블 */
-  addLabel?: string
-}
-
-/**
- * Renders a collapsible category section with a header that displays an icon, title, and item count.
- *
- * The section shows `children` inside a collapsible content area and maintains its open/closed state.
- * If `onAdd` is provided, an Add button is rendered that stops event propagation and invokes `onAdd`;
- * the button label uses `addLabel` when supplied or defaults to `Add new <title>` (title lowercased).
- *
- * @param title - Visible title for the section
- * @param icon - Icon element shown to the left of the title
- * @param count - Numeric badge shown on the right of the header
- * @param defaultOpen - Initial open state of the collapsible section
- * @param children - Content rendered inside the collapsible area
- * @param onAdd - Optional callback invoked when the Add button is clicked
- * @param addLabel - Optional label for the Add button; if omitted a default based on `title` is used
- * @returns The rendered category section element
- */
-function CategorySection({
-  title,
-  icon,
-  count,
-  defaultOpen = true,
-  children,
-  onAdd,
-  addLabel,
-}: CategorySectionProps) {
-  const [ isOpen, setIsOpen ] = useState(defaultOpen)
-
-  return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger className="flex items-center gap-2 w-full px-3 py-2 hover:bg-muted/50 rounded-md transition-colors">
-        <ChevronRight
-          className={cn(
-            "h-4 w-4 transition-transform duration-200",
-            isOpen && "rotate-90"
-          )}
-        />
-        {icon}
-        <span className="text-sm font-medium flex-1 text-left">{title}</span>
-        <span className="text-xs text-muted-foreground">{count}</span>
-      </CollapsibleTrigger>
-      <CollapsibleContent className="pl-6 pr-2 space-y-0.5">
-        {children}
-        {/* Add 버튼 */}
-        {onAdd && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation()
-              onAdd()
-            }}
-            className={cn(
-              "flex items-center justify-start gap-2 w-full h-auto px-3 py-1.5",
-              "text-xs text-muted-foreground font-normal",
-              "hover:bg-muted/50 hover:text-foreground"
-            )}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            {addLabel ?? `Add new ${title.toLowerCase()}`}
-          </Button>
-        )}
-      </CollapsibleContent>
-    </Collapsible>
-  )
-}
-
-/**
- * Left-side panel that lists nodes grouped into Entities, Embeddables, and Enums and provides selection, add, and delete controls.
- *
- * Renders collapsible category sections showing counts and items; selecting an item updates editor selection and recenters the canvas, add buttons start a pending-add workflow, and per-item delete actions remove the corresponding node.
- *
- * @returns The rendered sidebar element containing grouped node lists and their controls.
+ * Entities, Embeddables, Enums를 카테고리별로 그룹화하여 표시
+ * 선택, 추가, 삭제 기능 제공
  */
 export function NodeListPanel({ className }: NodeListPanelProps) {
   const {
@@ -179,6 +39,7 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
     deleteEntity,
     deleteEmbeddable,
     deleteEnum,
+    deleteInterface,
     startPendingAdd,
   } = useEditorContext()
 
@@ -189,6 +50,7 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
     const entities: EntityNode[] = []
     const embeddables: EmbeddableNode[] = []
     const enums: EnumNode[] = []
+    const interfaces: InterfaceNode[] = []
 
     nodes.forEach((node) => {
       switch (node.type) {
@@ -201,11 +63,14 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
         case "enum":
           enums.push(node as EnumNode)
           break
+        case "interface":
+          interfaces.push(node as InterfaceNode)
+          break
       }
     })
 
-    return { entities, embeddables, enums }
-  }, [ nodes ])
+    return { entities, embeddables, enums, interfaces }
+  }, [nodes])
 
   /**
    * 노드 선택 핸들러 (캔버스 선택 동기화 포함)
@@ -230,7 +95,7 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
         setCenter(node.position.x + 90, node.position.y + 50, { duration: 300 })
       }
     },
-    [ setSelection, setNodes, nodes, setCenter ]
+    [setSelection, setNodes, nodes, setCenter]
   )
 
   /**
@@ -240,7 +105,7 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
     (type: PendingAddType) => {
       startPendingAdd(type)
     },
-    [ startPendingAdd ]
+    [startPendingAdd]
   )
 
   /**
@@ -333,6 +198,33 @@ export function NodeListPanel({ className }: NodeListPanelProps) {
                   isSelected={isSelected(enumNode.id)}
                   onSelect={() => handleSelectNode(enumNode.id)}
                   onDelete={() => deleteEnum(enumNode.id)}
+                />
+              ))
+            )}
+          </CategorySection>
+
+          <Separator className="my-2" />
+
+          {/* Interface 섹션 */}
+          <CategorySection
+            title="Interfaces"
+            icon={<FileCode className="h-4 w-4 text-emerald-500" />}
+            count={groupedNodes.interfaces.length}
+            onAdd={() => handleStartAdd("interface")}
+            addLabel="Add new interface"
+          >
+            {groupedNodes.interfaces.length === 0 ? (
+              <p className="text-xs text-muted-foreground px-3 py-2">
+                No interfaces yet
+              </p>
+            ) : (
+              groupedNodes.interfaces.map((interfaceNode) => (
+                <NodeListItem
+                  key={interfaceNode.id}
+                  name={interfaceNode.data.name}
+                  isSelected={isSelected(interfaceNode.id)}
+                  onSelect={() => handleSelectNode(interfaceNode.id)}
+                  onDelete={() => deleteInterface(interfaceNode.id)}
                 />
               ))
             )}

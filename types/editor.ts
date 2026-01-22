@@ -28,7 +28,7 @@ export type SelectionType = "node" | "edge" | null
  * 추가 대기 중인 노드 타입
  * Ghost 노드 미리보기에서 사용
  */
-export type PendingAddType = "entity" | "embeddable" | "enum" | null
+export type PendingAddType = "entity" | "embeddable" | "enum" | "interface" | null
 
 /**
  * 현재 선택된 요소 정보

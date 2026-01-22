@@ -4,14 +4,19 @@
  * Embeddable 노드 커스텀 컴포넌트
  *
  * ReactFlow 캔버스에서 MikroORM Embeddable을 시각적으로 표현
- * Entity와 시각적으로 구분되는 디자인 (다른 색상, 아이콘)
+ * Entity와 시각적으로 구분되는 디자인 (보라색 테마, 점선 테두리)
  */
 
 import { memo } from "react"
-import { Handle, Position, type Node, type NodeProps } from "@xyflow/react"
+import type { Node, NodeProps } from "@xyflow/react"
 import type { EmbeddableData } from "@/types/entity"
-import { Package, Circle } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Circle } from "lucide-react"
+import { NodeHandles } from "@/components/editor/nodes/shared/node-handles"
+import {
+  NodeCard,
+  NodeCardHeader,
+  NodeCardBody,
+} from "@/components/editor/nodes/shared/node-card"
 
 /**
  * Embeddable 노드 타입 (ReactFlow Node 확장)
@@ -24,116 +29,58 @@ type EmbeddableNodeType = Node<EmbeddableData, "embeddable">
 type EmbeddableNodeProps = NodeProps<EmbeddableNodeType>
 
 /**
- * 핸들 스타일 (Embeddable 전용 - 보라색 계열)
- */
-const handleClassName =
-  "!w-2.5 !h-2.5 !bg-violet-500 !border-2 !border-background hover:!bg-violet-400 transition-colors"
-
-/**
- * Render a React Flow node that visually represents a MikroORM Embeddable entity.
+ * Embeddable 노드 컴포넌트
  *
- * Renders a compact card styled with a violet theme, a Package icon, and a dashed border to distinguish embeddables from regular entities; includes connection handles on top, left (targets) and right, bottom (sources), and lists the embeddable's properties or shows "No properties" when empty.
- *
- * @example
- * ```tsx
- * const nodeTypes = { embeddable: EmbeddableNode }
- * <ReactFlow nodeTypes={nodeTypes} />
- * ```
+ * MikroORM Embeddable을 카드 형태로 표시
+ * - 헤더: Embeddable 이름 + "Embeddable" 배지
+ * - 바디: 프로퍼티 목록
  */
 function EmbeddableNodeComponent({ data, selected }: EmbeddableNodeProps) {
   const { name, properties } = data
 
   return (
-    <>
-      {/* 상단 핸들 (Target) */}
-      <Handle
-        type="target"
-        position={Position.Top}
-        id="top"
-        className={handleClassName}
-      />
-
-      {/* 좌측 핸들 (Target) */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        id="left"
-        className={handleClassName}
-      />
-
-      {/* 메인 카드 */}
-      <div
-        className={cn(
-          "min-w-[180px] max-w-[280px] bg-background rounded-lg shadow-md",
-          "border-2 border-dashed transition-all",
-          selected
-            ? "border-violet-500 ring-2 ring-violet-500/20"
-            : "border-violet-300 dark:border-violet-700 hover:border-violet-400 dark:hover:border-violet-600"
-        )}
+    <NodeHandles theme="violet">
+      <NodeCard
+        theme="embeddable"
+        selected={selected}
+        header={
+          <NodeCardHeader
+            title={name}
+            badge="«VO»"
+            theme="embeddable"
+          />
+        }
       >
-        {/* 헤더: Embeddable 이름 */}
-        <div className="px-3 py-2 bg-violet-50 dark:bg-violet-950/30 border-b border-dashed border-violet-200 dark:border-violet-800 rounded-t-md">
-          <div className="text-sm font-semibold flex items-center gap-2">
-            <Package className="w-4 h-4 text-violet-500" />
-            <span className="truncate text-violet-700 dark:text-violet-300">
-              {name}
-            </span>
-            <span className="text-[10px] font-normal text-violet-400 dark:text-violet-500 ml-auto">
-              Embeddable
-            </span>
-          </div>
-        </div>
-
-        {/* 바디: 프로퍼티 목록 */}
-        {properties.length === 0 ? (
-          <div className="px-3 py-2 text-xs text-muted-foreground italic">
-            No properties
-          </div>
-        ) : (
-          <div className="py-1">
-            {properties.map((prop) => (
-              <div
-                key={prop.id}
-                className="flex items-center px-3 py-1 text-xs hover:bg-violet-50/50 dark:hover:bg-violet-950/20 transition-colors"
-              >
-                {/* 아이콘 영역 (고정 너비) */}
-                <div className="w-4 flex-shrink-0 flex items-center justify-center">
-                  {prop.isNullable ? (
-                    <Circle className="h-2 w-2 text-muted-foreground/40" />
-                  ) : null}
-                </div>
-
-                {/* 프로퍼티 이름 */}
-                <span className="font-medium text-foreground truncate">
-                  {prop.name}
-                </span>
-
-                {/* 타입 */}
-                <span className="text-muted-foreground ml-auto pl-2 flex-shrink-0">
-                  {prop.type}
-                </span>
+        <NodeCardBody
+          isEmpty={properties.length === 0}
+          emptyMessage="No properties"
+        >
+          {properties.map((prop) => (
+            <div
+              key={prop.id}
+              className="flex items-center px-3 py-1 text-xs hover:bg-muted/30 transition-colors"
+            >
+              {/* 아이콘 영역 (고정 너비) */}
+              <div className="w-4 flex-shrink-0 flex items-center justify-center">
+                {prop.isNullable ? (
+                  <Circle className="h-2 w-2 text-muted-foreground/40" />
+                ) : null}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
 
-      {/* 우측 핸들 (Source) */}
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="right"
-        className={handleClassName}
-      />
+              {/* 프로퍼티 이름 */}
+              <span className="font-medium text-foreground truncate">
+                {prop.name}
+              </span>
 
-      {/* 하단 핸들 (Source) */}
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="bottom"
-        className={handleClassName}
-      />
-    </>
+              {/* 타입 */}
+              <span className="text-muted-foreground ml-auto pl-2 flex-shrink-0">
+                {prop.type}
+              </span>
+            </div>
+          ))}
+        </NodeCardBody>
+      </NodeCard>
+    </NodeHandles>
   )
 }
 
