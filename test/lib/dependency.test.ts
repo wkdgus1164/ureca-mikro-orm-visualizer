@@ -77,9 +77,9 @@ const createMockOneToManyEdge = (
 // ============================================================================
 
 describe("getRelationDecorator", () => {
-  it("Dependency는 빈 문자열을 반환한다", () => {
+  it("Dependency는 null을 반환한다 (MikroORM 데코레이터 없음)", () => {
     const result = getRelationDecorator(RelationType.Dependency)
-    expect(result).toBe("")
+    expect(result).toBeNull()
   })
 
   it("OneToMany는 'OneToMany'를 반환한다", () => {
