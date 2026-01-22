@@ -54,13 +54,26 @@ function EnumMappingEditInner({
    * 프로퍼티 선택 핸들러
    */
   const handlePropertySelect = (propertyId: string) => {
+    // 단일 updatedProperties 배열에서 모든 변경사항 계산
+    let updatedProperties = [...properties]
+
     // 이전에 선택된 프로퍼티가 있으면 타입 복원 (string으로)
     if (selectedPropertyId) {
-      const updatedProperties = properties.map((p) =>
+      updatedProperties = updatedProperties.map((p) =>
         p.id === selectedPropertyId ? { ...p, type: "string" } : p
       )
-      updateEntity(entityNode.id, { properties: updatedProperties })
     }
+
+    // 새로 선택된 프로퍼티의 타입을 Enum으로 변경
+    updatedProperties = updatedProperties.map((p) =>
+      p.id === propertyId ? { ...p, type: enumNode.data.name } : p
+    )
+
+    // 한 번만 updateEntity 호출
+    updateEntity(entityNode.id, { properties: updatedProperties })
+
+    // Enum 매핑 업데이트
+    updateEnumMapping(selectedEdge.id, { propertyId })
 
     // 다른 EnumMapping 엣지가 같은 프로퍼티를 참조하고 있으면 엣지 삭제
     edges
@@ -73,13 +86,6 @@ function EnumMappingEditInner({
       .forEach((e) => {
         deleteRelationship(e.id)
       })
-
-    // 새로 선택된 프로퍼티의 타입을 Enum으로 변경
-    const updatedProperties = properties.map((p) =>
-      p.id === propertyId ? { ...p, type: enumNode.data.name } : p
-    )
-    updateEntity(entityNode.id, { properties: updatedProperties })
-    updateEnumMapping(selectedEdge.id, { propertyId })
   }
 
   /**
