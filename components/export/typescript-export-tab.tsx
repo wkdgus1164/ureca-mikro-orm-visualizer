@@ -28,7 +28,8 @@ interface TypeScriptExportTabProps {
 export function TypeScriptExportTab({ generatedCode }: TypeScriptExportTabProps) {
   const { resolvedTheme } = useTheme()
   // Monaco Editor 테마: 전역 테마에 따라 동적 전환
-  const monacoTheme = resolvedTheme === "dark" ? "vs-dark" : "light"
+  // Monaco 빌트인 테마: "vs" (light) / "vs-dark" / "hc-black"
+  const monacoTheme = resolvedTheme === "dark" ? "vs-dark" : "vs"
 
   // 선택된 Entity
   const [selectedEntity, setSelectedEntity] = useState<string | null>(null)
