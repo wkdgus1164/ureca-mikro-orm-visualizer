@@ -24,6 +24,8 @@ interface PropertySidebarProps {
   description?: string
   /** 사이드바 컨텐츠 */
   children: ReactNode
+  /** 사이드바 너비 (픽셀) */
+  width?: number
   /** 추가 CSS 클래스 */
   className?: string
 }
@@ -49,18 +51,19 @@ export function PropertySidebar({
   title,
   description,
   children,
+  width = 400,
   className,
 }: PropertySidebarProps) {
   return (
     <aside
       className={cn(
-        "flex-shrink-0 border-l bg-background transition-all duration-200 ease-in-out overflow-hidden pt-[50px]",
-        isOpen ? "w-[400px]" : "w-0",
+        "flex-shrink-0 border-l bg-background transition-[width] duration-200 ease-in-out overflow-hidden pt-[50px]",
         className
       )}
+      style={{ width: isOpen ? width : 0 }}
     >
       {isOpen && (
-        <div className="h-full flex flex-col w-[400px] overflow-hidden">
+        <div className="h-full flex flex-col overflow-hidden" style={{ width }}>
           {/* 헤더 */}
           <div className="flex items-start justify-between p-4 border-b flex-shrink-0">
             <div className="space-y-1">
