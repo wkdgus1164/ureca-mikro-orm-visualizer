@@ -55,8 +55,8 @@ export interface UseEditorReturn {
   onNodesChange: (changes: NodeChange<FlowNode>[]) => void
   /** 엣지 변경 핸들러 */
   onEdgesChange: (changes: EdgeChange<FlowEdge>[]) => void
-  /** 연결 핸들러 */
-  onConnect: (connection: Connection) => void
+  /** 연결 핸들러 (생성된 엣지 ID 반환) */
+  onConnect: (connection: Connection) => string | undefined
   /** UI 상태 */
   uiState: EditorUIState
   /** Entity 노드 추가 */
@@ -415,15 +415,16 @@ export function useEditor(): UseEditorReturn {
    * 커스텀 연결 핸들러
    * Entity ↔ Enum 연결 시 EnumMapping 엣지 생성
    * 그 외에는 일반 Relationship 엣지 생성
+   * @returns 생성된 엣지 ID (실패 시 undefined)
    */
   const onConnect = useCallback(
-    (connection: Connection) => {
-      if (!connection.source || !connection.target) return
+    (connection: Connection): string | undefined => {
+      if (!connection.source || !connection.target) return undefined
 
       const sourceNode = nodeOps.nodes.find((n) => n.id === connection.source)
       const targetNode = nodeOps.nodes.find((n) => n.id === connection.target)
 
-      if (!sourceNode || !targetNode) return
+      if (!sourceNode || !targetNode) return undefined
 
       // Entity ↔ Enum 연결 감지
       const isEntityToEnum =
@@ -435,7 +436,7 @@ export function useEditor(): UseEditorReturn {
         const entityId = sourceNode.type === "entity" ? sourceNode.id : targetNode.id
         const enumId = sourceNode.type === "enum" ? sourceNode.id : targetNode.id
 
-        edgeOps.addEnumMapping(
+        return edgeOps.addEnumMapping(
           entityId,
           enumId,
           connection.sourceHandle ?? undefined,
@@ -443,7 +444,7 @@ export function useEditor(): UseEditorReturn {
         )
       } else {
         // 일반 Relationship 엣지 생성
-        edgeOps.addRelationship(
+        return edgeOps.addRelationship(
           connection.source,
           connection.target,
           connection.sourceHandle ?? undefined,

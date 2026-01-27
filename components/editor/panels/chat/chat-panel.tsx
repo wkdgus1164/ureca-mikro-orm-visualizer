@@ -60,8 +60,8 @@ import {
   type PromptInputMessage,
 } from "@/components/ai-elements/prompt-input"
 
-import { ToolResult } from "./tool-result"
-import { QuestionPrompt } from "./question-prompt"
+import { ToolResult } from "@/components/editor/panels/chat/tool-result"
+import { QuestionPrompt } from "@/components/editor/panels/chat/question-prompt"
 import type { ToolResult as ToolResultType } from "@/types/chat"
 
 /**

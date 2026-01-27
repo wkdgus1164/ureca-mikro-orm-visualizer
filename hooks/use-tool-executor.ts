@@ -325,7 +325,6 @@ export function useToolExecutor(): UseToolExecutorReturn {
               return { type: "error", data: { message: commandOrError.error } }
             }
             applyAddRelationshipCommand(commandOrError, {
-              edges: editor.edges,
               onConnect: editor.onConnect,
               updateRelationship: editor.updateRelationship,
             })

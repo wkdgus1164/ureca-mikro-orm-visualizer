@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils"
 import { useEditorContext } from "@/components/providers/editor-provider"
 import { NodeListItem } from "@/components/editor/panels/shared/node-list-item"
 import { CategorySection } from "@/components/editor/panels/shared/category-section"
-import { ChatPanel } from "./chat"
+import { ChatPanel } from "@/components/editor/panels/chat"
 import type { EntityNode, EmbeddableNode, EnumNode, InterfaceNode } from "@/types/entity"
 import type { PendingAddType } from "@/types/editor"
 

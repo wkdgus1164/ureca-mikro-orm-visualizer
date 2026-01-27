@@ -5,7 +5,7 @@
  * use-tool-executor.ts에서 분리하여 테스트 용이성 향상
  */
 
-import type { ToolCommand } from "./tool-executor"
+import type { ToolCommand } from "@/lib/ai/tool-executor"
 import type { EntityProperty, EnumValue, InterfaceMethod } from "@/types/entity"
 import type { RelationType } from "@/types/relationship"
 import type { FlowNode } from "@/hooks/use-nodes"
@@ -43,7 +43,7 @@ export interface EditorActions {
     target: string
     sourceHandle: string | null
     targetHandle: string | null
-  }) => void
+  }) => string | undefined
   updateRelationship: (id: string, data: Record<string, unknown>) => void
 
   // EnumMapping
@@ -245,36 +245,28 @@ export interface AddRelationshipPayload {
 
 export function applyAddRelationshipCommand(
   command: ToolCommand,
-  editor: Pick<EditorActions, "edges" | "onConnect" | "updateRelationship">
+  editor: Pick<EditorActions, "onConnect" | "updateRelationship">
 ): void {
   const payload = command.payload as AddRelationshipPayload
 
-  // onConnect를 통해 기본 Relationship 생성
-  editor.onConnect({
+  // onConnect를 통해 기본 Relationship 생성하고 엣지 ID 반환받음
+  const edgeId = editor.onConnect({
     source: payload.sourceId,
     target: payload.targetId,
     sourceHandle: "right",
     targetHandle: "left",
   })
 
-  // 생성된 엣지 찾아서 업데이트 (비동기 처리)
-  setTimeout(() => {
-    const newEdge = editor.edges.find(
-      (e) =>
-        e.type === "relationship" &&
-        e.source === payload.sourceId &&
-        e.target === payload.targetId
-    )
-    if (newEdge) {
-      editor.updateRelationship(newEdge.id, {
-        relationType: payload.relationType,
-        sourceProperty: payload.sourceProperty,
-        targetProperty: payload.targetProperty,
-        isNullable: payload.isNullable,
-        cascade: payload.cascade,
-      })
-    }
-  }, 0)
+  // 생성된 엣지 ID로 바로 업데이트 (stale closure 문제 해결)
+  if (edgeId) {
+    editor.updateRelationship(edgeId, {
+      relationType: payload.relationType,
+      sourceProperty: payload.sourceProperty,
+      targetProperty: payload.targetProperty,
+      isNullable: payload.isNullable,
+      cascade: payload.cascade,
+    })
+  }
 }
 
 // ============================================
