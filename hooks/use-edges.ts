@@ -41,8 +41,8 @@ export interface UseEdgesReturn {
   onEdgesChange: (changes: EdgeChange<FlowEdge>[]) => void
   /** 기본 연결 핸들러 (Relationship 엣지 생성) */
   onConnect: (connection: Connection) => void
-  /** Relationship 엣지 추가 */
-  addRelationship: (sourceId: string, targetId: string, sourceHandle?: string, targetHandle?: string) => void
+  /** Relationship 엣지 추가 (생성된 엣지 ID 반환) */
+  addRelationship: (sourceId: string, targetId: string, sourceHandle?: string, targetHandle?: string) => string
   /** Relationship 엣지 업데이트 */
   updateRelationship: (id: string, data: Partial<RelationshipData>) => void
   /** Relationship 엣지 삭제 */
@@ -94,12 +94,13 @@ export function useEdges(): UseEdgesReturn {
   )
 
   /**
-   * Relationship 엣지 추가
+   * Relationship 엣지 추가 (생성된 엣지 ID 반환)
    */
   const addRelationship = useCallback(
-    (sourceId: string, targetId: string, sourceHandle?: string, targetHandle?: string) => {
+    (sourceId: string, targetId: string, sourceHandle?: string, targetHandle?: string): string => {
+      const edgeId = generateId()
       const newEdge: FlowEdge = {
-        id: generateId(),
+        id: edgeId,
         type: "relationship",
         source: sourceId,
         target: targetId,
@@ -115,6 +116,7 @@ export function useEdges(): UseEdgesReturn {
         },
       }
       setEdges((eds) => addEdge(newEdge, eds))
+      return edgeId
     },
     [setEdges]
   )
