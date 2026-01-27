@@ -3,11 +3,15 @@
 /**
  * Tool 실행 훅
  *
- * 도메인 로직과 에디터 상태를 연결하는 Application Layer 훅
+ * Application Layer - 도메인 로직과 에디터 상태를 연결
+ * - 커맨드 생성: lib/ai/tool-executor.ts (Domain Layer)
+ * - 커맨드 적용: lib/ai/command-applier.ts (Domain Layer)
  */
 
 import { useCallback } from "react"
 import { useEditorContext } from "@/components/providers/editor-provider"
+
+// Domain Layer - 커맨드 생성 함수들
 import {
   createAddEntityCommand,
   createUpdateEntityCommand,
@@ -21,6 +25,10 @@ import {
   createAddEnumMappingCommand,
   createClearDiagramCommand,
   createGetDiagramSummaryCommand,
+  findNodeByName,
+  findEnumByName,
+  findEntityByName,
+  findRelationship,
   type AddEntityArgs,
   type UpdateEntityArgs,
   type DeleteEntityArgs,
@@ -42,17 +50,23 @@ import {
   type AddEnumMappingArgs,
   type DeleteEnumMappingArgs,
   type ClearDiagramArgs,
-  type ToolCommand,
-  findNodeByName,
-  findEnumByName,
-  findEntityByName,
-  findRelationship,
 } from "@/lib/ai/tool-executor"
+
+// Domain Layer - 커맨드 적용 함수들
+import {
+  applyAddEntityCommand,
+  applyUpdateEntityCommand,
+  applyAddEmbeddableCommand,
+  applyAddEnumCommand,
+  applyAddInterfaceCommand,
+  applyAddPropertyCommand,
+  applyAddRelationshipCommand,
+  applyAddEnumMappingCommand,
+} from "@/lib/ai/command-applier"
+
 import type { ToolResult } from "@/types/chat"
-import type { EntityProperty, EnumValue, InterfaceMethod } from "@/types/entity"
+import type { EntityProperty, EnumValue } from "@/types/entity"
 import { RelationType } from "@/types/relationship"
-import type { FlowNode } from "@/hooks/use-nodes"
-import type { FlowEdge } from "@/hooks/use-edges"
 
 export interface UseToolExecutorReturn {
   executeTool: (toolName: string, args: unknown) => ToolResult
@@ -62,6 +76,8 @@ export interface UseToolExecutorReturn {
  * Tool 실행 훅
  *
  * AI가 호출한 Tool을 실행하고 에디터 상태를 업데이트
+ * - 유스케이스 조합만 담당
+ * - 실제 로직은 Domain Layer 함수에 위임
  */
 export function useToolExecutor(): UseToolExecutorReturn {
   const editor = useEditorContext()
@@ -75,31 +91,22 @@ export function useToolExecutor(): UseToolExecutorReturn {
           // ============================================
 
           case "addEntity": {
-            const command = createAddEntityCommand(
-              args as AddEntityArgs,
-              editor.nodes
-            )
-            applyAddEntityCommand(command, editor)
+            const command = createAddEntityCommand(args as AddEntityArgs, editor.nodes)
+            applyAddEntityCommand(command, editor.setNodes)
             return command.result
           }
 
           case "updateEntity": {
-            const commandOrError = createUpdateEntityCommand(
-              args as UpdateEntityArgs,
-              editor.nodes
-            )
+            const commandOrError = createUpdateEntityCommand(args as UpdateEntityArgs, editor.nodes)
             if ("error" in commandOrError) {
               return { type: "error", data: { message: commandOrError.error } }
             }
-            applyUpdateEntityCommand(commandOrError, editor)
+            applyUpdateEntityCommand(commandOrError, editor.updateEntity)
             return commandOrError.result
           }
 
           case "deleteEntity": {
-            const commandOrError = createDeleteEntityCommand(
-              args as DeleteEntityArgs,
-              editor.nodes
-            )
+            const commandOrError = createDeleteEntityCommand(args as DeleteEntityArgs, editor.nodes)
             if ("error" in commandOrError) {
               return { type: "error", data: { message: commandOrError.error } }
             }
@@ -113,11 +120,8 @@ export function useToolExecutor(): UseToolExecutorReturn {
           // ============================================
 
           case "addEmbeddable": {
-            const command = createAddEmbeddableCommand(
-              args as AddEmbeddableArgs,
-              editor.nodes
-            )
-            applyAddEmbeddableCommand(command, editor)
+            const command = createAddEmbeddableCommand(args as AddEmbeddableArgs, editor.nodes)
+            applyAddEmbeddableCommand(command, editor.setNodes)
             return command.result
           }
 
@@ -156,7 +160,7 @@ export function useToolExecutor(): UseToolExecutorReturn {
 
           case "addEnum": {
             const command = createAddEnumCommand(args as AddEnumArgs, editor.nodes)
-            applyAddEnumCommand(command, editor)
+            applyAddEnumCommand(command, editor.setNodes)
             return command.result
           }
 
@@ -197,11 +201,8 @@ export function useToolExecutor(): UseToolExecutorReturn {
           // ============================================
 
           case "addInterface": {
-            const command = createAddInterfaceCommand(
-              args as AddInterfaceArgs,
-              editor.nodes
-            )
-            applyAddInterfaceCommand(command, editor)
+            const command = createAddInterfaceCommand(args as AddInterfaceArgs, editor.nodes)
+            applyAddInterfaceCommand(command, editor.setNodes)
             return command.result
           }
 
@@ -239,14 +240,16 @@ export function useToolExecutor(): UseToolExecutorReturn {
           // ============================================
 
           case "addProperty": {
-            const commandOrError = createAddPropertyCommand(
-              args as AddPropertyArgs,
-              editor.nodes
-            )
+            const commandOrError = createAddPropertyCommand(args as AddPropertyArgs, editor.nodes)
             if ("error" in commandOrError) {
               return { type: "error", data: { message: commandOrError.error } }
             }
-            applyAddPropertyCommand(commandOrError, editor)
+            applyAddPropertyCommand(commandOrError, {
+              nodes: editor.nodes,
+              updateEntity: editor.updateEntity,
+              updateEmbeddable: editor.updateEmbeddable,
+              updateInterface: editor.updateInterface,
+            })
             return commandOrError.result
           }
 
@@ -317,14 +320,15 @@ export function useToolExecutor(): UseToolExecutorReturn {
           // ============================================
 
           case "addRelationship": {
-            const commandOrError = createAddRelationshipCommand(
-              args as AddRelationshipArgs,
-              editor.nodes
-            )
+            const commandOrError = createAddRelationshipCommand(args as AddRelationshipArgs, editor.nodes)
             if ("error" in commandOrError) {
               return { type: "error", data: { message: commandOrError.error } }
             }
-            applyAddRelationshipCommand(commandOrError, editor)
+            applyAddRelationshipCommand(commandOrError, {
+              edges: editor.edges,
+              onConnect: editor.onConnect,
+              updateRelationship: editor.updateRelationship,
+            })
             return commandOrError.result
           }
 
@@ -392,14 +396,16 @@ export function useToolExecutor(): UseToolExecutorReturn {
           // ============================================
 
           case "addEnumMapping": {
-            const commandOrError = createAddEnumMappingCommand(
-              args as AddEnumMappingArgs,
-              editor.nodes
-            )
+            const commandOrError = createAddEnumMappingCommand(args as AddEnumMappingArgs, editor.nodes)
             if ("error" in commandOrError) {
               return { type: "error", data: { message: commandOrError.error } }
             }
-            applyAddEnumMappingCommand(commandOrError, editor)
+            applyAddEnumMappingCommand(commandOrError, {
+              nodes: editor.nodes,
+              addEnumMapping: editor.addEnumMapping,
+              updateEnumMapping: editor.updateEnumMapping,
+              updateEntity: editor.updateEntity,
+            })
             return commandOrError.result
           }
 
@@ -498,220 +504,4 @@ export function useToolExecutor(): UseToolExecutorReturn {
   )
 
   return { executeTool }
-}
-
-// ============================================
-// 커맨드 적용 헬퍼 함수
-// ============================================
-
-interface EditorActions {
-  addEntity: (position?: { x: number; y: number }) => void
-  updateEntity: (id: string, data: Record<string, unknown>) => void
-  addEmbeddable: (position?: { x: number; y: number }) => void
-  updateEmbeddable: (id: string, data: Record<string, unknown>) => void
-  addEnum: (position?: { x: number; y: number }) => void
-  updateEnum: (id: string, data: Record<string, unknown>) => void
-  addInterface: (position?: { x: number; y: number }) => void
-  updateInterface: (id: string, data: Record<string, unknown>) => void
-  addEnumMapping: (entityId: string, enumId: string) => string
-  updateEnumMapping: (id: string, data: Record<string, unknown>) => void
-  nodes: FlowNode[]
-  setNodes: React.Dispatch<React.SetStateAction<FlowNode[]>>
-}
-
-function applyAddEntityCommand(command: ToolCommand, editor: EditorActions): void {
-  const payload = command.payload as {
-    id: string
-    name: string
-    tableName?: string
-    properties: EntityProperty[]
-    position: { x: number; y: number }
-  }
-
-  // 새 Entity 노드 직접 생성
-  editor.setNodes((nodes) => [
-    ...nodes,
-    {
-      id: payload.id,
-      type: "entity",
-      position: payload.position,
-      data: {
-        name: payload.name,
-        tableName: payload.tableName,
-        properties: payload.properties,
-      },
-    },
-  ])
-}
-
-function applyUpdateEntityCommand(command: ToolCommand, editor: EditorActions): void {
-  const payload = command.payload as {
-    id: string
-    newName?: string
-    newTableName?: string
-  }
-
-  const updates: Record<string, unknown> = {}
-  if (payload.newName) updates.name = payload.newName
-  if (payload.newTableName) updates.tableName = payload.newTableName
-
-  editor.updateEntity(payload.id, updates)
-}
-
-function applyAddEmbeddableCommand(command: ToolCommand, editor: EditorActions): void {
-  const payload = command.payload as {
-    id: string
-    name: string
-    properties: EntityProperty[]
-    position: { x: number; y: number }
-  }
-
-  editor.setNodes((nodes) => [
-    ...nodes,
-    {
-      id: payload.id,
-      type: "embeddable",
-      position: payload.position,
-      data: {
-        name: payload.name,
-        properties: payload.properties,
-      },
-    },
-  ])
-}
-
-function applyAddEnumCommand(command: ToolCommand, editor: EditorActions): void {
-  const payload = command.payload as {
-    id: string
-    name: string
-    values: EnumValue[]
-    position: { x: number; y: number }
-  }
-
-  editor.setNodes((nodes) => [
-    ...nodes,
-    {
-      id: payload.id,
-      type: "enum",
-      position: payload.position,
-      data: {
-        name: payload.name,
-        values: payload.values,
-      },
-    },
-  ])
-}
-
-function applyAddInterfaceCommand(command: ToolCommand, editor: EditorActions): void {
-  const payload = command.payload as {
-    id: string
-    name: string
-    properties: EntityProperty[]
-    methods: InterfaceMethod[]
-    position: { x: number; y: number }
-  }
-
-  editor.setNodes((nodes) => [
-    ...nodes,
-    {
-      id: payload.id,
-      type: "interface",
-      position: payload.position,
-      data: {
-        name: payload.name,
-        properties: payload.properties,
-        methods: payload.methods,
-      },
-    },
-  ])
-}
-
-function applyAddPropertyCommand(command: ToolCommand, editor: EditorActions): void {
-  const payload = command.payload as {
-    nodeId: string
-    property: EntityProperty
-  }
-
-  const node = editor.nodes.find((n) => n.id === payload.nodeId)
-  if (!node) return
-
-  const currentProperties = (node.data.properties as EntityProperty[]) ?? []
-  const newProperties = [...currentProperties, payload.property]
-
-  if (node.type === "entity") {
-    editor.updateEntity(payload.nodeId, { properties: newProperties })
-  } else if (node.type === "embeddable") {
-    editor.updateEmbeddable(payload.nodeId, { properties: newProperties })
-  } else if (node.type === "interface") {
-    editor.updateInterface(payload.nodeId, { properties: newProperties })
-  }
-}
-
-function applyAddRelationshipCommand(command: ToolCommand, editor: EditorActions & { onConnect: (connection: { source: string; target: string; sourceHandle: string | null; targetHandle: string | null }) => void; updateRelationship: (id: string, data: Record<string, unknown>) => void; edges: FlowEdge[] }): void {
-  const payload = command.payload as {
-    id: string
-    sourceId: string
-    targetId: string
-    relationType: RelationType
-    sourceProperty: string
-    targetProperty?: string
-    isNullable: boolean
-    cascade: boolean
-  }
-
-  // onConnect를 통해 기본 Relationship 생성
-  editor.onConnect({
-    source: payload.sourceId,
-    target: payload.targetId,
-    sourceHandle: "right" as string | null,
-    targetHandle: "left" as string | null,
-  })
-
-  // 생성된 엣지 찾아서 업데이트
-  setTimeout(() => {
-    const newEdge = editor.edges.find(
-      (e) =>
-        e.type === "relationship" &&
-        e.source === payload.sourceId &&
-        e.target === payload.targetId
-    )
-    if (newEdge) {
-      editor.updateRelationship(newEdge.id, {
-        relationType: payload.relationType,
-        sourceProperty: payload.sourceProperty,
-        targetProperty: payload.targetProperty,
-        isNullable: payload.isNullable,
-        cascade: payload.cascade,
-      })
-    }
-  }, 0)
-}
-
-function applyAddEnumMappingCommand(command: ToolCommand, editor: EditorActions & { updateEntity: (id: string, data: Record<string, unknown>) => void; updateEnumMapping: (id: string, data: Record<string, unknown>) => void }): void {
-  const payload = command.payload as {
-    id: string
-    entityId: string
-    enumId: string
-    propertyId: string
-    previousType: string
-  }
-
-  // EnumMapping 엣지 생성
-  const edgeId = editor.addEnumMapping(payload.entityId, payload.enumId)
-
-  // 엣지 데이터 업데이트
-  editor.updateEnumMapping(edgeId, {
-    propertyId: payload.propertyId,
-    previousType: payload.previousType,
-  })
-
-  // Entity의 프로퍼티 타입을 Enum으로 변경
-  const entity = editor.nodes.find((n) => n.id === payload.entityId)
-  const enumNode = editor.nodes.find((n) => n.id === payload.enumId)
-  if (entity && enumNode && entity.type === "entity") {
-    const properties = (entity.data.properties as EntityProperty[]).map((p) =>
-      p.id === payload.propertyId ? { ...p, type: enumNode.data.name as string } : p
-    )
-    editor.updateEntity(payload.entityId, { properties })
-  }
 }
